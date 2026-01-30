@@ -1,5 +1,5 @@
 site_name: ai-docs
-docs_dir: docs
+docs_dir: .ai-docs
 site_dir: ai_docs_site
 nav:
 - Главная: index.md

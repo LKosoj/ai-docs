@@ -117,6 +117,7 @@ def generate_docs(
     use_cache: bool = True,
     threads: int = 1,
     local_site: bool = False,
+    force: bool = False,
 ) -> None:
     cache = CacheManager(cache_dir)
     llm_cache = cache.load_llm_cache() if use_cache else None
@@ -267,28 +268,54 @@ def generate_docs(
     # Sections to regenerate
     regenerated_sections: List[str] = []
     docs_files: Dict[str, str] = {}
-    docs_dir = output_root / "docs"
+    docs_dir = output_root / ".ai-docs"
+    section_workers = min(threads, 4) if threads > 1 else 1
+
+    # Core + domain sections (+ index) in parallel (bounded)
+    configs_written: Dict[str, str] = {}
+    section_futures = {}
+    if section_workers > 1:
+        executor = ThreadPoolExecutor(max_workers=section_workers)
+    else:
+        executor = None
+
+    def _submit_section(out_path: str, title: str, context: str) -> None:
+        if executor:
+            section_futures[executor.submit(_generate_section, llm, llm_cache, title, context, language)] = (out_path, title)
+        else:
+            content = _generate_section(llm, llm_cache, title, context, language)
+            docs_files[out_path] = f"# {title}\n\n{content}\n"
+            regenerated_sections.append(title)
 
     # Core sections
     for key, title in SECTION_TITLES.items():
         if added or modified or deleted or not (docs_dir / f"{key}.md").exists():
             print(f"[ai-docs] generate section: {title}")
-            content = _generate_section(llm, llm_cache, title, overview_context, language)
-            docs_files[f"{key}.md"] = f"# {title}\n\n{content}\n"
-            regenerated_sections.append(title)
+            _submit_section(f"{key}.md", title, overview_context)
 
     # Domain sections
-    configs_written: Dict[str, str] = {}
     for domain, title in DOMAIN_TITLES.items():
         if domain not in domain_contexts:
             continue
         filename = f"{domain}.md"
         if domain in changed_domains or not (docs_dir / "configs" / filename).exists():
             print(f"[ai-docs] generate domain: {title}")
-            content = _generate_section(llm, llm_cache, title, domain_contexts[domain], language)
-            docs_files[f"configs/{filename}"] = f"# {title}\n\n{content}\n"
-            regenerated_sections.append(title)
+            _submit_section(f"configs/{filename}", title, domain_contexts[domain])
         configs_written[domain] = filename
+
+    # Index
+    index_title = "Документация проекта"
+    if added or modified or deleted or not (docs_dir / "index.md").exists():
+        print("[ai-docs] generate index")
+        _submit_section("index.md", index_title, overview_context)
+
+    if executor:
+        for future in as_completed(section_futures):
+            out_path, title = section_futures[future]
+            content = future.result()
+            docs_files[out_path] = f"# {title}\n\n{content}\n"
+            regenerated_sections.append(title)
+        executor.shutdown(wait=True)
 
     # Remove stale config docs if domain no longer present
     configs_dir = docs_dir / "configs"
@@ -298,14 +325,6 @@ def generate_docs(
                 stale_path = configs_dir / f"{domain}.md"
                 if stale_path.exists():
                     stale_path.unlink()
-
-    # Index
-    index_title = "Документация проекта"
-    if added or modified or deleted or not (docs_dir / "index.md").exists():
-        print("[ai-docs] generate index")
-        intro = _generate_section(llm, llm_cache, index_title, overview_context, language)
-        docs_files["index.md"] = f"# {index_title}\n\n{intro}\n"
-        regenerated_sections.append(index_title)
 
     # Dependencies (inject list if found)
     deps = _collect_dependencies(file_map)
@@ -336,10 +355,14 @@ def generate_docs(
 
     if write_readme:
         print("[ai-docs] write README")
-        readme = _generate_readme(llm, llm_cache, output_root.name, overview_context, language)
-        (output_root / "README.md").write_text(readme + "\n", encoding="utf-8")
+        readme_path = output_root / "README.md"
+        if readme_path.exists() and not force:
+            print("[ai-docs] skip README: already exists (use --force to overwrite)")
+        else:
+            readme = _generate_readme(llm, llm_cache, output_root.name, overview_context, language)
+            readme_path.write_text(readme + "\n", encoding="utf-8")
 
-    # Remove orphan docs (keep docs/plans)
+    # Remove orphan docs (keep .ai-docs/plans)
     if docs_dir.exists():
         print("[ai-docs] cleanup docs: removing orphan files")
         keep_files = {docs_dir / rel for rel in docs_files.keys()}

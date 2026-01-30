@@ -37,7 +37,7 @@ def build_mkdocs_yaml(site_name: str, sections: Dict[str, str], configs: Dict[st
 
     data = {
         "site_name": site_name,
-        "docs_dir": "docs",
+        "docs_dir": ".ai-docs",
         "site_dir": "ai_docs_site",
         "nav": nav,
     }

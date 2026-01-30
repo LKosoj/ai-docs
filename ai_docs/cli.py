@@ -26,6 +26,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-cache", action="store_true", help="Disable LLM cache")
     parser.add_argument("--threads", type=int, default=None, help="Number of parallel LLM workers")
     parser.add_argument("--local-site", action="store_true", help="Generate MkDocs config for local run")
+    parser.add_argument("--force", action="store_true", help="Overwrite README.md if it already exists")
     return parser.parse_args()
 
 
@@ -72,6 +73,7 @@ def main() -> None:
         use_cache=not args.no_cache,
         threads=max(1, threads),
         local_site=local_site,
+        force=args.force,
     )
 
     if is_url(args.source):

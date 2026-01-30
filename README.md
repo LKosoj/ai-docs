@@ -77,8 +77,8 @@ python -m ai_docs --source . --mkdocs --local-site
 
 ## Что генерируется
 - `README.md` — краткое описание проекта
-- `docs/` — страницы документации
-- `docs/changes.md` — изменения с последней генерации
+- `.ai-docs/` — страницы документации
+- `.ai-docs/changes.md` — изменения с последней генерации
 - `mkdocs.yml` — конфиг MkDocs
 - `ai_docs_site/` — собранный сайт MkDocs
 - `.ai_docs_cache/` — кэш и промежуточные summary‑файлы
@@ -95,6 +95,7 @@ python -m ai_docs --source . --mkdocs --local-site
 - `--cache-dir` — директория кэша (по умолчанию `.ai_docs_cache`)
 - `--no-cache` — отключить LLM‑кэш
 - `--local-site` — добавить `site_url` и `use_directory_urls` в `mkdocs.yml`
+- `--force` — перезаписать `README.md`, если он уже существует
 
 Поведение по умолчанию: если не указаны `--readme` и `--mkdocs`, генерируются оба артефакта.
 
@@ -106,7 +107,7 @@ mkdocs build -f mkdocs.yml
 
 ## Исключения
 Сканер учитывает `.gitignore` и дефолтные исключения:
-`.venv`, `node_modules`, `ai_docs_site`, `.ai_docs_cache`, `dist`, `build`, т.д.
+`.venv`, `node_modules`, `ai_docs_site`, `.ai-docs`, `.ai_docs_cache`, `dist`, `build`, т.д.
 
 ## Разработка и вклад
 - Установите зависимости (см. «Быстрый старт»)
