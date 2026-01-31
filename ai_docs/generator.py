@@ -134,6 +134,17 @@ def generate_docs(
 ) -> None:
     cache = CacheManager(cache_dir)
     llm_cache = cache.load_llm_cache() if use_cache else None
+    index_data = cache.load_index()
+    prev_files = index_data.get("files", {})
+
+    def _save_cache_snapshot() -> None:
+        snapshot = {
+            "files": {path: {k: v for k, v in meta.items() if k != "content"} for path, meta in file_map.items()},
+            "sections": index_data.get("sections", {}),
+        }
+        cache.save_index(snapshot)
+        if use_cache and llm_cache is not None:
+            cache.save_llm_cache(llm_cache)
 
     file_map: Dict[str, Dict] = {}
     for f in files:
@@ -192,6 +203,8 @@ def generate_docs(
             meta["summary_path"] = str(summary_path)
             done += 1
             print(f"[ai-docs] summarize done: {path} ({done}/{total})")
+    if to_summarize:
+        _save_cache_snapshot()
 
     # Detailed module summaries for changed files (code only)
     module_candidates = [
@@ -236,10 +249,10 @@ def generate_docs(
             meta["module_summary_path"] = str(summary_path)
             done += 1
             print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
+    if module_candidates:
+        _save_cache_snapshot()
 
     # Carry summaries for unchanged files (recreate if missing)
-    index_data = cache.load_index()
-    prev_files = index_data.get("files", {})
     missing_summaries: List[Tuple[str, Dict]] = []
     missing_module_summaries: List[Tuple[str, Dict]] = []
     for path, meta in unchanged.items():
@@ -300,6 +313,7 @@ def generate_docs(
                 meta["summary_path"] = str(summary_path)
                 done += 1
                 print(f"[ai-docs] summarize done: {path} ({done}/{total})")
+        _save_cache_snapshot()
 
     if missing_module_summaries:
         print(f"[ai-docs] summarize modules: {len(missing_module_summaries)} missing module summaries")
@@ -338,6 +352,7 @@ def generate_docs(
                 meta["module_summary_path"] = str(summary_path)
                 done += 1
                 print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
+        _save_cache_snapshot()
 
     # Remove summaries for deleted files
     if deleted:
