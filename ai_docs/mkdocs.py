@@ -39,6 +39,8 @@ def build_mkdocs_yaml(site_name: str, sections: Dict[str, str], configs: Dict[st
         "site_name": site_name,
         "docs_dir": ".ai-docs",
         "site_dir": "ai_docs_site",
+        "plugins": ["search", "mermaid2"],
+        "markdown_extensions": ["pymdownx.superfences"],
         "nav": nav,
     }
     if local_site:

@@ -68,6 +68,12 @@ def _generate_section(llm: LLMClient, llm_cache: Dict[str, str], title: str, con
         f"Язык: {language}. Раздел: {title}. "
         "Используй предоставленный контекст. Избегай воды, дай практические детали."
     )
+    if title.lower() == "архитектура":
+        prompt += (
+            " В начале раздела обязательно вставь Mermaid-диаграмму архитектуры. "
+            "Используй блок:\n```mermaid\n...\n```.\n"
+            "Схема должна отражать основные компоненты и потоки данных проекта."
+        )
     messages = [
         {"role": "system", "content": prompt},
         {"role": "user", "content": context},
@@ -177,15 +183,20 @@ def generate_docs(
             done += 1
             print(f"[ai-docs] summarize done: {path} ({done}/{total})")
 
-    # Carry summaries for unchanged files
+    # Carry summaries for unchanged files (recreate if missing)
     index_data = cache.load_index()
     prev_files = index_data.get("files", {})
     missing_summaries: List[Tuple[str, Dict]] = []
     for path, meta in unchanged.items():
         prev = prev_files.get(path, {})
-        if "summary_path" in prev:
-            meta["summary_path"] = prev["summary_path"]
+        summary_path = prev.get("summary_path")
+        if summary_path and Path(summary_path).exists():
+            meta["summary_path"] = summary_path
         else:
+            if summary_path:
+                print(f"[ai-docs] summarize missing: {path} ({summary_path})")
+            else:
+                print(f"[ai-docs] summarize missing: {path}")
             missing_summaries.append((path, meta))
 
     if missing_summaries:
@@ -362,8 +373,10 @@ def generate_docs(
             readme = _generate_readme(llm, llm_cache, output_root.name, overview_context, language)
             readme_path.write_text(readme + "\n", encoding="utf-8")
 
-    # Remove orphan docs (keep .ai-docs/plans)
-    if docs_dir.exists():
+    # Remove orphan docs (keep .ai-docs/plans).
+    # Only cleanup when sections were actually regenerated.
+    did_regenerate = bool(regenerated_sections)
+    if docs_dir.exists() and docs_files and did_regenerate:
         print("[ai-docs] cleanup docs: removing orphan files")
         keep_files = {docs_dir / rel for rel in docs_files.keys()}
         keep_dirs = {docs_dir / "plans"}
@@ -375,6 +388,8 @@ def generate_docs(
             if path in keep_files:
                 continue
             path.unlink()
+    elif docs_dir.exists():
+        print("[ai-docs] cleanup docs: skipped (no regenerated sections)")
 
     if write_mkdocs:
         print("[ai-docs] mkdocs: build")
