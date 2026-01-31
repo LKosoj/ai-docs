@@ -5,6 +5,13 @@ plugins:
 - search
 - mermaid2
 markdown_extensions:
+- tables
+- sane_lists
+- attr_list
+- def_list
+- footnotes
+- admonition
+- fenced_code
 - pymdownx.superfences
 nav:
 - Главная: index.md

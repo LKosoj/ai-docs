@@ -53,7 +53,16 @@ def build_mkdocs_yaml(
         "docs_dir": ".ai-docs",
         "site_dir": "ai_docs_site",
         "plugins": ["search", "mermaid2"],
-        "markdown_extensions": ["pymdownx.superfences"],
+        "markdown_extensions": [
+            "tables",
+            "sane_lists",
+            "attr_list",
+            "def_list",
+            "footnotes",
+            "admonition",
+            "fenced_code",
+            "pymdownx.superfences",
+        ],
         "nav": nav,
     }
     if local_site:
