@@ -11,13 +11,48 @@ SUMMARY_PROMPT = """
 Ответ строго в Markdown, без заголовка.
 """.strip()
 
+MODULE_SUMMARY_PROMPT = """
+Ты технический писатель. Сформируй подробную документацию модуля в стиле Doxygen.
+Сначала дай краткое верхнеуровневое описание модуля (2–4 предложения).
+Далее перечисли функции/процедуры и классы. Для каждой сущности используй формат:
 
-def summarize_file(content: str, file_type: str, domains: List[str], llm_client, llm_cache: Dict[str, str], model: str) -> str:
+<сигнатура>
+<краткое назначение одной строкой>
+Аргументы
+<имя> — <описание>
+Возвращает
+<описание> (если есть)
+Исключения
+<описание> (если есть)
+
+Для классов:
+<имя класса>
+<краткое назначение одной строкой>
+Поля
+<имя> — <описание> (если есть)
+Методы
+<сигнатура> — <краткое назначение>
+
+Если аргументов/возвращаемого значения/исключений нет — блок пропускай.
+Разделяй сущности строкой из трёх дефисов: `---`.
+Ответ строго в Markdown, без заголовка документа, без маркеров списка, сохраняя последовательность блоков.
+""".strip()
+
+
+def summarize_file(
+    content: str,
+    file_type: str,
+    domains: List[str],
+    llm_client,
+    llm_cache: Dict[str, str],
+    model: str,
+    detailed: bool = False,
+) -> str:
     chunks = chunk_text(content, model=model, max_tokens=1800)
     summaries = []
     for chunk in chunks:
-        prompt = SUMMARY_PROMPT
-        if file_type == "infra" or domains:
+        prompt = MODULE_SUMMARY_PROMPT if detailed else SUMMARY_PROMPT
+        if not detailed and (file_type == "infra" or domains):
             prompt = SUMMARY_PROMPT + "\nФайл относится к инфраструктуре: " + ", ".join(domains)
         messages = [
             {"role": "system", "content": prompt},
@@ -42,4 +77,3 @@ def write_summary(summary_dir: Path, rel_path: str, summary: str) -> Path:
     out_path = summary_dir / f"{safe_name}.md"
     out_path.write_text(summary, encoding="utf-8")
     return out_path
-

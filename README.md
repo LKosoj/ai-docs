@@ -79,6 +79,7 @@ python -m ai_docs --source . --mkdocs --local-site
 - `README.md` — краткое описание проекта
 - `.ai-docs/` — страницы документации
 - `.ai-docs/changes.md` — изменения с последней генерации
+- `.ai-docs/modules/` — детальная документация модулей (страница на модуль, Doxygen‑подобное описание функций/классов/параметров)
 - `mkdocs.yml` — конфиг MkDocs
 - `ai_docs_site/` — собранный сайт MkDocs
 - `.ai_docs_cache/` — кэш и промежуточные summary‑файлы

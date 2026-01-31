@@ -142,7 +142,9 @@ def generate_docs(
     print(f"[ai-docs] diff: added={len(added)} modified={len(modified)} deleted={len(deleted)} unchanged={len(unchanged)}")
 
     summaries_dir = cache_dir / "intermediate" / "files"
+    module_summaries_dir = cache_dir / "intermediate" / "modules"
     ensure_dir(summaries_dir)
+    ensure_dir(module_summaries_dir)
 
     # Summaries for changed files (parallel if threads > 1)
     to_summarize: List[Tuple[str, Dict]] = list({**added, **modified}.items())
@@ -159,6 +161,7 @@ def generate_docs(
                     llm,
                     llm_cache,
                     llm.model,
+                    False,
                 ): (path, meta)
                 for path, meta in to_summarize
             }
@@ -177,16 +180,57 @@ def generate_docs(
         done = 0
         for path, meta in to_summarize:
             print(f"[ai-docs] summarize start: {path}")
-            summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model)
+            summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
             summary_path = write_summary(summaries_dir, path, summary)
             meta["summary_path"] = str(summary_path)
             done += 1
             print(f"[ai-docs] summarize done: {path} ({done}/{total})")
 
+    # Detailed module summaries for changed files (code only)
+    module_candidates = [(path, meta) for path, meta in to_summarize if meta.get("type") == "code"]
+    if module_candidates:
+        print(f"[ai-docs] summarize modules: {len(module_candidates)} changed code files (threads={threads})")
+    if threads > 1 and module_candidates:
+        with ThreadPoolExecutor(max_workers=threads) as executor:
+            futures = {
+                executor.submit(
+                    summarize_file,
+                    meta["content"],
+                    meta["type"],
+                    meta["domains"],
+                    llm,
+                    llm_cache,
+                    llm.model,
+                    True,
+                ): (path, meta)
+                for path, meta in module_candidates
+            }
+            total = len(futures)
+            done = 0
+            for future in as_completed(futures):
+                path, meta = futures[future]
+                print(f"[ai-docs] summarize module start: {path}")
+                summary = future.result()
+                summary_path = write_summary(module_summaries_dir, path, summary)
+                meta["module_summary_path"] = str(summary_path)
+                done += 1
+                print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
+    else:
+        total = len(module_candidates)
+        done = 0
+        for path, meta in module_candidates:
+            print(f"[ai-docs] summarize module start: {path}")
+            summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
+            summary_path = write_summary(module_summaries_dir, path, summary)
+            meta["module_summary_path"] = str(summary_path)
+            done += 1
+            print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
+
     # Carry summaries for unchanged files (recreate if missing)
     index_data = cache.load_index()
     prev_files = index_data.get("files", {})
     missing_summaries: List[Tuple[str, Dict]] = []
+    missing_module_summaries: List[Tuple[str, Dict]] = []
     for path, meta in unchanged.items():
         prev = prev_files.get(path, {})
         summary_path = prev.get("summary_path")
@@ -198,6 +242,16 @@ def generate_docs(
             else:
                 print(f"[ai-docs] summarize missing: {path}")
             missing_summaries.append((path, meta))
+        module_summary_path = prev.get("module_summary_path")
+        if meta.get("type") == "code":
+            if module_summary_path and Path(module_summary_path).exists():
+                meta["module_summary_path"] = module_summary_path
+            else:
+                if module_summary_path:
+                    print(f"[ai-docs] summarize module missing: {path} ({module_summary_path})")
+                else:
+                    print(f"[ai-docs] summarize module missing: {path}")
+                missing_module_summaries.append((path, meta))
 
     if missing_summaries:
         print(f"[ai-docs] summarize: {len(missing_summaries)} missing summaries")
@@ -230,11 +284,49 @@ def generate_docs(
             done = 0
             for path, meta in missing_summaries:
                 print(f"[ai-docs] summarize start: {path}")
-                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model)
+                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
                 summary_path = write_summary(summaries_dir, path, summary)
                 meta["summary_path"] = str(summary_path)
                 done += 1
                 print(f"[ai-docs] summarize done: {path} ({done}/{total})")
+
+    if missing_module_summaries:
+        print(f"[ai-docs] summarize modules: {len(missing_module_summaries)} missing module summaries")
+        if threads > 1:
+            with ThreadPoolExecutor(max_workers=threads) as executor:
+                futures = {
+                    executor.submit(
+                        summarize_file,
+                        meta["content"],
+                        meta["type"],
+                        meta["domains"],
+                        llm,
+                        llm_cache,
+                        llm.model,
+                        True,
+                    ): (path, meta)
+                    for path, meta in missing_module_summaries
+                }
+                total = len(futures)
+                done = 0
+                for future in as_completed(futures):
+                    path, meta = futures[future]
+                    print(f"[ai-docs] summarize module start: {path}")
+                    summary = future.result()
+                    summary_path = write_summary(module_summaries_dir, path, summary)
+                    meta["module_summary_path"] = str(summary_path)
+                    done += 1
+                    print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
+        else:
+            total = len(missing_module_summaries)
+            done = 0
+            for path, meta in missing_module_summaries:
+                print(f"[ai-docs] summarize module start: {path}")
+                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
+                summary_path = write_summary(module_summaries_dir, path, summary)
+                meta["module_summary_path"] = str(summary_path)
+                done += 1
+                print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
 
     # Remove summaries for deleted files
     if deleted:
@@ -245,6 +337,12 @@ def generate_docs(
             if summary_path:
                 try:
                     Path(summary_path).unlink()
+                except FileNotFoundError:
+                    pass
+            module_summary_path = prev_meta.get("module_summary_path")
+            if module_summary_path:
+                try:
+                    Path(module_summary_path).unlink()
                 except FileNotFoundError:
                     pass
             prev_files.pop(path, None)
@@ -280,6 +378,7 @@ def generate_docs(
     regenerated_sections: List[str] = []
     docs_files: Dict[str, str] = {}
     docs_dir = output_root / ".ai-docs"
+    module_pages: Dict[str, str] = {}
     section_workers = min(threads, 4) if threads > 1 else 1
 
     # Core + domain sections (+ index) in parallel (bounded)
@@ -319,6 +418,35 @@ def generate_docs(
     if added or modified or deleted or not (docs_dir / "index.md").exists():
         print("[ai-docs] generate index")
         _submit_section("index.md", index_title, overview_context)
+
+    # Modules (detailed summaries -> per-module pages + index)
+    module_summaries = []
+    module_nav_paths: List[str] = []
+    for path, meta in file_map.items():
+        summary_path = meta.get("module_summary_path")
+        if not summary_path:
+            continue
+        module_rel = Path("modules") / Path(path).with_suffix("")
+        module_rel_str = module_rel.as_posix() + ".md"
+        module_title = Path(path).with_suffix("").as_posix()
+        summary = read_text_file(Path(summary_path))
+        module_pages[module_rel_str] = f"# {module_title}\n\n{summary}\n"
+        module_nav_paths.append(module_rel_str)
+        module_summaries.append(summary)
+    if module_summaries:
+        modules_title = "Модули"
+        modules_context = _truncate_context("\n\n".join(module_summaries), llm.model, input_budget)
+        print("[ai-docs] generate modules")
+        intro = _generate_section(llm, llm_cache, modules_title, modules_context, language)
+        toc_lines = "\n".join(
+            [
+                f"- [{Path(p).with_suffix('').as_posix()}]({Path(p).as_posix()[len('modules/'):] if p.startswith('modules/') else p})"
+                for p in sorted(module_nav_paths)
+            ]
+        )
+        docs_files["modules/index.md"] = f"# {modules_title}\n\n{intro}\n\n## Список модулей\n\n{toc_lines}\n"
+        regenerated_sections.append(modules_title)
+        docs_files.update(module_pages)
 
     if executor:
         for future in as_completed(section_futures):
@@ -397,6 +525,8 @@ def generate_docs(
             site_name=output_root.name,
             sections=SECTION_TITLES,
             configs=configs_written,
+            has_modules=bool(module_summaries),
+            module_nav_paths=module_nav_paths if module_summaries else None,
             local_site=local_site,
         )
         (output_root / "mkdocs.yml").write_text(mkdocs_yaml, encoding="utf-8")

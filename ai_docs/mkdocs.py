@@ -4,7 +4,14 @@ from typing import Dict, List
 import yaml
 
 
-def build_mkdocs_yaml(site_name: str, sections: Dict[str, str], configs: Dict[str, str], local_site: bool = False) -> str:
+def build_mkdocs_yaml(
+    site_name: str,
+    sections: Dict[str, str],
+    configs: Dict[str, str],
+    local_site: bool = False,
+    has_modules: bool = False,
+    module_nav_paths: List[str] | None = None,
+) -> str:
     nav = [
         {"Главная": "index.md"},
     ]
@@ -33,6 +40,12 @@ def build_mkdocs_yaml(site_name: str, sections: Dict[str, str], configs: Dict[st
             cfg_nav.append({title: f"configs/{filename}"})
         nav.append({"Конфиги": cfg_nav})
 
+    if has_modules:
+        modules_nav: List[Dict[str, object]] = [{"Обзор": "modules/index.md"}]
+        if module_nav_paths:
+            modules_nav.extend(_build_modules_nav(module_nav_paths))
+        nav.append({"Модули": modules_nav})
+
     nav.append({"Изменения": "changes.md"})
 
     data = {
@@ -47,6 +60,43 @@ def build_mkdocs_yaml(site_name: str, sections: Dict[str, str], configs: Dict[st
         data["site_url"] = ""
         data["use_directory_urls"] = False
     return yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
+
+
+def _build_modules_nav(module_paths: List[str]) -> List[Dict[str, object]]:
+    tree: Dict[str, object] = {}
+
+    for module_path in module_paths:
+        rel = Path(module_path).as_posix()
+        if rel.startswith("modules/"):
+            rel = rel[len("modules/") :]
+        parts = rel.split("/")
+        parts[-1] = Path(parts[-1]).with_suffix("").name
+        _insert_nav_node(tree, parts, module_path)
+
+    return _tree_to_nav(tree)
+
+
+def _insert_nav_node(tree: Dict[str, object], parts: List[str], rel_path: str) -> None:
+    key = parts[0]
+    if len(parts) == 1:
+        tree[key] = rel_path
+        return
+    node = tree.get(key)
+    if not isinstance(node, dict):
+        node = {}
+        tree[key] = node
+    _insert_nav_node(node, parts[1:], rel_path)
+
+
+def _tree_to_nav(tree: Dict[str, object]) -> List[Dict[str, object]]:
+    nav: List[Dict[str, object]] = []
+    for key in sorted(tree.keys()):
+        value = tree[key]
+        if isinstance(value, dict):
+            nav.append({key: _tree_to_nav(value)})
+        else:
+            nav.append({key: value})
+    return nav
 
 
 def write_docs_files(docs_dir: Path, files: Dict[str, str]) -> None:

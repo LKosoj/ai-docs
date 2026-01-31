@@ -31,7 +31,8 @@ DEFAULT_EXCLUDE_PATTERNS = {
     "**/dist/*", "**/build/*",
     "**/.idea/*", "**/.vscode/*", "**/__pycache__/*",
     "**/.pytest_cache/*", "**/.mypy_cache/*",
-    "**/.ai_docs_cache/*", "**/ai_docs_site/*", "**/.ai-docs/*",
+    "**/.ai_docs_cache/*", "**/ai_docs_site/*",
+    ".ai-docs/*", ".ai-docs/**", "**/.ai-docs/*", "**/.ai-docs/**",
     ".github/*", ".github/**", "**/.github/*", "**/.github/**",
     "mkdocs.yml", "**/mkdocs.yml", "mkdocs_yml.md", "**/mkdocs_yml.md",
 }
