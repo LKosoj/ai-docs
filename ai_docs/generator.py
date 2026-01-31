@@ -216,24 +216,25 @@ def generate_docs(
         print(f"[ai-docs] summarize modules: {len(module_candidates)} changed code files (threads={threads})")
     if threads > 1 and module_candidates:
         with ThreadPoolExecutor(max_workers=threads) as executor:
-            futures = {
-                executor.submit(
-                    summarize_file,
-                    meta["content"],
-                    meta["type"],
-                    meta["domains"],
-                    llm,
-                    llm_cache,
-                    llm.model,
-                    True,
-                ): (path, meta)
-                for path, meta in module_candidates
-            }
+            futures = {}
+            for path, meta in module_candidates:
+                print(f"[ai-docs] summarize module start: {path}")
+                futures[
+                    executor.submit(
+                        summarize_file,
+                        meta["content"],
+                        meta["type"],
+                        meta["domains"],
+                        llm,
+                        llm_cache,
+                        llm.model,
+                        True,
+                    )
+                ] = (path, meta)
             total = len(futures)
             done = 0
             for future in as_completed(futures):
                 path, meta = futures[future]
-                print(f"[ai-docs] summarize module start: {path}")
                 summary = future.result()
                 summary_path = write_summary(module_summaries_dir, path, summary)
                 meta["module_summary_path"] = str(summary_path)
@@ -319,24 +320,25 @@ def generate_docs(
         print(f"[ai-docs] summarize modules: {len(missing_module_summaries)} missing module summaries")
         if threads > 1:
             with ThreadPoolExecutor(max_workers=threads) as executor:
-                futures = {
-                    executor.submit(
-                        summarize_file,
-                        meta["content"],
-                        meta["type"],
-                        meta["domains"],
-                        llm,
-                        llm_cache,
-                        llm.model,
-                        True,
-                    ): (path, meta)
-                    for path, meta in missing_module_summaries
-                }
+                futures = {}
+                for path, meta in missing_module_summaries:
+                    print(f"[ai-docs] summarize module start: {path}")
+                    futures[
+                        executor.submit(
+                            summarize_file,
+                            meta["content"],
+                            meta["type"],
+                            meta["domains"],
+                            llm,
+                            llm_cache,
+                            llm.model,
+                            True,
+                        )
+                    ] = (path, meta)
                 total = len(futures)
                 done = 0
                 for future in as_completed(futures):
                     path, meta = futures[future]
-                    print(f"[ai-docs] summarize module start: {path}")
                     summary = future.result()
                     summary_path = write_summary(module_summaries_dir, path, summary)
                     meta["module_summary_path"] = str(summary_path)

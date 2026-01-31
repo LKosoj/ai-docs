@@ -50,7 +50,7 @@ class LLMClient:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
         }
-        response = requests.post(url, headers=headers, json=payload, timeout=(60, 240))
+        response = requests.post(url, headers=headers, json=payload, timeout=(120, 480))
         response.raise_for_status()
         data = response.json()
         content = data["choices"][0]["message"]["content"]
