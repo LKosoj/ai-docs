@@ -6,3 +6,5 @@ __pycache__
 .ai_docs_cache
 .venv
 ai_docs_site
+AGENTS.md
+.ai_docs

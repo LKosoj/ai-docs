@@ -106,7 +106,7 @@ mkdocs build -f mkdocs.yml
 ```
 
 ## Исключения
-Сканер учитывает `.gitignore` и дефолтные исключения:
+Сканер учитывает `.gitignore`, `.build_ignore` и дефолтные исключения:
 `.venv`, `node_modules`, `ai_docs_site`, `.ai-docs`, `.ai_docs_cache`, `dist`, `build`, т.д.
 
 ## Разработка и вклад

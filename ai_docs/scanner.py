@@ -45,17 +45,21 @@ class ScanResult:
         self.repo_name = repo_name
 
 
-def _load_gitignore(root: Path) -> Optional[pathspec.PathSpec]:
-    gitignore = root / ".gitignore"
-    if not gitignore.exists():
-        return None
-    patterns = gitignore.read_text(encoding="utf-8", errors="ignore").splitlines()
-    return pathspec.PathSpec.from_lines("gitignore", patterns)
+def _load_ignore_specs(root: Path) -> List[pathspec.PathSpec]:
+    specs: List[pathspec.PathSpec] = []
+    for name in (".gitignore", ".build_ignore"):
+        ignore_file = root / name
+        if not ignore_file.exists():
+            continue
+        patterns = ignore_file.read_text(encoding="utf-8", errors="ignore").splitlines()
+        specs.append(pathspec.PathSpec.from_lines("gitignore", patterns))
+    return specs
 
 
-def _should_include(rel_path: str, include: Optional[Set[str]], exclude: Optional[Set[str]], gitignore: Optional[pathspec.PathSpec]) -> bool:
-    if gitignore and gitignore.match_file(rel_path):
-        return False
+def _should_include(rel_path: str, include: Optional[Set[str]], exclude: Optional[Set[str]], ignore_specs: List[pathspec.PathSpec]) -> bool:
+    for spec in ignore_specs:
+        if spec.match_file(rel_path):
+            return False
     if exclude:
         for pattern in exclude:
             if pathspec.PathSpec.from_lines("gitignore", [pattern]).match_file(rel_path):
@@ -70,7 +74,7 @@ def _should_include(rel_path: str, include: Optional[Set[str]], exclude: Optiona
 
 def _scan_directory(root: Path, include: Optional[Set[str]], exclude: Optional[Set[str]], max_size: int) -> List[Dict]:
     files: List[Dict] = []
-    gitignore = _load_gitignore(root)
+    ignore_specs = _load_ignore_specs(root)
 
     for dirpath, dirnames, filenames in os.walk(root):
         # Avoid .git directory traversal
@@ -80,7 +84,7 @@ def _scan_directory(root: Path, include: Optional[Set[str]], exclude: Optional[S
             rel_path = abs_path.relative_to(root)
             rel_path_str = to_posix(rel_path)
 
-            if not _should_include(rel_path_str, include, exclude, gitignore):
+            if not _should_include(rel_path_str, include, exclude, ignore_specs):
                 continue
 
             if abs_path.is_symlink():
