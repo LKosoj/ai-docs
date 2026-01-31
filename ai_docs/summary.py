@@ -12,31 +12,98 @@ SUMMARY_PROMPT = """
 """.strip()
 
 MODULE_SUMMARY_PROMPT = """
-Ты технический писатель. Сформируй подробную документацию модуля в стиле Doxygen.
+Ты технический писатель. Сформируй документацию модуля в стиле Doxygen.
 Сначала дай краткое верхнеуровневое описание модуля (2–4 предложения).
-Далее перечисли функции/процедуры и классы. Для каждой сущности используй формат:
+Затем, если есть важные структуры данных/типы, добавь блок:
+Ключевые структуры данных
+<имя> — <краткое описание>
+
+Далее перечисли функции/процедуры и классы строго в Doxygen‑формате.
+Для функций/процедур используй формат:
 
 <сигнатура>
 <краткое назначение одной строкой>
 Аргументы
 <имя> — <описание>
 Возвращает
-<описание> (если есть)
+<описание>
 Исключения
-<описание> (если есть)
+<описание>
 
-Для классов:
-<имя класса>
+Для классов используй формат:
+class <имя>
 <краткое назначение одной строкой>
 Поля
-<имя> — <описание> (если есть)
+<имя> — <описание>
 Методы
 <сигнатура> — <краткое назначение>
 
-Если аргументов/возвращаемого значения/исключений нет — блок пропускай.
+Если аргументов/возвращаемого значения/исключений/полей нет — соответствующий блок пропускай.
 Разделяй сущности строкой из трёх дефисов: `---`.
-Ответ строго в Markdown, без заголовка документа, без маркеров списка, сохраняя последовательность блоков.
+Не используй заголовки Markdown, списки, подзаголовки вроде "Основные функции".
+Ответ строго в Markdown, без заголовка документа, сохраняя последовательность блоков.
 """.strip()
+
+MODULE_SUMMARY_REFORMAT_PROMPT = """
+Переформатируй текст в строгий Doxygen‑стиль для модуля.
+Требования:
+- Без заголовков Markdown, без списков, без блоков кода.
+- Структура: краткое описание модуля; затем (если есть) "Ключевые структуры данных" с линиями "<имя> — <описание>".
+- Далее только сущности (функции/процедуры/классы) в формате:
+<сигнатура>
+<краткое назначение одной строкой>
+Аргументы
+<имя> — <описание>
+Возвращает
+<описание>
+Исключения
+<описание>
+Для классов:
+class <имя>
+<краткое назначение одной строкой>
+Поля
+<имя> — <описание>
+Методы
+<сигнатура> — <краткое назначение>
+
+Если блок пустой — не выводи его. Между сущностями ставь строку `---`.
+Ответ строго в Markdown без заголовка документа.
+""".strip()
+
+
+def _needs_doxygen_fix(text: str) -> bool:
+    if "```" in text:
+        return True
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            return True
+        if stripped.startswith(("-", "*", "•")):
+            return True
+        if stripped[:2].isdigit() and stripped[1] == ".":
+            return True
+    lowered = text.lower()
+    noisy_markers = [
+        "основные функции",
+        "основные возможности",
+        "обработка ошибок",
+        "интеграции",
+        "ключевые структуры данных:",
+        "##",
+    ]
+    return any(marker in lowered for marker in noisy_markers)
+
+
+def _normalize_module_summary(
+    summary: str, llm_client, llm_cache: Dict[str, str]
+) -> str:
+    if not _needs_doxygen_fix(summary):
+        return summary
+    messages = [
+        {"role": "system", "content": MODULE_SUMMARY_REFORMAT_PROMPT},
+        {"role": "user", "content": summary},
+    ]
+    return llm_client.chat(messages, cache=llm_cache).strip()
 
 
 def summarize_file(
@@ -61,14 +128,26 @@ def summarize_file(
         summaries.append(llm_client.chat(messages, cache=llm_cache).strip())
 
     if len(summaries) == 1:
-        return summaries[0]
+        result = summaries[0]
+        if detailed:
+            return _normalize_module_summary(result, llm_client, llm_cache)
+        return result
 
     combined = "\n\n".join(summaries)
-    messages = [
-        {"role": "system", "content": "Собери единое краткое резюме для документации на основе частей ниже. Ответ в Markdown."},
-        {"role": "user", "content": combined},
-    ]
-    return llm_client.chat(messages, cache=llm_cache).strip()
+    if detailed:
+        messages = [
+            {"role": "system", "content": MODULE_SUMMARY_REFORMAT_PROMPT},
+            {"role": "user", "content": combined},
+        ]
+    else:
+        messages = [
+            {"role": "system", "content": "Собери единое краткое резюме для документации на основе частей ниже. Ответ в Markdown."},
+            {"role": "user", "content": combined},
+        ]
+    result = llm_client.chat(messages, cache=llm_cache).strip()
+    if detailed:
+        return _normalize_module_summary(result, llm_client, llm_cache)
+    return result
 
 
 def write_summary(summary_dir: Path, rel_path: str, summary: str) -> Path:

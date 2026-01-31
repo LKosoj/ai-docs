@@ -1,80 +1,128 @@
 # Запуск и окружение
 
-```markdown
-# Запуск и окружение
+## Установка и запуск
 
-## Базовые требования
+Инструмент `ai_docs` доступен как CLI-приложение. Для запуска:
+
+```bash
+# Установка (если пакет доступен в PyPI)
+pip install ai_docs
+
+# Запуск для локального репозитория
+ai_docs --source . --mkdocs --readme --language ru
+
+# Запуск для удалённого репозитория
+ai_docs --source https://github.com/user/repo.git --mkdocs
+```
+
+Альтернативно, можно запустить напрямую из исходников:
+```bash
+python -m ai_docs --source .
+```
+
+## Требования
+
 - Python 3.9+
-- Доступ к LLM через API (например, OpenAI, Azure OpenAI)
-- Установленный пакет `ai_docs` (через `pip install ai_docs` или локально)
+- `tiktoken`, `requests`, `pathspec`, `PyYAML`
+- Доступ к LLM API (например, OpenAI, Azure OpenAI)
 
-## Настройка окружения
-Перед запуском задайте обязательные переменные в файле `.env` или через системные переменные:
+## Переменные окружения (`.env`)
+
+Настройки передаются через `.env` или напрямую в окружении:
 
 ```env
-OPENAI_API_KEY=your_api_key_here
-OPENAI_BASE_URL=https://api.openai.com/v1  # опционально, для кастомных эндпоинтов
+# Обязательно
+OPENAI_API_KEY=sk-...
+
+# Опционально
+OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_MODEL=gpt-4o-mini
-OPENAI_TEMPERATURE=0.2
 OPENAI_MAX_TOKENS=1200
 OPENAI_CONTEXT_TOKENS=8192
+OPENAI_TEMPERATURE=0.2
 
+# Параллелизация
 AI_DOCS_THREADS=4
-AI_DOCS_LOCAL_SITE=false
+
+# Режим MkDocs
+AI_DOCS_LOCAL_SITE=true
 ```
 
-> **Важно**: `OPENAI_API_KEY` обязателен. Для локального запуска сайта документации установите `AI_DOCS_LOCAL_SITE=true`.
+## Основные CLI-параметры
 
-## Запуск CLI
-Основная команда:
-
-```bash
-ai_docs --source <путь_или_url> [опции]
-```
-
-### Примеры запуска
-
-**1. Генерация README для локального проекта:**
-```bash
-ai_docs --source . --readme --language ru --force
-```
-
-**2. Сборка MkDocs-сайта из удалённого репозитория:**
-```bash
-ai_docs --source https://github.com/user/repo.git --mkdocs --local-site
-```
-
-**3. Генерация на английском с кастомными потоками:**
-```bash
-ai_docs --source . --mkdocs --language en --threads 6
-```
+| Параметр | Назначение |
+|--------|-----------|
+| `--source PATH_OR_URL` | Путь к директории или URL Git-репозитория |
+| `--readme` | Генерировать `README.md` |
+| `--mkdocs` | Генерировать `mkdocs.yml` и структуру сайта |
+| `--language ru\|en` | Язык документации (по умолчанию: `ru`) |
+| `--output DIR` | Каталог вывода (по умолчанию: `./output/<repo>`) |
+| `--threads N` | Количество потоков (по умолчанию: `AI_DOCS_THREADS`) |
+| `--cache-dir DIR` | Каталог кэша (по умолчанию: `.ai_docs_cache`) |
+| `--no-cache` | Отключить кэширование LLM-ответов |
+| `--local-site` | Настроить MkDocs для локального просмотра |
+| `--force` | Перезаписать существующий `README.md` |
+| `--include PATTERN` | Шаблоны включения файлов |
+| `--exclude PATTERN` | Шаблоны исключения файлов |
+| `--max-size N` | Макс. размер файла в байтах (по умолчанию: 204800) |
 
 ## Режимы работы
-| Флаг | Назначение |
-|------|----------|
-| `--readme` | Генерирует `README.md` в корне проекта |
-| `--mkdocs` | Создаёт `mkdocs.yml` и структуру `.ai-docs/` для сборки сайта |
-| `--local-site` | Настраивает `mkdocs.yml` для локального просмотра (без `site_url`, `use_directory_urls: false`) |
 
-## Каталоги и артефакты
-После запуска создаются:
-- `.ai-docs/` — сгенерированные страницы документации
-- `ai_docs_site/` — собранный статический сайт (при `--mkdocs`)
-- `.ai_docs_cache/` — кэш LLM и хэшей файлов (можно очистить вручную)
-- `README.md` — перезаписывается только с флагом `--force`
-
-## Особенности запуска
-- Удалённые репозитории клонируются с `--depth 1` для скорости.
-- Файлы игнорируются согласно `.gitignore`, `.build_ignore` и встроенным правилам (например, `node_modules`, `.venv`).
-- Бинарные файлы и символические ссылки пропускаются.
-- Временные директории при ошибках удаляются автоматически.
-
-## Диагностика
-При проблемах проверьте:
-1. Наличие `OPENAI_API_KEY`
-2. Доступность API (таймауты: 30с подключение, 120с ответ)
-3. Размер файлов (макс. 200 КБ по умолчанию)
-4. Логи ошибок в stdout/stderr
-
-Для отладки кэширования используйте `--cache-dir .ai_docs_cache` и проверьте содержимое `llm_cache.json`.
+### 1. Только README
+```bash
+ai_docs --source . --readme --language ru
 ```
+Создаёт `README.md` в корне проекта.
+
+### 2. Полный MkDocs-сайт
+```bash
+ai_docs --source . --mkdocs --readme
+```
+Генерирует:
+- `.ai-docs/` — исходники документации
+- `mkdocs.yml` — конфигурация
+- `ai_docs_site/` — собранный сайт
+
+После генерации сайт можно запустить:
+```bash
+cd ai_docs_site && python -m http.server 8000
+```
+
+### 3. Локальный режим MkDocs
+С флагом `--local-site` или переменной `AI_DOCS_LOCAL_SITE=true`:
+- Убирается `site_url` из `mkdocs.yml`
+- Отключается `use_directory_urls`
+- Подходит для просмотра без веб-сервера
+
+## Кэширование
+
+Инструмент использует кэш для ускорения повторных запусков:
+- `.ai_docs_cache/index.json` — хеши файлов и статус изменений
+- `.ai_docs_cache/llm_cache.json` — ответы LLM по хешу запроса
+
+При неизменённых файлах обработка пропускается, генерация занимает секунды.
+
+Отключить кэш:
+```bash
+ai_docs --source . --no-cache
+```
+
+## Игнорируемые файлы
+
+Автоматически исключаются:
+- `node_modules`, `.venv`, `.env`, `__pycache__`
+- `.git/`, `.github/`, `.vscode/`
+- Бинарные файлы
+- Файлы, указанные в `.gitignore` и `.build_ignore`
+
+Кастомизация:
+```bash
+ai_docs --source . --exclude "*.log" --exclude "temp/"
+```
+
+## Ограничения
+
+- Файлы > 200 КБ пропускаются (настраивается через `--max-size`)
+- Бинарные файлы не анализируются
+- Символические ссылки игнорируются
+- Удалённые репозитории клонируются с `--depth 1`

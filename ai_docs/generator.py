@@ -37,6 +37,13 @@ DOMAIN_TITLES = {
     "ci": "CI/CD",
 }
 
+def _is_test_path(path: str) -> bool:
+    parts = Path(path).parts
+    if any(part in {"test", "tests", "__tests__"} for part in parts):
+        return True
+    name = Path(path).name
+    return name.startswith("test_") or name.endswith("_test.py")
+
 
 def _collect_dependencies(files: Dict[str, Dict]) -> List[str]:
     deps: List[str] = []
@@ -187,7 +194,11 @@ def generate_docs(
             print(f"[ai-docs] summarize done: {path} ({done}/{total})")
 
     # Detailed module summaries for changed files (code only)
-    module_candidates = [(path, meta) for path, meta in to_summarize if meta.get("type") == "code"]
+    module_candidates = [
+        (path, meta)
+        for path, meta in to_summarize
+        if meta.get("type") == "code" and not _is_test_path(path)
+    ]
     if module_candidates:
         print(f"[ai-docs] summarize modules: {len(module_candidates)} changed code files (threads={threads})")
     if threads > 1 and module_candidates:
@@ -243,7 +254,7 @@ def generate_docs(
                 print(f"[ai-docs] summarize missing: {path}")
             missing_summaries.append((path, meta))
         module_summary_path = prev.get("module_summary_path")
-        if meta.get("type") == "code":
+        if meta.get("type") == "code" and not _is_test_path(path):
             if module_summary_path and Path(module_summary_path).exists():
                 meta["module_summary_path"] = module_summary_path
             else:
@@ -423,6 +434,8 @@ def generate_docs(
     module_summaries = []
     module_nav_paths: List[str] = []
     for path, meta in file_map.items():
+        if _is_test_path(path):
+            continue
         summary_path = meta.get("module_summary_path")
         if not summary_path:
             continue
@@ -502,9 +515,9 @@ def generate_docs(
             readme_path.write_text(readme + "\n", encoding="utf-8")
 
     # Remove orphan docs (keep .ai-docs/plans).
-    # Only cleanup when sections were actually regenerated.
-    did_regenerate = bool(regenerated_sections)
-    if docs_dir.exists() and docs_files and did_regenerate:
+    # Only cleanup when actual source changes occurred.
+    has_changes = bool(added or modified or deleted)
+    if docs_dir.exists() and docs_files and has_changes:
         print("[ai-docs] cleanup docs: removing orphan files")
         keep_files = {docs_dir / rel for rel in docs_files.keys()}
         keep_dirs = {docs_dir / "plans"}
@@ -517,7 +530,7 @@ def generate_docs(
                 continue
             path.unlink()
     elif docs_dir.exists():
-        print("[ai-docs] cleanup docs: skipped (no regenerated sections)")
+        print("[ai-docs] cleanup docs: skipped (no source changes)")
 
     if write_mkdocs:
         print("[ai-docs] mkdocs: build")

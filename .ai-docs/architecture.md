@@ -1,102 +1,117 @@
 # Архитектура
 
 ```mermaid
-flowchart TD
-    A[CLI: ai_docs] --> B[main.py]
-    B --> C{Источник?}
-    C -->|Локальный путь| D[scanner.py: scan_source]
-    C -->|Git URL| E[scanner.py: _clone_repo]
-    D --> F[Фильтрация: .gitignore, .build_ignore]
+graph TD
+    A[CLI: ai_docs] --> B[scan_source]
+    B --> C{Источник}
+    C -->|Локальный путь| D[Сканирование директории]
+    C -->|Git URL| E[Клонирование репозитория]
+    D --> F[Фильтрация файлов]
     E --> F
-    F --> G[ScanResult: файлы + метаданные]
-    G --> H[cache.py: CacheManager]
-    H --> I{Изменения?}
-    I -->|Новые/изменённые| J[summarize.py: summarize_file]
-    I -->|Без изменений| K[Использовать кэш]
-    J --> L[LLMClient: chat()]
-    L --> M[tokens.py: chunk_text]
-    M --> N[API: OpenAI/GPT]
-    N --> O[Кэширование ответа: llm_cache]
-    O --> P[write_summary: .ai-docs/]
-    K --> P
-    P --> Q[docs.py: build_mkdocs_yaml]
-    Q --> R[mkdocs.yml]
-    P --> S[write_docs_files]
-    S --> T[.ai-docs/]
-    T --> U[mkdocs build]
-    U --> V[ai_docs_site/]
-    H --> W[format_changes_md]
-    W --> X[.ai-docs/changes.md]
-    B --> Y[Завершение: очистка временных репозиториев]
-
-    style A fill:#4B9CD3,stroke:#333
-    style V fill:#27AE60,stroke:#333,color:#fff
-    style X fill:#F39C12,stroke:#333,color:#fff
+    F --> G[.gitignore, .build_ignore]
+    F --> H[include/exclude паттерны]
+    F --> I[Определение типа: classify_type]
+    F --> J[Определение доменов: detect_domains]
+    G --> K[ScanResult]
+    H --> K
+    I --> K
+    J --> K
+    K --> L[CacheManager]
+    L --> M{Изменения?}
+    M -->|Нет| N[Использовать кэш]
+    M -->|Да| O[Обработка через LLMClient]
+    O --> P[chunk_text по max_tokens]
+    P --> Q[summarize_file]
+    Q --> R[Кэширование ответа: LLMClient.chat]
+    R --> S[Сохранение в .ai-docs/]
+    L --> T[diff_files: added/modified/deleted]
+    T --> U[format_changes_md]
+    U --> V[.ai-docs/changes.md]
+    Q --> W[Генерация модулей]
+    W --> X[build_mkdocs_yaml]
+    X --> Y[mkdocs.yml]
+    S --> Y
+    Y --> Z[write_docs_files]
+    Z --> AA[ai_docs_site/ (MkDocs build)]
+    A --> AB[Переменные окружения]
+    AB --> AC[OPENAI_API_KEY, MODEL, URL]
+    AB --> AD[AI_DOCS_THREADS, LOCAL_SITE]
+    style A fill:#4CAF50,stroke:#388E3C
+    style AA fill:#2196F3,stroke:#1976D2
+    style AB fill:#FFC107,stroke:#FFA000
 ```
 
-## Основные компоненты
+## Архитектура
 
-### 1. **CLI-интерфейс (`main.py`, `__main__.py`)**
-Точка входа. Обрабатывает аргументы командной строки, инициализирует окружение, запускает последовательность обработки. Поддерживает:
-- `--source` (локальный путь или URL)
-- `--readme` / `--mkdocs`
-- `--language`, `--threads`, `--cache-dir`, `--force`
-- Автоматическое добавление в `sys.path` при прямом запуске.
+### Обзор
+Система `ai_docs` построена по модульной архитектуре, где каждый компонент отвечает за определённый этап генерации документации: сканирование, анализ, генерация, кэширование и публикация. Процесс полностью автоматизирован и поддерживает инкрементальную обработку.
 
-### 2. **Сканер файлов (`scanner.py`)**
-Рекурсивно сканирует директорию или клонирует Git-репозиторий (`--depth 1`). Применяет фильтрацию:
-- По умолчанию: включает код, конфиги, документацию.
-- Исключает: `node_modules`, `.venv`, `.git`, бинарные файлы.
-- Учитывает `.gitignore`, `.build_ignore` через `pathspec`.
-- Ограничивает размер файлов (`--max-size`, по умолчанию 200 КБ).
-- Возвращает `ScanResult` с метаданными: путь, тип (`classify_type`), домены (`detect_domains`).
+### Основные компоненты
 
-### 3. **Кэширование (`cache.py`, `utils.py`)**
-- `CacheManager`: управляет `index.json` (хэши файлов) и `llm_cache.json` (ответы LLM).
-- `diff_files()`: определяет `added`, `modified`, `deleted`, `unchanged` на основе SHA-256.
-- `llm_cache` — потокобезопасный словарь, ключ — хэш нормализованного JSON-запроса.
-- Автоматическое создание `.ai_docs_cache/`.
+#### 1. **CLI-интерфейс (`ai_docs.cli`)**
+Точка входа. Парсит аргументы командной строки, инициализирует настройки из `.env` и запускает основной цикл генерации. Поддерживает режимы `--readme` и `--mkdocs`.
 
-### 4. **LLM-клиент (`llm.py`)**
-- `LLMClient`: отправляет запросы к OpenAI-совместимому API.
-- Поддерживает: `OPENAI_BASE_URL`, кастомные модели, таймауты.
+#### 2. **Сканер (`ai_docs.scanner`)**
+- Сканирует локальные или удалённые (Git) репозитории.
+- Применяет фильтры: `DEFAULT_INCLUDE_PATTERNS`, `DEFAULT_EXCLUDE_PATTERNS`, `.gitignore`, `.build_ignore`.
+- Определяет тип файла (`classify_type`) и домены (`detect_domains`).
+- Пропускает бинарные файлы и символические ссылки.
+- Возвращает `ScanResult` — список файлов с метаданными.
+
+#### 3. **Кэш (`ai_docs.cache`)**
+- `CacheManager` управляет двумя кэшами:
+  - `index.json`: хранит хеши файлов для определения изменений.
+  - `llm_cache.json`: кэширует ответы LLM по хешу запроса.
+- `diff_files()` возвращает `added`, `modified`, `deleted`, `unchanged` — позволяет избежать повторной обработки.
+
+#### 4. **LLM-клиент (`ai_docs.llm`)**
+- `LLMClient` отправляет запросы к OpenAI-совместимому API.
+- Поддерживает кэширование через `threading.Lock`.
+- Использует `requests` с таймаутами (30с/120с).
 - Параметры: `temperature=0.2`, `max_tokens=1200`, `context_limit=8192`.
-- Кэширование через `threading.Lock`.
 
-### 5. **Генерация документации (`summarize.py`)**
-- `summarize_file()`: разбивает текст на чанки (`chunk_text`, до 1800 токенов), отправляет в LLM.
-- Использует разные промпты: `SUMMARY_PROMPT` (кратко), `MODULE_SUMMARY_PROMPT` (подробно).
-- Дополняет промпт доменами (Kubernetes, Terraform и др.).
-- Результат сохраняется в `.ai-docs/` с безопасным именем (`safe_slug`).
+#### 5. **Генератор документации (`ai_docs.generator`)**
+- `summarize_file()`:
+  - Разбивает текст на чанки (`chunk_text`).
+  - Формирует промпт с учётом `file_type` и `domains`.
+  - При `detailed=True` применяет Doxygen-форматирование.
+- `_normalize_module_summary()` — корректирует формат с помощью LLM.
+- Параллельная обработка: `ThreadPoolExecutor` (управляется `--threads`).
 
-### 6. **Построение MkDocs (`docs.py`)**
-- `build_mkdocs_yaml()`: генерирует `mkdocs.yml` с:
-  - `docs_dir: .ai-docs`
-  - `site_dir: ai_docs_site`
-  - Плагины: `search`, `mermaid2`
-  - Навигация: динамически строится по модулям и секциям.
-- При `--local-site`: убирает `site_url`, отключает `use_directory_urls`.
-- `write_docs_files()` — безопасная запись Markdown-файлов.
+#### 6. **MkDocs-интеграция (`ai_docs.mkdocs`)**
+- `build_mkdocs_yaml()`:
+  - Формирует `mkdocs.yml` с динамической навигацией.
+  - Поддерживает локальный режим (`--local-site`): убирает `site_url`, отключает `use_directory_urls`.
+  - Включает плагины: `search`, `mermaid2`.
+- `write_docs_files()` — сохраняет Markdown-файлы в `.ai-docs/`.
 
-### 7. **Вспомогательные модули**
-- `tokens.py`: `count_tokens`, `chunk_text` через `tiktoken`.
-- `utils.py`: `sha256_text`, `is_binary_file`, `safe_slug`, `to_posix`.
-- `changes.py`: `format_changes_md` — отчёт об изменениях в Markdown.
-- `types.py`: `classify_type`, `detect_domains`, `is_infra` — анализ по расширениям и контексту.
+#### 7. **Утилиты**
+- `ai_docs.utils`: `sha256_text`, `safe_slug`, `is_binary_file`, `read_text_file`.
+- `ai_docs.tokenizer`: `chunk_text()` с использованием `tiktoken`.
+- `ai_docs.changes`: `format_changes_md()` — отчёт об изменениях.
 
-## Потоки данных
+### Поток данных
+1. CLI → `scan_source()` → `ScanResult`
+2. `CacheManager.diff_files()` → определение изменённых файлов
+3. Для новых/изменённых файлов: `summarize_file()` → LLM → кэш
+4. Генерация `changes.md`, `modules/`, `dependencies.md`
+5. Построение `mkdocs.yml` и запись в `.ai-docs/`
+6. Сборка сайта: `mkdocs build` → `ai_docs_site/`
 
-1. **Инициализация**: CLI → `main.py` → загрузка `.env`, настройка LLM.
-2. **Сканирование**: `scan_source` → фильтрация → `ScanResult`.
-3. **Сравнение с кэшем**: `CacheManager.diff_files()` → определение изменённых файлов.
-4. **Генерация**: `summarize_file` → `LLMClient.chat()` → кэширование → сохранение в `.ai-docs/`.
-5. **Сборка**: `build_mkdocs_yaml` + `write_docs_files` → `mkdocs build` → `ai_docs_site/`.
-6. **Отчёт**: `format_changes_md` → `changes.md`.
+### Особенности
+- **Инкрементальность**: повторные запуски без изменений завершаются мгновенно.
+- **Безопасность**: игнорируются бинарные файлы, некорректная кодировка обрабатывается с `errors="ignore"`.
+- **Масштабируемость**: параллельная обработка файлов и разделов.
+- **Гибкость**: поддержка кастомных игнор-правил, настройка LLM через `.env`.
 
-## Особенности реализации
-
-- **Инкрементальная генерация**: перепроцессинг только изменённых файлов.
-- **Параллелизм**: `ThreadPoolExecutor` с `--threads` (по умолчанию из `AI_DOCS_THREADS`).
-- **Безопасность**: игнорирование бинарных файлов, обрезка по токенам, `errors="ignore"` при чтении UTF-8.
-- **Поддержка локализации**: русские заголовки в `SECTION_TITLES`, `DOMAIN_TITLES`.
-- **Очистка**: удаление временных репозиториев после обработки URL-источников.
+### Структура выходных данных
+```
+.  
+├── .ai-docs/               # Сгенерированные Markdown-файлы
+│   ├── changes.md
+│   ├── modules/
+│   └── index.md
+├── mkdocs.yml              # Конфиг для MkDocs
+├── README.md               # Краткое описание проекта
+└── ai_docs_site/           # Собранный статический сайт
+```
