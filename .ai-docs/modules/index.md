@@ -1,104 +1,237 @@
 # Модули
 
-## `scanner`
+```markdown
+# Модули
 
-Модуль `scanner` предназначен для анализа исходного кода из локальной директории или удалённого Git-репозитория. Он рекурсивно сканирует файлы, применяет правила включения и исключения, определяет их тип и предметные области (домены), фильтрует бинарные и слишком большие файлы, а также учитывает `.gitignore` и другие ignore-файлы. Результат — структурированный объект `ScanResult` с информацией о каждом подходящем файле.
+## scan
 
-### Константы
-
-```python
-DEFAULT_INCLUDE_PATTERNS: Set[str]
-```
-Шаблоны файлов по умолчанию, включаемые в сканирование. Обычно включают исходный код, конфигурации и документацию (например, `*.py`, `*.yaml`, `README.md`).
-
-```python
-DEFAULT_EXCLUDE_PATTERNS: Set[str]
-```
-Шаблоны файлов по умолчанию, исключаемые из сканирования. Включают скрытые директории, виртуальные окружения, артефакты сборки (например, `.venv/`, `__pycache__/`, `*.log`).
+Модуль `scan` отвечает за рекурсивное сканирование исходных кодов из локальной директории или удалённого Git-репозитория. Поддерживает фильтрацию файлов по шаблонам, обработку `.gitignore`, определение типов файлов и исключение бинарных или слишком больших файлов.
 
 ### Класс `ScanResult`
 
-Результат сканирования исходного кода.
+Результат сканирования исходного кода. Содержит список проанализированных файлов и метаданные.
 
-**Поля:**
-- `root` (`Path`) — абсолютный путь к корневой директории сканирования.
-- `files` (`List[Dict]`) — список метаданных прошедших фильтрацию файлов. Каждый словарь содержит:
-  - `path` — относительный путь к файлу.
-  - `abs_path` — абсолютный путь.
-  - `size` — размер в байтах.
-  - `content` — содержимое файла (если текстовый и в пределах `max_size`).
-  - `type` — тип файла (например, `code`, `config`).
-  - `domains` — множество доменов (например, `kubernetes`, `docker`).
-- `source` (`str`) — исходная строка (URL или путь), переданная в `scan_source`.
-- `repo_name` (`str`) — имя репозитория (из URL или имени директории).
+#### Поля
+- `root` — абсолютный путь к корневой директории сканирования.
+- `files` — список словарей с информацией о каждом файле: путь, размер, содержимое, тип, домены.
+- `source` — исходный URL или путь, переданный на вход.
+- `repo_name` — имя репозитория (из URL или имени директории).
+
+#### Методы
+- `_load_ignore_specs(root: Path) -> List[pathspec.PathSpec]`  
+  Загружает и компилирует правила игнорирования из `.gitignore` и `.build_ignore`.  
+  Возвращает список скомпилированных `PathSpec` для сопоставления с путями.
+
+- `_should_include(rel_path: str, include: Optional[List], exclude: Optional[List], ignore_specs: List[PathSpec]) -> bool`  
+  Проверяет, должен ли файл быть включён в результаты. Учитывает пользовательские шаблоны и ignore-файлы.
+
+- `_scan_directory(root: Path, include: List, exclude: List, max_size: int) -> List[Dict]`  
+  Рекурсивно сканирует директорию. Возвращает список словарей с метаданными и содержимым включённых файлов.
+
+- `_clone_repo(repo_url: str) -> Tuple[Path, str]`  
+  Клонирует Git-репозиторий в временный каталог.  
+  **Исключения**: `RuntimeError`, если клонирование не удалось.
+
+- `scan_source(source: str, include: List = DEFAULT_INCLUDE_PATTERNS, exclude: List = DEFAULT_EXCLUDE_PATTERNS, max_size: int = 200000) -> ScanResult`  
+  Основной метод: запускает сканирование по локальному пути или URL.  
+  **Исключения**: `FileNotFoundError` (если путь не существует), `RuntimeError` (ошибка клонирования).
+
+---
+
+## cli
+
+Модуль `cli` реализует интерфейс командной строки для генерации документации.
 
 ### Функции
+- `parse_args() -> argparse.Namespace`  
+  Парсит аргументы командной строки.  
+  Поддерживает: `--source`, `--output`, `--readme`, `--mkdocs`, `--language`, `--include`, `--exclude`, `--max-size`, `--cache-dir`, `--no-cache`, `--threads`, `--local-site`, `--force`.  
+  **Исключения**: может вызвать `SystemExit` при ошибке парсинга.
 
-#### `_load_ignore_specs(root: Path) -> List[pathspec.PathSpec]`
+- `resolve_output(source: str, output: Optional[str], repo_name: str) -> Path`  
+  Определяет итоговую директорию вывода. Если `output` не задан, формирует путь по умолчанию.
 
-Загружает и компилирует правила игнорирования из `.gitignore` и `.build_ignore` в указанной директории.
+- `main() -> None`  
+  Основная точка входа: парсит аргументы, сканирует исходники, инициализирует LLM и запускает генерацию.  
+  **Исключения**: возможны при ошибках сканирования, доступа к LLM или записи файлов.
 
-**Аргументы:**
-- `root` — корневая директория проекта.
+---
 
-**Возвращает:**
-- Список скомпилированных `pathspec.PathSpec`, используемых для проверки путей.
+## llm
 
-#### `_should_include(rel_path: str, include: Optional[Set[str]], exclude: Optional[Set[str]], ignore_specs: List[pathspec.PathSpec]) -> bool`
+Модуль `llm` предоставляет клиент для взаимодействия с LLM через HTTP API с поддержкой кэширования.
 
-Определяет, должен ли файл быть включён в результаты сканирования.
+### Класс `LLMClient`
 
-**Аргументы:**
-- `rel_path` — относительный путь к файлу (в формате POSIX).
-- `include` — пользовательские шаблоны включения. Если `None`, включаются все файлы, не исключённые другими правилами.
-- `exclude` — пользовательские шаблоны исключения.
-- `ignore_specs` — список скомпилированных спецификаций игнорирования.
+Клиент для отправки запросов к языковой модели.
 
-**Возвращает:**
-- `True`, если файл прошёл все фильтры; `False` — если должен быть пропущен.
+#### Поля
+- `api_key` — ключ аутентификации.
+- `base_url` — базовый URL API (например, `https://api.openai.com/v1`).
+- `model` — идентификатор модели (например, `gpt-4o-mini`).
+- `temperature` — параметр случайности генерации (по умолчанию `0.2`).
+- `max_tokens` — макс. количество токенов в ответе.
+- `context_limit` — общий лимит токенов в контексте.
 
-#### `_scan_directory(root: Path, include: Optional[Set[str]], exclude: Optional[Set[str]], max_size: int) -> List[Dict]`
+#### Методы
+- `__init__(api_key, base_url, model, temperature=0.2, max_tokens=1200, context_limit=8192)`  
+  Инициализирует клиент.
+- `_cache_key(payload: Dict) -> str`  
+  Генерирует хеш-ключ для кэширования на основе нормализованного JSON.
+- `chat(messages: List[Dict], cache: Optional[Dict] = None) -> str`  
+  Отправляет чат-запрос к API и возвращает ответ модели.
 
-Рекурсивно сканирует директорию и возвращает список подходящих файлов.
+### Функция
+- `from_env() -> LLMClient`  
+  Создаёт клиент на основе переменных окружения.  
+  **Исключения**: `RuntimeError`, если `OPENAI_API_KEY` не задан.
 
-**Аргументы:**
-- `root` — корневая директория.
-- `include` — шаблоны включения.
-- `exclude` — шаблоны исключения.
-- `max_size` — максимальный размер файла в байтах (файлы больше — пропускаются).
+---
 
-**Возвращает:**
-- Список словарей с метаданными файлов, прошедших фильтрацию.
+## docs
 
-#### `_clone_repo(repo_url: str) -> Tuple[Path, str]`
+Модуль `docs` отвечает за генерацию и обработку документации по исходным файлам с использованием LLM.
 
-Клонирует удалённый Git-репозиторий в временную директорию.
+### Ключевые функции
+- `summarize_file(content: str, file_type: str, domains: List[str], llm, llm_cache: Dict, model: str, detailed: bool = False) -> str`  
+  Генерирует краткое или детальное резюме файла. Поддерживает Doxygen-стиль при `detailed=True`.
 
-**Аргументы:**
-- `repo_url` — URL репозитория (HTTP/HTTPS).
+- `_normalize_module_summary(summary: str, llm, llm_cache: Dict) -> str`  
+  Приводит резюме к строгому Doxygen-формату.
 
-**Возвращает:**
-- Кортеж: путь к временной директории и имя репозитория (без `.git`).
+- `write_summary(summary_dir: Path, rel_path: str, summary: str) -> Path`  
+  Сохраняет резюме в Markdown-файл, сохраняя структуру путей.
 
-**Исключения:**
-- `RuntimeError` — при ошибке клонирования (недоступный URL, сетевая ошибка и т.п.).
+- `generate_docs(files: List[Dict], output_root: Path, cache_dir: Path, llm: LLMClient, language: str, write_readme: bool, write_mkdocs: bool, use_cache: bool = True, threads: int = 1, local_site: bool = False, force: bool = False) -> None`  
+  Основная функция: генерирует документацию, суммаризует файлы, создаёт README и/или `mkdocs.yml`. Поддерживает многопоточность.
 
-#### `scan_source(source: str, include: Optional[Set[str]] = None, exclude: Optional[Set[str]] = None, max_size: int = 200000) -> ScanResult`
+- `_is_test_path(path: str) -> bool`  
+  Определяет, является ли путь тестовым (по имени папки/файла).
 
-Основная функция модуля. Сканирует локальную директорию или клонирует и сканирует удалённый репозиторий.
+- `_collect_dependencies(files: Dict[str, Dict]) -> List[str]`  
+  Извлекает зависимости из `pyproject.toml`, `requirements.txt`, `package.json`.
 
-**Аргументы:**
-- `source` — путь к локальной директории или URL Git-репозитория.
-- `include` — пользовательские шаблоны включения (по умолчанию — `DEFAULT_INCLUDE_PATTERNS`).
-- `exclude` — пользовательские шаблоны исключения (по умолчанию — `DEFAULT_EXCLUDE_PATTERNS`).
-- `max_size` — максимальный размер файла в байтах (по умолчанию — 200 КБ).
+- `_generate_section(llm, llm_cache, title, context, language) -> str`  
+  Генерирует раздел документации (например, "Архитектура") с Mermaid-диаграммой.
 
-**Возвращает:**
-- Объект `ScanResult`.
+- `_strip_duplicate_heading(content: str, title: str) -> str`  
+  Удаляет дублирующий заголовок из сгенерированного текста.
 
-**Исключения:**
-- `FileNotFoundError` — если локальный путь не существует.
-- `RuntimeError` — если не удалось клонировать репозиторий.
+- `_generate_readme(llm, llm_cache, project_name, overview_context, language) -> str`  
+  Генерирует содержимое `README.md`.
+
+- `_truncate_context(context: str, model: str, max_tokens: int) -> str`  
+  Обрезает контекст до указанного количества токенов.
+
+- `format_changes_md(added, modified, deleted, regenerated, summary) -> str`  
+  Формирует Markdown-отчёт о изменениях в файлах и секциях.
+
+---
+
+## mkdocs
+
+Модуль `mkdocs` генерирует конфигурацию `mkdocs.yml` и записывает файлы документации.
+
+### Функции
+- `build_mkdocs_yaml(site_name: str, sections: Dict, configs: Dict, local_site: bool = False, has_modules: bool = False, module_nav_paths: List[str] | None = None) -> str`  
+  Генерирует YAML-конфигурацию для MkDocs.
+
+- `_build_modules_nav(module_paths: List[str]) -> List[Dict]`  
+  Строит иерархическую навигацию по модулям.
+
+- `_insert_nav_node(tree: Dict, parts: List[str], rel_path: str) -> None`  
+  Рекурсивно вставляет узел в дерево навигации.
+
+- `_tree_to_nav(tree: Dict) -> List[Dict]`  
+  Преобразует дерево навигации в список для MkDocs.
+
+- `write_docs_files(docs_dir: Path, files: Dict[str, str]) -> None`  
+  Записывает все файлы документации на диск.
+
+---
+
+## utils
+
+Модуль `utils` предоставляет вспомогательные функции для работы с файлами, путями и хешированием.
+
+### Функции
+- `sha256_bytes(data: bytes) -> str` — возвращает SHA-256 хеш в hex.
+- `sha256_text(text: str) -> str` — хеширует текстовую строку.
+- `read_text_file(path: Path) -> str` — читает файл в UTF-8, игнорируя ошибки.
+- `safe_slug(path: str) -> str` — преобразует строку в безопасный слаг.
+- `ensure_dir(path: Path) -> None` — создаёт директорию и родителей.
+- `is_binary_file(path: Path, sample_size: int = 2048) -> bool` — определяет, бинарный ли файл.
+- `is_url(value: str) -> bool` — проверяет, является ли строка URL.
+- `to_posix(path: Path) -> str` — преобразует путь в POSIX-формат.
+
+---
+
+## classify
+
+Модуль `classify` определяет тип файла и его домены (инфраструктура, CI, Docker и т.д.).
+
+### Функции
+- `classify_type(path: Path) -> str`  
+  Возвращает тип файла: `code`, `docs`, `config`, `data`, `infra`, `ci`, `other`.
+
+- `detect_domains(path: Path, content_snippet: str) -> Set[str]`  
+  Определяет домены по имени, пути и фрагменту содержимого (например, `kubernetes`, `docker`).
+
+- `is_infra(domains: Set[str]) -> bool`  
+  Проверяет, относится ли файл к инфраструктурным доменам.
+
+---
+
+## cache
+
+Модуль `cache` управляет кэшем файлов и ответов LLM.
+
+### Класс `CacheManager`
+
+#### Поля
+- `cache_dir` — директория хранения кэша.
+- `index_path` — путь к `index.json`.
+- `llm_cache_path` — путь к `llm_cache.json`.
+
+#### Методы
+- `__init__(cache_dir: Path)` — инициализирует менеджер и создаёт директорию.
+- `load_index() -> Dict` — загружает индекс или возвращает пустой.
+- `save_index(data: Dict) -> None` — сохраняет индекс.
+- `load_llm_cache() -> Dict[str, str]` — загружает кэш LLM.
+- `save_llm_cache(data: Dict[str, str]) -> None` — сохраняет кэш LLM.
+- `diff_files(current_files: Dict[str, Dict]) -> Tuple[added, modified, deleted, unchanged]`  
+  Сравнивает текущие файлы с предыдущим состоянием.
+
+---
+
+## tokens
+
+Модуль `tokens` отвечает за подсчёт и разбиение текста на токены.
+
+### Функции
+- `get_encoding(model: str)`  
+  Возвращает кодировку `tiktoken` для модели, fallback к `cl100k_base`.
+
+- `count_tokens(text: str, model: str) -> int`  
+  Возвращает количество токенов в тексте.
+
+- `chunk_text(text: str, model: str, max_tokens: int) -> List[str]`  
+  Разбивает текст на фрагменты по лимиту токенов.
+
+---
+
+## __main__
+
+Модуль `__main__` обеспечивает запуск приложения как скрипта: `python -m ai_docs`.
+
+### Функции
+- `_load_main()`  
+  Динамически загружает `main` из `ai_docs.cli`.  
+  **Исключения**: `ImportError` — обрабатывается через fallback.
+
+- `main()`  
+  Точка входа при запуске модуля. Вызывает `main()` из `cli`.
+```
 
 ## Список модулей
 
