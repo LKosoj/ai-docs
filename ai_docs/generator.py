@@ -136,6 +136,7 @@ def generate_docs(
     llm_cache = cache.load_llm_cache() if use_cache else None
     index_data = cache.load_index()
     prev_files = index_data.get("files", {})
+    errors: List[str] = []
 
     def _save_cache_snapshot() -> None:
         snapshot = {
@@ -188,7 +189,13 @@ def generate_docs(
             for future in as_completed(futures):
                 path, meta = futures[future]
                 print(f"[ai-docs] summarize start: {path}")
-                summary = future.result()
+                try:
+                    summary = future.result()
+                except Exception as exc:
+                    msg = f"summarize: {path} -> {exc}"
+                    print(f"[ai-docs] summarize error: {path} ({exc})")
+                    errors.append(msg)
+                    continue
                 summary_path = write_summary(summaries_dir, path, summary)
                 meta["summary_path"] = str(summary_path)
                 done += 1
@@ -198,11 +205,16 @@ def generate_docs(
         done = 0
         for path, meta in to_summarize:
             print(f"[ai-docs] summarize start: {path}")
-            summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
-            summary_path = write_summary(summaries_dir, path, summary)
-            meta["summary_path"] = str(summary_path)
-            done += 1
-            print(f"[ai-docs] summarize done: {path} ({done}/{total})")
+            try:
+                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
+                summary_path = write_summary(summaries_dir, path, summary)
+                meta["summary_path"] = str(summary_path)
+                done += 1
+                print(f"[ai-docs] summarize done: {path} ({done}/{total})")
+            except Exception as exc:
+                msg = f"summarize: {path} -> {exc}"
+                print(f"[ai-docs] summarize error: {path} ({exc})")
+                errors.append(msg)
     if to_summarize:
         _save_cache_snapshot()
 
@@ -217,6 +229,7 @@ def generate_docs(
     if threads > 1 and module_candidates:
         with ThreadPoolExecutor(max_workers=threads) as executor:
             futures = {}
+            print(f"[ai-docs] summarize modules: queued {len(module_candidates)} tasks (workers={threads})")
             for path, meta in module_candidates:
                 print(f"[ai-docs] summarize module start: {path}")
                 futures[
@@ -235,7 +248,13 @@ def generate_docs(
             done = 0
             for future in as_completed(futures):
                 path, meta = futures[future]
-                summary = future.result()
+                try:
+                    summary = future.result()
+                except Exception as exc:
+                    msg = f"summarize module: {path} -> {exc}"
+                    print(f"[ai-docs] summarize module error: {path} ({exc})")
+                    errors.append(msg)
+                    continue
                 summary_path = write_summary(module_summaries_dir, path, summary)
                 meta["module_summary_path"] = str(summary_path)
                 done += 1
@@ -245,11 +264,16 @@ def generate_docs(
         done = 0
         for path, meta in module_candidates:
             print(f"[ai-docs] summarize module start: {path}")
-            summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
-            summary_path = write_summary(module_summaries_dir, path, summary)
-            meta["module_summary_path"] = str(summary_path)
-            done += 1
-            print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
+            try:
+                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
+                summary_path = write_summary(module_summaries_dir, path, summary)
+                meta["module_summary_path"] = str(summary_path)
+                done += 1
+                print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
+            except Exception as exc:
+                msg = f"summarize module: {path} -> {exc}"
+                print(f"[ai-docs] summarize module error: {path} ({exc})")
+                errors.append(msg)
     if module_candidates:
         _save_cache_snapshot()
 
@@ -299,7 +323,13 @@ def generate_docs(
                 for future in as_completed(futures):
                     path, meta = futures[future]
                     print(f"[ai-docs] summarize start: {path}")
-                    summary = future.result()
+                    try:
+                        summary = future.result()
+                    except Exception as exc:
+                        msg = f"summarize: {path} -> {exc}"
+                        print(f"[ai-docs] summarize error: {path} ({exc})")
+                        errors.append(msg)
+                        continue
                     summary_path = write_summary(summaries_dir, path, summary)
                     meta["summary_path"] = str(summary_path)
                     done += 1
@@ -309,11 +339,16 @@ def generate_docs(
             done = 0
             for path, meta in missing_summaries:
                 print(f"[ai-docs] summarize start: {path}")
-                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
-                summary_path = write_summary(summaries_dir, path, summary)
-                meta["summary_path"] = str(summary_path)
-                done += 1
-                print(f"[ai-docs] summarize done: {path} ({done}/{total})")
+                try:
+                    summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
+                    summary_path = write_summary(summaries_dir, path, summary)
+                    meta["summary_path"] = str(summary_path)
+                    done += 1
+                    print(f"[ai-docs] summarize done: {path} ({done}/{total})")
+                except Exception as exc:
+                    msg = f"summarize: {path} -> {exc}"
+                    print(f"[ai-docs] summarize error: {path} ({exc})")
+                    errors.append(msg)
         _save_cache_snapshot()
 
     if missing_module_summaries:
@@ -321,6 +356,7 @@ def generate_docs(
         if threads > 1:
             with ThreadPoolExecutor(max_workers=threads) as executor:
                 futures = {}
+                print(f"[ai-docs] summarize modules: queued {len(missing_module_summaries)} tasks (workers={threads})")
                 for path, meta in missing_module_summaries:
                     print(f"[ai-docs] summarize module start: {path}")
                     futures[
@@ -339,7 +375,13 @@ def generate_docs(
                 done = 0
                 for future in as_completed(futures):
                     path, meta = futures[future]
-                    summary = future.result()
+                    try:
+                        summary = future.result()
+                    except Exception as exc:
+                        msg = f"summarize module: {path} -> {exc}"
+                        print(f"[ai-docs] summarize module error: {path} ({exc})")
+                        errors.append(msg)
+                        continue
                     summary_path = write_summary(module_summaries_dir, path, summary)
                     meta["module_summary_path"] = str(summary_path)
                     done += 1
@@ -349,11 +391,16 @@ def generate_docs(
             done = 0
             for path, meta in missing_module_summaries:
                 print(f"[ai-docs] summarize module start: {path}")
-                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
-                summary_path = write_summary(module_summaries_dir, path, summary)
-                meta["module_summary_path"] = str(summary_path)
-                done += 1
-                print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
+                try:
+                    summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
+                    summary_path = write_summary(module_summaries_dir, path, summary)
+                    meta["module_summary_path"] = str(summary_path)
+                    done += 1
+                    print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
+                except Exception as exc:
+                    msg = f"summarize module: {path} -> {exc}"
+                    print(f"[ai-docs] summarize module error: {path} ({exc})")
+                    errors.append(msg)
         _save_cache_snapshot()
 
     # Remove summaries for deleted files
@@ -574,3 +621,8 @@ def generate_docs(
     cache.save_index(new_index)
     if use_cache and llm_cache is not None:
         cache.save_llm_cache(llm_cache)
+
+    if errors:
+        print("[ai-docs] errors summary:")
+        for item in errors:
+            print(f"[ai-docs] error: {item}")

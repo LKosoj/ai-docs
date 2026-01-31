@@ -53,7 +53,10 @@ class LLMClient:
         response = requests.post(url, headers=headers, json=payload, timeout=(120, 480))
         response.raise_for_status()
         data = response.json()
-        content = data["choices"][0]["message"]["content"]
+        try:
+            content = data["choices"][0]["message"]["content"]
+        except Exception as exc:
+            raise RuntimeError(f"LLM response missing content: {data}") from exc
         if cache is not None:
             with self._cache_lock:
                 cache[key] = content
