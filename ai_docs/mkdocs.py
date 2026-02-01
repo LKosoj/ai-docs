@@ -79,7 +79,7 @@ def _build_modules_nav(module_paths: List[str]) -> List[Dict[str, object]]:
         if rel.startswith("modules/"):
             rel = rel[len("modules/") :]
         parts = rel.split("/")
-        parts[-1] = Path(parts[-1]).with_suffix("").name
+        parts[-1] = Path(parts[-1]).with_suffix("").name.replace("__", ".")
         _insert_nav_node(tree, parts, module_path)
 
     return _tree_to_nav(tree)
