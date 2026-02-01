@@ -150,23 +150,23 @@
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="1"><a class="nav-link" href="#_1">Зависимости</a>
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#pyprojecttoml">Основные зависимости (pyproject.toml)</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#runtime">Основные зависимости (runtime)</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Опциональные зависимости</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Системные зависимости</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Управление зависимостями</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Опциональные зависимости (разработка)</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_7">Особенности использования</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_4">Управление зависимостями</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_8">Системные требования</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_5">Особенности использования</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -177,42 +177,96 @@
 </div></div>
 <div class="col-md-9" role="main">
 <h1 id="_1">Зависимости</h1>
-<h2 id="pyprojecttoml">Основные зависимости (pyproject.toml)</h2>
-<p>Зависимости определены в секции <code>[project.dependencies]</code> и необходимы для работы всех компонентов <code>ai_docs</code>:</p>
+<h2 id="runtime">Основные зависимости (runtime)</h2>
+<p>Для работы <code>ai_docs</code> требуются следующие пакеты, указанные в <code>pyproject.toml</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Пакет</th>
+<th>Назначение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>requests</code></td>
+<td>HTTP-запросы к LLM API</td>
+</tr>
+<tr>
+<td><code>tiktoken</code></td>
+<td>Токенизация текста для расчёта длины контекста</td>
+</tr>
+<tr>
+<td><code>PyYAML</code></td>
+<td>Парсинг конфигурационных файлов <code>.ai-docs.yaml</code></td>
+</tr>
+<tr>
+<td><code>python-dotenv</code></td>
+<td>Загрузка переменных окружения из <code>.env</code></td>
+</tr>
+<tr>
+<td><code>mkdocs</code></td>
+<td>Генерация статического сайта документации</td>
+</tr>
+<tr>
+<td><code>mkdocs-mermaid2-plugin</code></td>
+<td>Поддержка диаграмм Mermaid в MkDocs</td>
+</tr>
+<tr>
+<td><code>pymdown-extensions</code></td>
+<td>Дополнительные Markdown-расширения (подсветка, таблицы и др.)</td>
+</tr>
+<tr>
+<td><code>pathspec</code></td>
+<td>Сопоставление путей с шаблонами <code>.gitignore</code></td>
+</tr>
+</tbody>
+</table>
+<p>Установка:
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>ai-docs-gen
+</code></pre></div></p>
+<h2 id="_2">Системные зависимости</h2>
+<table>
+<thead>
+<tr>
+<th>Компонент</th>
+<th>Требование</th>
+<th>Проверка</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>git</code></td>
+<td>Клонирование удалённых репозиториев</td>
+<td><code>git --version</code></td>
+</tr>
+<tr>
+<td>Python ≥ 3.8</td>
+<td>Минимальная версия интерпретатора</td>
+<td><code>python --version</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">Опциональные зависимости (разработка)</h2>
+<p>Для участия в разработке установите дополнительные инструменты:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</code></pre></div>
+<p>Требуются для:
+- Запуска тестов: <code>pytest</code>
+- Сборки пакета: <code>setuptools&gt;=68</code>, <code>wheel</code>
+- Автоматической проверки кода: <code>flake8</code>, <code>black</code>, <code>mypy</code> (указаны в dev-секциях, если присутствуют)</p>
+<h2 id="_4">Управление зависимостями</h2>
 <ul>
-<li><code>requests</code> — HTTP-запросы к LLM API.</li>
-<li><code>tiktoken</code> — токенизация текста для контроля длины контекста.</li>
-<li><code>PyYAML</code> — парсинг конфигурационных файлов <code>.ai-docs.yaml</code>.</li>
-<li><code>python-dotenv</code> — загрузка переменных окружения из <code>.env</code>.</li>
-<li><code>pathspec</code> — обработка шаблонов игнорирования (<code>.gitignore</code>, <code>.build_ignore</code>).</li>
-<li><code>mkdocs</code> — генерация статического сайта документации.</li>
-<li><code>mkdocs-mermaid2-plugin</code> — поддержка диаграмм Mermaid в MkDocs.</li>
-<li><code>mkdocs-pymdown-extensions</code> — расширенные Markdown-функции (подсветка, таблицы и др.).</li>
+<li>Все зависимости объявлены в <code>pyproject.toml</code>.</li>
+<li>Проект использует стандартный бэкенд <code>setuptools.build_meta</code>.</li>
+<li>Локальная установка с зависимостями: <code>pip install -e .</code></li>
+<li>Сборка дистрибутива: <code>python -m build</code></li>
 </ul>
-<h2 id="_2">Опциональные зависимости</h2>
+<h2 id="_5">Особенности использования</h2>
 <ul>
-<li><code>git</code> (системный) — клонирование удалённых репозиториев по URL. Должен быть установлен в системе.</li>
-</ul>
-<h2 id="_3">Управление зависимостями</h2>
-<h3 id="_4">Установка</h3>
-<pre class="highlight"><code class="language-bash">pip install -e .</code></pre>
-<p>Команда устанавливает пакет в режиме разработки с зависимостями из <code>pyproject.toml</code>.</p>
-<h3 id="_5">Проверка</h3>
-<p>Убедитесь, что установлены:
-- Python ≥ 3.8
-- <code>git</code> в <code>PATH</code> (для работы с URL-репозиториями)</p>
-<h3 id="_6">Контроль версий</h3>
-<p>Версии зависимостей не зафиксированы жёстко — используются минимальные совместимые версии. Для воспроизводимости используйте <code>pip freeze &gt; requirements.txt</code> после установки.</p>
-<h2 id="_7">Особенности использования</h2>
-<ul>
-<li>Кэширование LLM-запросов (<code>tiktoken</code>, <code>pathspec</code>) критично для производительности.</li>
-<li><code>mkdocs</code> и его плагины требуются только при генерации сайта (<code>--mkdocs</code>).</li>
-<li><code>python-dotenv</code> автоматически загружает <code>.env</code> при запуске <code>main.py</code>.</li>
-</ul>
-<h2 id="_8">Системные требования</h2>
-<ul>
-<li>Операционная система: Linux, macOS, Windows (с поддержкой Python и git).</li>
-<li>Свободное место: минимум 100 МБ (с учётом временных файлов и кэша).</li>
+<li><strong>Кэширование LLM</strong>: использует <code>tiktoken</code> для расчёта токенов и контроля контекста.</li>
+<li><strong>Работа с Git</strong>: <code>git</code> обязателен только при указании <code>--source</code> как URL.</li>
+<li><strong>Фильтрация файлов</strong>: <code>pathspec</code> обеспечивает совместимость с синтаксисом <code>.gitignore</code>.</li>
+<li><strong>Генерация сайта</strong>: <code>mkdocs</code> и его плагины настраиваются автоматически при <code>--mkdocs</code>.</li>
 </ul></div>
 </div>
 </div>

@@ -1,300 +1,275 @@
 <!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="None">
+        
+        
+        <link rel="shortcut icon" href="img/favicon.ico">
+        <title>ai-docs</title>
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/fontawesome.min.css" rel="stylesheet">
+        <link href="css/brands.min.css" rel="stylesheet">
+        <link href="css/solid.min.css" rel="stylesheet">
+        <link href="css/v4-font-face.min.css" rel="stylesheet">
+        <link href="css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
 
-<html data-bs-theme="light" lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="None" name="description"/>
-<link href="img/favicon.ico" rel="shortcut icon"/>
-<title>ai-docs</title>
-<link href="css/bootstrap.min.css" rel="stylesheet"/>
-<link href="css/fontawesome.min.css" rel="stylesheet"/>
-<link href="css/brands.min.css" rel="stylesheet"/>
-<link href="css/solid.min.css" rel="stylesheet"/>
-<link href="css/v4-font-face.min.css" rel="stylesheet"/>
-<link href="css/base.css" rel="stylesheet"/>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" id="hljs-light" rel="stylesheet"/>
-<link disabled="" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" id="hljs-dark" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-<script>hljs.highlightAll();</script>
-</head>
-<body class="homepage">
-<div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
-<div class="container">
-<a class="navbar-brand" href="index.html">ai-docs</a>
-<!-- Expander button -->
-<button aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler" data-bs-target="#navbar-collapse" data-bs-toggle="collapse" type="button">
-<span class="navbar-toggler-icon"></span>
-</button>
-<!-- Expanded navigation -->
-<div class="navbar-collapse collapse" id="navbar-collapse">
-<!-- Main navigation -->
-<ul class="nav navbar-nav">
-<li class="nav-item">
-<a aria-current="page" class="nav-link active" href="index.html">Главная</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="architecture.html">Архитектура</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="runtime.html">Запуск</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="dependencies.html">Зависимости</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="testing.html">Тестирование</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="conventions.html">Соглашения</a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="glossary.html">Глоссарий</a>
-</li>
-<li class="nav-item dropdown">
-<a aria-expanded="false" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">Конфигурация проекта</a>
-<ul class="dropdown-menu">
+    <body class="homepage">
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">ai-docs</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="index.html" class="nav-link active" aria-current="page">Главная</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="architecture.html" class="nav-link">Архитектура</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="runtime.html" class="nav-link">Запуск</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="dependencies.html" class="nav-link">Зависимости</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="testing.html" class="nav-link">Тестирование</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="conventions.html" class="nav-link">Соглашения</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="glossary.html" class="nav-link">Глоссарий</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Конфигурация проекта</a>
+                                <ul class="dropdown-menu">
+                                    
 <li>
-<a class="dropdown-item" href="configs/index.html">Обзор</a>
+    <a href="configs/index.html" class="dropdown-item">Обзор</a>
 </li>
+                                    
 <li>
-<a class="dropdown-item" href="configs/files/pyproject__toml.html">pyproject.toml</a>
+    <a href="configs/files/pyproject__toml.html" class="dropdown-item">pyproject.toml</a>
 </li>
-</ul>
-</li>
-<li class="nav-item dropdown">
-<a aria-expanded="false" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">Модули</a>
-<ul class="dropdown-menu">
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Модули</a>
+                                <ul class="dropdown-menu">
+                                    
 <li>
-<a class="dropdown-item" href="modules/index.html">Обзор</a>
+    <a href="modules/index.html" class="dropdown-item">Обзор</a>
 </li>
-<li class="dropdown-submenu">
-<a class="dropdown-item" href="#">/ai_docs</a>
-<ul class="dropdown-menu">
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">/ai_docs</a>
+    <ul class="dropdown-menu">
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/__init____py.html">__init__.py</a>
+    <a href="modules/ai_docs/__init____py.html" class="dropdown-item">__init__.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/__main____py.html">__main__.py</a>
+    <a href="modules/ai_docs/__main____py.html" class="dropdown-item">__main__.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/cache__py.html">cache.py</a>
+    <a href="modules/ai_docs/cache__py.html" class="dropdown-item">cache.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/changes__py.html">changes.py</a>
+    <a href="modules/ai_docs/changes__py.html" class="dropdown-item">changes.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/cli__py.html">cli.py</a>
+    <a href="modules/ai_docs/cli__py.html" class="dropdown-item">cli.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/domain__py.html">domain.py</a>
+    <a href="modules/ai_docs/domain__py.html" class="dropdown-item">domain.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/generator__py.html">generator.py</a>
+    <a href="modules/ai_docs/generator__py.html" class="dropdown-item">generator.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/llm__py.html">llm.py</a>
+    <a href="modules/ai_docs/llm__py.html" class="dropdown-item">llm.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/mkdocs__py.html">mkdocs.py</a>
+    <a href="modules/ai_docs/mkdocs__py.html" class="dropdown-item">mkdocs.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/scanner__py.html">scanner.py</a>
+    <a href="modules/ai_docs/scanner__py.html" class="dropdown-item">scanner.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/summary__py.html">summary.py</a>
+    <a href="modules/ai_docs/summary__py.html" class="dropdown-item">summary.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/tokenizer__py.html">tokenizer.py</a>
+    <a href="modules/ai_docs/tokenizer__py.html" class="dropdown-item">tokenizer.py</a>
 </li>
+            
 <li>
-<a class="dropdown-item" href="modules/ai_docs/utils__py.html">utils.py</a>
+    <a href="modules/ai_docs/utils__py.html" class="dropdown-item">utils.py</a>
 </li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="changes.html">Изменения</a>
-</li>
-</ul>
-<ul class="nav navbar-nav ms-md-auto">
-<li class="nav-item">
-<a class="nav-link" data-bs-target="#mkdocs_search_modal" data-bs-toggle="modal" href="#">
-<i class="fa fa-search"></i> Search
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a href="changes.html" class="nav-link">Изменения</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
                             </a>
-</li>
-<li class="nav-item">
-<a class="nav-link disabled" rel="prev">
-<i class="fa fa-arrow-left"></i> Previous
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" class="nav-link disabled">
+                                    <i class="fa fa-arrow-left"></i> Previous
                                 </a>
-</li>
-<li class="nav-item">
-<a class="nav-link" href="architecture.html" rel="next">
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="architecture.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
-</a>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="container">
-<div class="row">
-<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
-<div class="navbar-header">
-<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Table of Contents" type="button">
-<span class="fa fa-angle-down"></span>
-</button>
-</div>
-<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
-<ul class="nav flex-column">
-<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#_1">Документация проекта</a>
-<ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Обзор</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Установка и запуск</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_6">Основные команды</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_11">Артефакты</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_12">Конфигурация</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_14">Работа с кэшем</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_15">Поддерживаемые домены</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_16">Структура документации</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_17">Сборка сайта</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_18">Разработка</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_22">Лицензия</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</div>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#_1" class="nav-link">Документация проекта</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#_2" class="nav-link">Обзор</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#_3" class="nav-link">Установка и запуск</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#_6" class="nav-link">Конфигурация</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#cli-" class="nav-link">CLI-интерфейс</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#_9" class="nav-link">Архитектура и внутренние компоненты</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#_12" class="nav-link">Принципы работы</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#cicd" class="nav-link">Интеграция в CI/CD</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#_13" class="nav-link">Разработка и вклад</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#_17" class="nav-link">Ограничения</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#_18" class="nav-link">Поддержка</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
 </div></div>
-<div class="col-md-9" role="main">
+                    <div class="col-md-9" role="main">
+
 <h1 id="_1">Документация проекта</h1>
 <h2 id="_2">Обзор</h2>
-<p><code>ai_docs</code> — это CLI-инструмент для автоматической генерации технической документации на основе анализа исходного кода, конфигураций и структуры проекта. Поддерживает локальные директории и Git-репозитории (включая удалённые по URL). Результатом работы являются:</p>
+<p><code>ai_docs</code> — это CLI-инструмент для автоматической генерации и поддержки технической документации на основе исходного кода, конфигураций и структуры проекта. Инструмент анализирует локальные директории или Git-репозитории (локальные и удалённые), распознаёт технологические домены (Kubernetes, Terraform, CI/CD и др.) и генерирует:</p>
 <ul>
 <li><code>README.md</code> — краткое описание проекта;</li>
-<li>полноценный сайт документации на MkDocs (в <code>ai_docs_site/</code>);</li>
-<li>структурированная документация в <code>.ai-docs/</code>.</li>
+<li>полноценный сайт документации в формате <strong>MkDocs</strong>.</li>
 </ul>
-<p>Инструмент использует LLM для анализа и генерации текста, поддерживает кэширование, инкрементальную обработку и многопоточность.</p>
-<hr/>
+<p>Поддерживается инкрементальная обработка, кэширование LLM-ответов и многопоточная генерация.</p>
+<hr />
 <h2 id="_3">Установка и запуск</h2>
 <h3 id="_4">Установка</h3>
-<pre class="highlight"><code class="language-bash">pip install ai-documentery</code></pre>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>ai-docs-gen
+</code></pre></div>
 <p>Или из исходников:</p>
-<pre class="highlight"><code class="language-bash">pip install -e .</code></pre>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/your-repo/ai_docs.git
+<span class="nb">cd</span><span class="w"> </span>ai_docs
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</code></pre></div>
 <h3 id="_5">Быстрый старт</h3>
-<pre class="highlight"><code class="language-bash">ai-docs --source . --readme --mkdocs --language ru</code></pre>
-<p>Сгенерирует <code>README.md</code> и сайт MkDocs на русском языке.</p>
-<hr/>
-<h2 id="_6">Основные команды</h2>
-<pre class="highlight"><code class="language-bash">ai-docs --source &lt;путь_или_url&gt; [опции]</code></pre>
-<h3 id="_7">Обязательный параметр</h3>
-<ul>
-<li><code>--source</code> — путь к локальной директории или URL Git-репозитория.</li>
-</ul>
-<h3 id="_8">Опции вывода</h3>
+<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--readme<span class="w"> </span>--mkdocs
+</code></pre></div>
+<p>Сгенерирует <code>README.md</code> и сайт MkDocs в папке <code>docs/</code>.</p>
+<hr />
+<h2 id="_6">Конфигурация</h2>
+<h3 id="_7">Переменные окружения</h3>
 <table>
 <thead>
 <tr>
-<th>Флаг</th>
+<th>Переменная</th>
 <th>Назначение</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--readme</code></td>
-<td>Генерировать <code>README.md</code></td>
-</tr>
-<tr>
-<td><code>--mkdocs</code></td>
-<td>Генерировать конфиг и структуру для MkDocs</td>
-</tr>
-<tr>
-<td><code>--output DIR</code></td>
-<td>Каталог вывода (по умолчанию: <code>.</code> для README, <code>.ai-docs</code> для MkDocs)</td>
-</tr>
-</tbody>
-</table>
-<h3 id="_9">Фильтрация файлов</h3>
-<table>
-<thead>
-<tr>
-<th>Флаг</th>
-<th>Назначение</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--include GLOB</code></td>
-<td>Включить файлы по шаблону (можно указать несколько раз)</td>
-</tr>
-<tr>
-<td><code>--exclude GLOB</code></td>
-<td>Исключить файлы по шаблону (можно указать несколько раз)</td>
-</tr>
-<tr>
-<td><code>--max-size N</code></td>
-<td>Макс. размер файла в байтах (по умолчанию: 200 000)</td>
-</tr>
-</tbody>
-</table>
-<h3 id="llm">Настройки LLM</h3>
-<table>
-<thead>
-<tr>
-<th>Переменная окружения</th>
-<th>Назначение</th>
-<th>Значение по умолчанию</th>
+<th>По умолчанию</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>OPENAI_API_KEY</code></td>
-<td>Ключ API</td>
-<td>Обязательно</td>
+<td>Ключ API для LLM (обязательно)</td>
+<td>—</td>
 </tr>
 <tr>
 <td><code>OPENAI_BASE_URL</code></td>
-<td>Базовый URL API</td>
+<td>Базовый URL API (для кастомных эндпоинтов)</td>
 <td><code>https://api.openai.com/v1</code></td>
 </tr>
 <tr>
 <td><code>OPENAI_MODEL</code></td>
-<td>Модель</td>
+<td>Модель LLM</td>
 <td><code>gpt-4o-mini</code></td>
 </tr>
 <tr>
@@ -309,280 +284,326 @@
 </tr>
 <tr>
 <td><code>OPENAI_CONTEXT_TOKENS</code></td>
-<td>Лимит контекста</td>
+<td>Общий лимит контекста</td>
 <td><code>8192</code></td>
+</tr>
+<tr>
+<td><code>AI_DOCS_THREADS</code></td>
+<td>Количество потоков обработки</td>
+<td><code>4</code></td>
+</tr>
+<tr>
+<td><code>AI_DOCS_LOCAL_SITE</code></td>
+<td>Режим локальной сборки (без публикации)</td>
+<td><code>false</code></td>
 </tr>
 </tbody>
 </table>
-<h3 id="_10">Прочие опции</h3>
+<p>Переменные можно задать в <code>.env</code>-файле в корне проекта.</p>
+<hr />
+<h3 id="ai-docsyaml">Конфигурационный файл <code>.ai-docs.yaml</code></h3>
+<p>Располагается в корне проекта. Позволяет кастомизировать:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">code_extensions</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.py&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.go&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.ts&quot;</span>
+<span class="nt">doc_extensions</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.md&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.rst&quot;</span>
+<span class="nt">config_extensions</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.yaml&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.toml&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.tf&quot;</span>
+<span class="nt">exclude</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;temp/&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;*.log&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;secrets/&quot;</span>
+</code></pre></div>
+<p>Если файл отсутствует, создаётся автоматически с настройками по умолчанию.</p>
+<hr />
+<h2 id="cli-">CLI-интерфейс</h2>
+<h3 id="_8">Основные флаги</h3>
 <table>
 <thead>
 <tr>
-<th>Флаг / Переменная</th>
-<th>Назначение</th>
+<th>Флаг</th>
+<th>Описание</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td><code>--source PATH|URL</code></td>
+<td>Путь к директории или URL Git-репозитория (обязательно)</td>
+</tr>
+<tr>
+<td><code>--readme</code></td>
+<td>Сгенерировать <code>README.md</code></td>
+</tr>
+<tr>
+<td><code>--mkdocs</code></td>
+<td>Сгенерировать сайт MkDocs</td>
+</tr>
+<tr>
+<td><code>--language ru|en</code></td>
+<td>Язык документации (<code>ru</code> по умолчанию)</td>
+</tr>
+<tr>
+<td><code>--threads N</code></td>
+<td>Количество потоков (переопределяет <code>AI_DOCS_THREADS</code>)</td>
+</tr>
+<tr>
 <td><code>--force</code></td>
 <td>Перезаписать существующий <code>README.md</code></td>
+</tr>
+<tr>
+<td><code>--local-site</code></td>
+<td>Настроить MkDocs для локального запуска (переопределяет <code>AI_DOCS_LOCAL_SITE</code>)</td>
 </tr>
 <tr>
 <td><code>--no-cache</code></td>
 <td>Отключить кэширование LLM-запросов</td>
 </tr>
 <tr>
-<td><code>--threads N</code></td>
-<td>Количество потоков (по умолчанию: 4)</td>
+<td><code>--include GLOB</code></td>
+<td>Дополнительные glob-паттерны для включения файлов</td>
 </tr>
 <tr>
-<td><code>AI_DOCS_THREADS</code></td>
-<td>Альтернатива <code>--threads</code></td>
+<td><code>--exclude GLOB</code></td>
+<td>Дополнительные glob-паттерны для исключения</td>
 </tr>
 <tr>
-<td><code>--local-site</code></td>
-<td>Настроить MkDocs для локального запуска</td>
-</tr>
-<tr>
-<td><code>AI_DOCS_LOCAL_SITE</code></td>
-<td>Альтернатива <code>--local-site</code></td>
-</tr>
-<tr>
-<td><code>--language ru/en</code></td>
-<td>Язык документации</td>
+<td><code>--max-size N</code></td>
+<td>Макс. размер файла в байтах (по умолчанию 200 000)</td>
 </tr>
 </tbody>
 </table>
-<hr/>
-<h2 id="_11">Артефакты</h2>
-<p>После выполнения генерируются:</p>
+<blockquote>
+<p>Если не указаны <code>--readme</code> или <code>--mkdocs</code>, генерируются оба артефакта.</p>
+</blockquote>
+<hr />
+<h2 id="_9">Архитектура и внутренние компоненты</h2>
+<h3 id="_10">Основные модули</h3>
 <table>
 <thead>
 <tr>
-<th>Артефакт</th>
+<th>Модуль</th>
 <th>Назначение</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>README.md</code></td>
-<td>Краткое описание проекта</td>
+<td><code>ai_docs.scanner</code></td>
+<td>Сканирование файлов с фильтрацией по расширениям, <code>.gitignore</code>, размеру и типу</td>
 </tr>
 <tr>
-<td><code>.ai-docs/</code></td>
-<td>Полная документация (модули, конфиги, зависимости)</td>
+<td><code>ai_docs.llm</code></td>
+<td>Клиент для взаимодействия с LLM (OpenAI-совместимый API)</td>
 </tr>
 <tr>
-<td><code>mkdocs.yml</code></td>
-<td>Конфигурация сайта</td>
+<td><code>ai_docs.summarize</code></td>
+<td>Генерация резюме файлов с использованием промптов и кэширования</td>
 </tr>
 <tr>
-<td><code>ai_docs_site/</code></td>
-<td>Собранный сайт (после <code>mkdocs build</code>)</td>
+<td><code>ai_docs.docs</code></td>
+<td>Построение структуры документации, генерация <code>mkdocs.yml</code>, запись файлов</td>
 </tr>
 <tr>
-<td><code>.ai_docs_cache/</code></td>
-<td>Кэш LLM-запросов и хэшей файлов</td>
+<td><code>ai_docs.cache</code></td>
+<td>Управление кэшем: <code>index.json</code> (состояние файлов), <code>llm_cache.json</code> (ответы LLM)</td>
+</tr>
+<tr>
+<td><code>ai_docs.utils</code></td>
+<td>Вспомогательные функции: токенизация, хеширование, работа с путями</td>
 </tr>
 </tbody>
 </table>
-<hr/>
-<h2 id="_12">Конфигурация</h2>
-<h3 id="ai-docsyaml"><code>.ai-docs.yaml</code></h3>
-<p>Позволяет кастомизировать поведение сканера:</p>
-<pre class="highlight"><code class="language-yaml">code_extensions:
-  - .py
-  - .js
-  - .go
-
-doc_extensions:
-  - .md
-  - .rst
-
-config_extensions:
-  - .yaml
-  - .toml
-
-exclude:
-  - temp/
-  - *.log</code></pre>
-<p>Если файл отсутствует — создаётся автоматически с настройками по умолчанию.</p>
-<h3 id="_13">Игнорируемые файлы</h3>
-<p>Учитываются:
-- <code>.gitignore</code>
-- <code>.build_ignore</code>
-- Настройки в <code>.ai-docs.yaml</code></p>
-<p>По умолчанию исключаются:
-<pre class="highlight"><code>.git, __pycache__, .venv, venv, node_modules, dist, build, 
-.ai-docs, .ai_docs_cache, ai_docs_site, *.pyc, *.log</code></pre></p>
-<hr/>
-<h2 id="_14">Работа с кэшем</h2>
-<p>Кэширование включено по умолчанию. Используется два файла в <code>.ai_docs_cache/</code>:</p>
+<hr />
+<h3 id="_11">Каталоги и артефакты</h3>
+<p>После запуска создаются:</p>
 <ul>
-<li><code>index.json</code> — хэши файлов и метаданные (для отслеживания изменений)</li>
-<li><code>llm_cache.json</code> — ответы LLM (ключ — SHA256 от payload)</li>
+<li><code>.ai-docs/</code> — промежуточные данные:</li>
+<li><code>_index.json</code> — навигационный индекс, приоритеты модулей;</li>
+<li><code>changes.md</code> — отчёт об изменениях;</li>
+<li><code>modules/</code>, <code>configs/</code> — описания файлов.</li>
+<li><code>.ai_docs_cache/</code> — кэш:</li>
+<li><code>index.json</code> — хэши файлов;</li>
+<li><code>llm_cache.json</code> — закэшированные ответы LLM.</li>
+<li><code>docs/</code> — выходная документация MkDocs.</li>
+<li><code>README.md</code> — основной файл описания проекта.</li>
+<li><code>mkdocs.yml</code> — конфигурация сайта.</li>
 </ul>
-<p>При повторном запуске:
-- Неизменённые файлы не перепроцессируются.
-- Повторные LLM-запросы возвращаются из кэша.</p>
-<p>Отключить: <code>--no-cache</code>.</p>
-<hr/>
-<h2 id="_15">Поддерживаемые домены</h2>
-<p>Автоматически определяются по наличию характерных файлов:</p>
-<table>
-<thead>
-<tr>
-<th>Домен</th>
-<th>Файлы</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Kubernetes</td>
-<td><code>k8s.yaml</code>, <code>deployment.yaml</code></td>
-</tr>
-<tr>
-<td>Helm</td>
-<td><code>Chart.yaml</code>, <code>values.yaml</code></td>
-</tr>
-<tr>
-<td>Terraform</td>
-<td><code>.tf</code>, <code>terraform.tfstate</code></td>
-</tr>
-<tr>
-<td>Docker</td>
-<td><code>Dockerfile</code>, <code>docker-compose.yml</code></td>
-</tr>
-<tr>
-<td>CI/CD</td>
-<td><code>.gitlab-ci.yml</code>, <code>.github/workflows/</code></td>
-</tr>
-<tr>
-<td>Python</td>
-<td><code>pyproject.toml</code>, <code>requirements.txt</code></td>
-</tr>
-<tr>
-<td>Node.js</td>
-<td><code>package.json</code>, <code>npm</code>/<code>yarn</code>-файлы</td>
-</tr>
-</tbody>
-</table>
-<p>Используется для формирования разделов в документации.</p>
-<hr/>
-<h2 id="_16">Структура документации</h2>
-<p>Сгенерированная документация в <code>.ai-docs/</code> включает:</p>
-<pre class="highlight"><code>.ai-docs/
-├── index.md               # Обзор проекта
-├── architecture.md        # Архитектура (с Mermaid-диаграммами)
-├── dependencies.md        # Зависимости
-├── testing.md             # Тестирование
-├── changes.md             # История изменений
-├── glossary.md            # Глоссарий
-├── modules/               # Описание модулей
-├── configs/               # Описание конфигураций
-└── _index.json            # Навигационный индекс</code></pre>
-<p><code>_index.json</code> используется для построения навигации в MkDocs.</p>
-<hr/>
-<h2 id="_17">Сборка сайта</h2>
-<p>После генерации:</p>
-<pre class="highlight"><code class="language-bash">mkdocs build -f mkdocs.yml</code></pre>
-<p>Сайт будет доступен в <code>ai_docs_site/</code>.</p>
-<p>Для предпросмотра:</p>
-<pre class="highlight"><code class="language-bash">mkdocs serve -f mkdocs.yml</code></pre>
-<hr/>
-<h2 id="_18">Разработка</h2>
-<h3 id="_19">Зависимости</h3>
-<p>Указаны в <code>pyproject.toml</code>:
-- <code>requests</code>, <code>tiktoken</code>, <code>PyYAML</code>, <code>python-dotenv</code>
-- <code>mkdocs</code>, <code>mkdocs-mermaid2</code>, <code>pymdown-extensions</code></p>
-<h3 id="_20">Запуск в режиме разработки</h3>
-<pre class="highlight"><code class="language-bash">python -m ai_docs.cli --source . --readme</code></pre>
-<h3 id="_21">Тестирование</h3>
-<pre class="highlight"><code class="language-bash">pytest tests/</code></pre>
-<p>Тестируются:
-- Сканирование файлов
-- Кэширование (<code>CacheManager</code>)
-- Форматирование отчётов (<code>format_changes_md</code>)
-- Обработка игнорируемых файлов</p>
-<hr/>
-<h2 id="_22">Лицензия</h2>
-<p>MIT. Проект принимает PR и предложения.</p></div>
-</div>
-</div>
-<footer class="col-md-12">
-<hr/>
-<p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
-</footer>
-<script src="js/bootstrap.bundle.min.js"></script>
-<script>
+<blockquote>
+<p>Каталоги <code>.ai-docs</code> и <code>.ai_docs_cache</code> добавлены в <code>.gitignore</code> по умолчанию.</p>
+</blockquote>
+<hr />
+<h2 id="_12">Принципы работы</h2>
+<h3 id="1">1. Сканирование</h3>
+<ul>
+<li>Поддерживаются: локальные пути, <code>https://</code>, <code>git@</code>.</li>
+<li>При работе с URL — репозиторий клонируется во временный каталог.</li>
+<li>Фильтрация:</li>
+<li>Учитываются <code>.gitignore</code>, <code>.build_ignore</code>.</li>
+<li>Исключаются: <code>.git</code>, <code>__pycache__</code>, <code>node_modules</code>, <code>.venv</code>, <code>dist</code>, <code>build</code>.</li>
+<li>Ограничение по размеру: до 200 КБ на файл.</li>
+<li>Автоматическое определение типа файла: код, конфигурация, документация.</li>
+<li>Обнаружение доменов: Kubernetes, Helm, Terraform, Docker, CI/CD и др.</li>
+</ul>
+<h3 id="2">2. Генерация резюме</h3>
+<ul>
+<li>Для каждого файла вызывается <code>summarize_file()</code> с соответствующим промптом:</li>
+<li><code>SUMMARY_PROMPT</code> — базовое описание;</li>
+<li><code>MODULE_SUMMARY_PROMPT</code> — для модулей кода;</li>
+<li><code>CONFIG_SUMMARY_PROMPT</code> — для конфигураций.</li>
+<li>Длинные файлы разбиваются на чанки (<code>chunk_text</code>) с учётом лимита токенов.</li>
+<li>Вывод нормализуется: удаляются лишние символы, форматируется Markdown.</li>
+</ul>
+<h3 id="3">3. Кэширование</h3>
+<ul>
+<li><code>CacheManager</code> сравнивает хэши файлов (<code>sha256</code>) с предыдущим запуском.</li>
+<li>Определяет:</li>
+<li><code>added</code> — новые файлы;</li>
+<li><code>modified</code> — изменённые;</li>
+<li><code>deleted</code> — удалённые;</li>
+<li><code>unchanged</code> — без изменений.</li>
+<li>LLM-запросы кэшируются по хешу payload (SHA256).</li>
+<li>Кэш потокобезопасен.</li>
+</ul>
+<h3 id="4">4. Построение документации</h3>
+<ul>
+<li>Формируется <code>mkdocs.yml</code>:</li>
+<li>Поддержка Mermaid, таблиц, поиска;</li>
+<li>Многоуровневая навигация через <code>_build_tree_nav</code>.</li>
+<li>Генерируются разделы:</li>
+<li>Архитектура (с диаграммами);</li>
+<li>Зависимости (из <code>pyproject.toml</code>, <code>package.json</code>, <code>requirements.txt</code>);</li>
+<li>Тестирование;</li>
+<li>Изменения (<code>changes.md</code>).</li>
+<li>Все файлы записываются в <code>docs/</code> с сохранением структуры.</li>
+</ul>
+<hr />
+<h2 id="cicd">Интеграция в CI/CD</h2>
+<p>Пример для GitHub Actions:</p>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Generate Docs</span>
+<span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">    </span><span class="no">pip install ai-docs-gen</span>
+<span class="w">    </span><span class="no">ai-docs --source . --readme --mkdocs --language ru</span>
+<span class="w">  </span><span class="nt">env</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">OPENAI_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.OPENAI_API_KEY }}</span>
+</code></pre></div>
+<blockquote>
+<p>Рекомендуется запускать при каждом коммите в <code>main</code>, чтобы поддерживать документацию в актуальном состоянии.</p>
+</blockquote>
+<hr />
+<h2 id="_13">Разработка и вклад</h2>
+<h3 id="_14">Запуск для отладки</h3>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>ai_docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--readme<span class="w"> </span>--mkdocs
+</code></pre></div>
+<h3 id="_15">Тестирование</h3>
+<div class="highlight"><pre><span></span><code>pytest<span class="w"> </span>tests/
+</code></pre></div>
+<p>Тесты покрывают:
+- Сканирование файлов;
+- Работу кэша;
+- Форматирование отчётов;
+- Генерацию конфигурации MkDocs.</p>
+<h3 id="_16">Вклад</h3>
+<p>Приветствуются:
+- Исправления ошибок;
+- Добавление поддержки новых технологий;
+- Улучшение промптов;
+- Расширение документации.</p>
+<p>Лицензия: <strong>MIT</strong>.</p>
+<hr />
+<h2 id="_17">Ограничения</h2>
+<ul>
+<li>Требуется доступ к LLM с API, совместимым с OpenAI.</li>
+<li>Не обрабатывает бинарные файлы.</li>
+<li>Максимальный размер файла — 200 КБ (настраивается).</li>
+<li>Для больших проектов может потребоваться увеличение <code>AI_DOCS_THREADS</code> и времени выполнения.</li>
+</ul>
+<hr />
+<h2 id="_18">Поддержка</h2>
+<p>Для вопросов и предложений используйте Issues и Pull Requests в репозитории проекта.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="js/bootstrap.bundle.min.js"></script>
+        <script>
             var base_url = ".",
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
-<script src="js/base.js"></script>
-<script src="search/main.js"></script>
-<div aria-hidden="true" aria-labelledby="searchModalLabel" class="modal" id="mkdocs_search_modal" role="dialog" tabindex="-1">
-<div class="modal-dialog modal-lg">
-<div class="modal-content">
-<div class="modal-header">
-<h4 class="modal-title" id="searchModalLabel">Search</h4>
-<button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+        <script src="js/base.js"></script>
+        <script src="search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
 </div>
-<div class="modal-body">
-<p>From here you can search these documents. Enter your search terms below.</p>
-<form>
-<div class="form-group">
-<input class="form-control" id="mkdocs-search-query" placeholder="Search..." title="Type search term here" type="search"/>
-</div>
-</form>
-<div data-no-results-text="No results found" id="mkdocs-search-results"></div>
-</div>
-<div class="modal-footer">
-</div>
-</div>
-</div>
-</div><div aria-hidden="true" aria-labelledby="keyboardModalLabel" class="modal" id="mkdocs_keyboard_modal" role="dialog" tabindex="-1">
-<div class="modal-dialog">
-<div class="modal-content">
-<div class="modal-header">
-<h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
-<button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
-</div>
-<div class="modal-body">
-<table class="table">
-<thead>
-<tr>
-<th style="width: 20%;">Keys</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="help shortcut"><kbd>?</kbd></td>
-<td>Open this help</td>
-</tr>
-<tr>
-<td class="next shortcut"><kbd>n</kbd></td>
-<td>Next page</td>
-</tr>
-<tr>
-<td class="prev shortcut"><kbd>p</kbd></td>
-<td>Previous page</td>
-</tr>
-<tr>
-<td class="search shortcut"><kbd>s</kbd></td>
-<td>Search</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="modal-footer">
-</div>
-</div>
-</div>
-</div>
-</body>
+
+    </body>
 </html>
+
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2026-02-01 18:51:06.966601+00:00
+Build Date UTC : 2026-02-01 20:14:05.587069+00:00
 -->
