@@ -246,24 +246,26 @@ def generate_docs(
         print(f"[ai-docs] summarize: {len(to_summarize)} changed files (threads={threads})")
     if threads > 1 and to_summarize:
         with ThreadPoolExecutor(max_workers=threads) as executor:
-            futures = {
-                executor.submit(
-                    summarize_file,
-                    meta["content"],
-                    meta["type"],
-                    meta["domains"],
-                    llm,
-                    llm_cache,
-                    llm.model,
-                    False,
-                ): (path, meta)
-                for path, meta in to_summarize
-            }
+            futures = {}
+            print(f"[ai-docs] summarize: queued {len(to_summarize)} tasks (workers={threads})")
+            for path, meta in to_summarize:
+                print(f"[ai-docs] summarize start: {path}")
+                futures[
+                    executor.submit(
+                        summarize_file,
+                        meta["content"],
+                        meta["type"],
+                        meta["domains"],
+                        llm,
+                        llm_cache,
+                        llm.model,
+                        False,
+                    )
+                ] = (path, meta)
             total = len(futures)
             done = 0
             for future in as_completed(futures):
                 path, meta = futures[future]
-                print(f"[ai-docs] summarize start: {path}")
                 try:
                     summary = future.result()
                 except Exception as exc:
@@ -381,23 +383,25 @@ def generate_docs(
         print(f"[ai-docs] summarize: {len(missing_summaries)} missing summaries")
         if threads > 1:
             with ThreadPoolExecutor(max_workers=threads) as executor:
-                futures = {
-                    executor.submit(
-                        summarize_file,
-                        meta["content"],
-                        meta["type"],
-                        meta["domains"],
-                        llm,
-                        llm_cache,
-                        llm.model,
-                    ): (path, meta)
-                    for path, meta in missing_summaries
-                }
+                futures = {}
+                print(f"[ai-docs] summarize: queued {len(missing_summaries)} tasks (workers={threads})")
+                for path, meta in missing_summaries:
+                    print(f"[ai-docs] summarize start: {path}")
+                    futures[
+                        executor.submit(
+                            summarize_file,
+                            meta["content"],
+                            meta["type"],
+                            meta["domains"],
+                            llm,
+                            llm_cache,
+                            llm.model,
+                        )
+                    ] = (path, meta)
                 total = len(futures)
                 done = 0
                 for future in as_completed(futures):
                     path, meta = futures[future]
-                    print(f"[ai-docs] summarize start: {path}")
                     try:
                         summary = future.result()
                     except Exception as exc:
