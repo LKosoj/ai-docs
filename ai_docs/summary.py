@@ -133,12 +133,36 @@ def _normalize_module_summary(
 
 def _normalize_config_summary(summary: str, llm_client, llm_cache: Dict[str, str]) -> str:
     if not _needs_doxygen_fix(summary):
-        return summary
+        return _format_config_blocks(summary)
     messages = [
         {"role": "system", "content": CONFIG_SUMMARY_REFORMAT_PROMPT},
         {"role": "user", "content": summary},
     ]
-    return llm_client.chat(messages, cache=llm_cache).strip()
+    return _format_config_blocks(llm_client.chat(messages, cache=llm_cache).strip())
+
+
+def _format_config_blocks(text: str) -> str:
+    lines = [line.rstrip() for line in text.strip().splitlines() if line.strip()]
+    if not lines:
+        return text.strip()
+    output: List[str] = []
+    i = 0
+    headers = {"Секции и ключи", "Важные параметры"}
+    while i < len(lines):
+        line = lines[i].strip()
+        if line in headers:
+            entries: List[str] = []
+            i += 1
+            while i < len(lines) and lines[i].strip() not in headers:
+                entries.append(lines[i].strip())
+                i += 1
+            output.append(line)
+            if entries:
+                output.append("<br>\n".join(entries))
+            continue
+        output.append(line)
+        i += 1
+    return "\n\n".join(output).strip()
 
 
 def _strip_fenced_markdown(text: str) -> str:
