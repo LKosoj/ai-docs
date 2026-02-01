@@ -1,6 +1,6 @@
 # ai_docs — technical documentation generator
 
-Russian version: README.md
+ [Русская версия](README.md) | [English version](README_EN.md)
 
 ## Overview
 `ai_docs` is a CLI tool for generating technical documentation from code and configuration files.
