@@ -99,7 +99,7 @@ python -m ai_docs --source . --mkdocs --local-site
 Если в проекте есть файл `.ai-docs.yaml`, он задаёт приоритетный список расширений для сканирования.
 Если файла нет, он создаётся автоматически на основе текущих `*_EXTENSIONS`.
 
-Формат:
+Формат (поддерживаются map и list для расширений):
 ```yaml
 code_extensions:
   .py: Python
@@ -110,6 +110,9 @@ doc_extensions:
 config_extensions:
   .yml: YAML
   .json: JSON
+exclude:
+  - "temp/*"
+  - "*.log"
 ```
 
 ## CLI‑параметры
