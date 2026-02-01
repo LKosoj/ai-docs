@@ -77,7 +77,7 @@
 </li>
                                     
   <li class="dropdown-submenu">
-    <a href="#" class="dropdown-item">ai_docs</a>
+    <a href="#" class="dropdown-item">/ai_docs</a>
     <ul class="dropdown-menu">
             
 <li>
@@ -176,31 +176,31 @@
             
             <li class="nav-item" data-bs-level="1"><a href="#_1" class="nav-link">Соглашения</a>
               <ul class="nav flex-column">
-            <li class="nav-item" data-bs-level="2"><a href="#_2" class="nav-link">Именование и структура файлов</a>
+            <li class="nav-item" data-bs-level="2"><a href="#_2" class="nav-link">Структура проекта</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#_3" class="nav-link">Классификация файлов</a>
+            <li class="nav-item" data-bs-level="2"><a href="#_3" class="nav-link">Именование и пути</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#_4" class="nav-link">Соглашения по обработке</a>
+            <li class="nav-item" data-bs-level="2"><a href="#_4" class="nav-link">Классификация файлов</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#_5" class="nav-link">Соглашения по кэшированию</a>
+            <li class="nav-item" data-bs-level="2"><a href="#_5" class="nav-link">Формат вывода</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#_6" class="nav-link">Соглашения по генерации контента</a>
+            <li class="nav-item" data-bs-level="2"><a href="#_6" class="nav-link">Обработка изменений</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#mkdocs" class="nav-link">Соглашения по навигации MkDocs</a>
+            <li class="nav-item" data-bs-level="2"><a href="#_7" class="nav-link">Работа с кэшем</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#_7" class="nav-link">Соглашения по логированию и отладке</a>
+            <li class="nav-item" data-bs-level="2"><a href="#_8" class="nav-link">Язык и локализация</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -213,103 +213,90 @@
 
 <h1 id="_1">Соглашения</h1>
 <p>В проекте используются единые соглашения по структуре, именованию и обработке файлов для обеспечения предсказуемости и автоматизации генерации документации.</p>
-<h2 id="_2">Именование и структура файлов</h2>
+<h2 id="_2">Структура проекта</h2>
 <ul>
-<li>
-<p><strong>Документация по модулям</strong>:<br />
-  Файлы размещаются в <code>.ai-docs/modules/</code>.<br />
-  Имя файла — slug-версия исходного пути (например, <code>src__utils__helpers.py.md</code> для <code>src/utils/helpers.py</code>).<br />
-  Замена <code>/</code> → <code>__</code>, удаление недопустимых символов.</p>
-</li>
-<li>
-<p><strong>Документация по конфигурациям</strong>:<br />
-  Файлы — в <code>.ai-docs/configs/</code>.<br />
-  Аналогичное именование: <code>Dockerfile.md</code>, <code>k8s__deploy.yaml.md</code>.</p>
-</li>
-<li>
-<p><strong>Главная страница</strong>:<br />
-<code>.ai-docs/index.md</code> — вводный раздел сайта MkDocs.<br />
-<code>README.md</code> — краткое описание проекта в корне.</p>
-</li>
-<li>
-<p><strong>Навигация</strong>:<br />
-<code>.ai-docs/_index.json</code> — JSON-индекс с приоритетами, типами и путями модулей. Используется для построения <code>nav</code> в <code>mkdocs.yml</code>.</p>
-</li>
+<li><code>.ai-docs/</code> — корневая директория сгенерированной документации:</li>
+<li><code>modules/</code> — описания модулей (по одному <code>.md</code> на файл кода).</li>
+<li><code>configs/</code> — документация по конфигурационным файлам.</li>
+<li><code>_index.json</code> — навигационный индекс с метаданными и приоритетами.</li>
+<li><code>docs/</code> — финальная документация для MkDocs (копия <code>.ai-docs/</code> при сборке).</li>
+<li><code>.ai_docs_cache/</code> — кэш LLM-запросов и хэшей файлов (<code>llm_cache.json</code>, <code>index.json</code>).</li>
+<li><code>mkdocs.yml</code> — конфигурация сайта, генерируется автоматически.</li>
+<li><code>ai_docs_site/</code> — результат выполнения <code>mkdocs build</code>.</li>
 </ul>
-<h2 id="_3">Классификация файлов</h2>
-<p>Тип файла определяется по расширению, имени и пути:</p>
-<table>
-<thead>
-<tr>
-<th>Тип</th>
-<th>Критерии</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>code</code></td>
-<td>Расширения из <code>CODE_EXTENSIONS</code> (<code>.py</code>, <code>.js</code>, <code>.go</code> и др.)</td>
-</tr>
-<tr>
-<td><code>config</code></td>
-<td>Из <code>CONFIG_EXTENSIONS</code> (<code>.yaml</code>, <code>.toml</code>, <code>.json</code>) или ключевые имена (<code>Dockerfile</code>, <code>Makefile</code>)</td>
-</tr>
-<tr>
-<td><code>doc</code></td>
-<td><code>.md</code>, <code>.rst</code>, <code>.txt</code></td>
-</tr>
-<tr>
-<td><code>test</code></td>
-<td>Содержит <code>test</code> в имени или пути</td>
-</tr>
-</tbody>
-</table>
-<p>Домены (инфраструктура) определяются по:
-- <code>TERRAFORM_EXTENSIONS</code>, <code>K8S_FILENAMES</code>, <code>HELM_FILENAMES</code>, <code>DOCKER_FILENAMES</code>
-- Наличию <code>requirements.txt</code>, <code>pyproject.toml</code>, <code>package.json</code> — для Python/JS</p>
-<h2 id="_4">Соглашения по обработке</h2>
+<h2 id="_3">Именование и пути</h2>
 <ul>
-<li><strong>Максимальный размер файла</strong>: 200 КБ. Превышение — пропуск с логом.</li>
-<li><strong>Бинарные файлы</strong>: определяются по наличию нулевых байтов. Не читаются.</li>
-<li><strong>Кодировка</strong>: все текстовые файлы читаются как UTF-8. Ошибки заменяются.</li>
-<li><strong>Игнорирование</strong>:<br />
-  Учитываются:</li>
-<li><code>.gitignore</code></li>
-<li><code>.build_ignore</code></li>
-<li><code>.ai-docs.yaml</code> → <code>exclude</code></li>
-<li>Стандартные паттерны: <code>.venv</code>, <code>node_modules</code>, <code>__pycache__</code>, <code>dist</code>, <code>build</code>, <code>.ai-docs</code>, <code>.ai_docs_cache</code></li>
+<li>Имена файлов документации нормализуются:</li>
+<li>Замена <code>/</code>, <code>\</code>, <code>.</code> на <code>-</code>.</li>
+<li>Преобразование в lowercase.</li>
+<li>Пример: <code>src/utils/helper.py</code> → <code>modules/src-utils-helper.md</code>.</li>
+<li>Slug-идентификаторы генерируются через <code>slugify()</code> с использованием только допустимых ASCII-символов.</li>
+<li>Все пути в <code>_index.json</code> и навигации используют POSIX-формат (<code>/</code>), даже на Windows.</li>
 </ul>
-<h2 id="_5">Соглашения по кэшированию</h2>
+<h2 id="_4">Классификация файлов</h2>
+<p>Тип файла определяется по расширению, имени и пути:
+- <strong>Код</strong>: <code>*.py</code>, <code>*.js</code>, <code>*.go</code> и др. из <code>CODE_EXTENSIONS</code>.
+- <strong>Конфигурации</strong>: <code>*.yaml</code>, <code>*.toml</code>, <code>*.tf</code>, <code>.env</code> и др. из <code>CONFIG_EXTENSIONS</code>.
+- <strong>Документация</strong>: <code>*.md</code>, <code>README*</code>, <code>CHANGELOG*</code>.
+- <strong>CI/CD</strong>: файлы с именами <code>Dockerfile</code>, <code>.gitlab-ci.yml</code>, <code>Jenkinsfile</code> и др.</p>
+<p>Домены (инфраструктура) определяются по ключевым файлам:
+- <code>Kubernetes</code>: <code>*.yaml</code> с <code>apiVersion: v1</code>, <code>kustomization.yaml</code>.
+- <code>Terraform</code>: <code>*.tf</code>, <code>terraform.tfstate</code>.
+- <code>Helm</code>: <code>Chart.yaml</code>, <code>templates/</code>.
+- <code>Docker</code>: <code>Dockerfile</code>, <code>docker-compose.yml</code>.</p>
+<h2 id="_5">Формат вывода</h2>
 <ul>
-<li>Кэш LLM-запросов: <code>.ai_docs_cache/llm_cache.json</code><br />
-  Ключ — SHA256 от сериализованного payload.</li>
-<li>Индекс файлов: <code>.ai_docs_cache/index.json</code><br />
-  Хранит хэши (SHA-256) и метаданные. Используется для инкрементальной обработки.</li>
-<li>При запуске с <code>--no-cache</code> кэш не используется, но не удаляется.</li>
+<li>Все сгенерированные <code>.md</code>-файлы:</li>
+<li>В UTF-8.</li>
+<li>С заголовком первого уровня (<code>#</code>) — название файла или модуля.</li>
+<li>С разметкой Mermaid для диаграмм (в разделе архитектуры).</li>
+<li>С переносами строк в Unix-стиле (<code>\n</code>).</li>
+<li><code>_index.json</code> содержит:
+  <pre class="highlight"><code class="language-json">{
+  "files": {
+    "relative/path/file.py": {
+      "type": "code",
+      "domains": ["terraform", "ci_cd"],
+      "hash": "sha256...",
+      "summary_path": "modules/..."
+    }
+  },
+  "navigation": [...]
+}</code></pre></li>
 </ul>
-<h2 id="_6">Соглашения по генерации контента</h2>
+<h2 id="_6">Обработка изменений</h2>
 <ul>
-<li><strong>Язык</strong>: по умолчанию <code>ru</code>, задаётся через <code>--language</code> или <code>AI_DOCS_LANGUAGE</code>.</li>
-<li><strong>Заголовки разделов</strong>: локализованы через <code>SECTION_TITLES</code>, <code>DOMAIN_TITLES</code>.</li>
-<li><strong>Шаблоны промптов</strong>:  </li>
-<li><code>SUMMARY_PROMPT</code> — общий обзор файла.  </li>
-<li><code>MODULE_SUMMARY_PROMPT</code> — для модулей кода.  </li>
-<li><code>CONFIG_SUMMARY_PROMPT</code> — для конфигураций.<br />
-  Все шаблоны поддерживают переменные: <code>{content}</code>, <code>{path}</code>, <code>{type}</code>, <code>{domains}</code>.</li>
+<li>При запуске <code>ai_docs</code>:</li>
+<li>Сравнивается хэш каждого файла с <code>index.json</code>.</li>
+<li>Определяются: <code>added</code>, <code>modified</code>, <code>deleted</code>.</li>
+<li>Перегенерируются только затронутые файлы и зависимые разделы (например, <code>dependencies.md</code>).</li>
+<li>В <code>changes.md</code> фиксируются:</li>
+<li>Списки изменённых файлов.</li>
+<li>Перегенерированные разделы.</li>
+<li>Итоговое резюме изменений в Markdown.</li>
 </ul>
-<h2 id="mkdocs">Соглашения по навигации MkDocs</h2>
+<h2 id="_7">Работа с кэшем</h2>
 <ul>
-<li>Структура <code>nav</code> в <code>mkdocs.yml</code> строится динамически:</li>
-<li>Группировка через <code>__</code> в именах файлов: <code>auth__login.py.md</code> → <code>Авторизация / Вход</code>.</li>
-<li>Стандартные разделы: Главная, Архитектура, Зависимости, Тестирование, Изменения.</li>
-<li>Авто-добавление доменных разделов: Kubernetes, Helm, Terraform — при обнаружении.</li>
+<li>Кэширование LLM-запросов:</li>
+<li>Ключ — SHA256 от сериализованного payload.</li>
+<li>Хранится в <code>.ai_docs_cache/llm_cache.json</code>.</li>
+<li>Потокобезопасная запись через <code>threading.Lock</code>.</li>
+<li>Кэш файлов (<code>index.json</code>):</li>
+<li>Содержит хэши и метаданные.</li>
+<li>Используется для инкрементальной обработки.</li>
+<li>Обновляется после успешной генерации.</li>
 </ul>
-<h2 id="_7">Соглашения по логированию и отладке</h2>
+<h2 id="_8">Язык и локализация</h2>
 <ul>
-<li>Прогресс отображается в реальном времени (через <code>tqdm</code> при многопоточной обработке).</li>
-<li>Ошибки чтения/обработки файла — логируются, но не прерывают выполнение.</li>
-<li>Для отладки: запуск через <code>python -m ai_docs.cli ...</code> с <code>--verbose</code> (если реализовано).</li>
-</ul></div>
+<li>Язык документации задаётся через <code>--language</code> (по умолчанию <code>ru</code>).</li>
+<li>Все заголовки и шаблоны берутся из <code>SECTION_TITLES</code> и <code>DOMAIN_TITLES</code> по языку.</li>
+<li>Пример:
+  <pre class="highlight"><code class="language-python">SECTION_TITLES = {
+    "ru": {"architecture": "Архитектура"},
+    "en": {"architecture": "Architecture"}
+}</code></pre></li>
+</ul>
+<p>Соблюдение этих соглашений позволяет системе корректно анализировать, кэшировать и обновлять документацию без ручного вмешательства.</p></div>
             </div>
         </div>
 

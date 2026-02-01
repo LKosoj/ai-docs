@@ -26,7 +26,7 @@ nav:
   - pyproject.toml: configs/files/pyproject__toml.md
 - Модули:
   - Обзор: modules/index.md
-  - ai_docs:
+  - /ai_docs:
     - __init__.py: modules/ai_docs/__init____py.md
     - __main__.py: modules/ai_docs/__main____py.md
     - cache.py: modules/ai_docs/cache__py.md

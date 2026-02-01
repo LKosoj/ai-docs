@@ -70,7 +70,7 @@
 <a class="dropdown-item" href="modules/index.html">Обзор</a>
 </li>
 <li class="dropdown-submenu">
-<a class="dropdown-item" href="#">ai_docs</a>
+<a class="dropdown-item" href="#">/ai_docs</a>
 <ul class="dropdown-menu">
 <li>
 <a class="dropdown-item" href="modules/ai_docs/__init____py.html">__init__.py</a>
@@ -155,35 +155,43 @@
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Архитектура и компоненты</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Установка и запуск</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_4">Работа с инструментом</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_6">Основные команды</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_8">Конфигурация</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_11">Артефакты</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_9">Генерируемые артефакты</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_12">Конфигурация</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_10">Игнорируемые файлы</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_14">Работа с кэшем</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_11">Сборка сайта</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_15">Поддерживаемые домены</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_12">Разработка</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_16">Структура документации</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_16">Лицензия</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_17">Сборка сайта</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_18">Разработка</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_22">Лицензия</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -195,175 +203,89 @@
 <div class="col-md-9" role="main">
 <h1 id="_1">Документация проекта</h1>
 <h2 id="_2">Обзор</h2>
-<p><code>ai_docs</code> — это CLI-инструмент для автоматической генерации технической документации на основе анализа исходного кода и конфигурационных файлов. Инструмент поддерживает локальные директории и Git-репозитории (локальные и удалённые), а также генерирует как краткую документацию в формате <code>README.md</code>, так и полноценный сайт документации с использованием MkDocs.</p>
-<p>Основная цель — минимизация ручного труда при поддержке актуальной, структурированной и локализованной документации.</p>
+<p><code>ai_docs</code> — это CLI-инструмент для автоматической генерации технической документации на основе анализа исходного кода, конфигураций и структуры проекта. Поддерживает локальные директории и Git-репозитории (включая удалённые по URL). Результатом работы являются:</p>
+<ul>
+<li><code>README.md</code> — краткое описание проекта;</li>
+<li>полноценный сайт документации на MkDocs (в <code>ai_docs_site/</code>);</li>
+<li>структурированная документация в <code>.ai-docs/</code>.</li>
+</ul>
+<p>Инструмент использует LLM для анализа и генерации текста, поддерживает кэширование, инкрементальную обработку и многопоточность.</p>
 <hr/>
-<h2 id="_3">Архитектура и компоненты</h2>
-<h3 id="1-ai_docsscanner">1. Сканирование файлов (<code>ai_docs.scanner</code>)</h3>
-<ul>
-<li><strong>Назначение</strong>: рекурсивный обход файловой системы с фильтрацией.</li>
-<li><strong>Поддержка источников</strong>:</li>
-<li>Локальные пути.</li>
-<li>URL Git-репозиториев (клонируются во временные каталоги).</li>
-<li><strong>Фильтрация</strong>:</li>
-<li>Учитывает <code>.gitignore</code>, <code>.build_ignore</code>.</li>
-<li>Применяет <code>include</code>/<code>exclude</code> из CLI и <code>.ai-docs.yaml</code>.</li>
-<li>Ограничивает размер файлов (<code>--max-size</code>, по умолчанию 200 КБ).</li>
-<li><strong>Результат</strong>: объект <code>ScanResult</code> с метаданными по каждому файлу (путь, тип, домен, хэш).</li>
-</ul>
-<h3 id="2">2. Определение доменов и типов</h3>
-<ul>
-<li><strong>Классификация</strong>:</li>
-<li><code>classify_type()</code>: определяет тип файла (код, конфигурация, документация).</li>
-<li><code>detect_domains()</code>: распознаёт домены (Kubernetes, Terraform, Docker, CI/CD) по расширениям и именам.</li>
-<li><strong>Базовые наборы</strong>:</li>
-<li><code>CODE_EXTENSIONS</code>, <code>CONFIG_EXTENSIONS</code>, <code>CI_FILENAMES</code>, <code>DOCKER_FILENAMES</code> и др.</li>
-<li><strong>Кастомизация</strong>: через <code>.ai-docs.yaml</code>.</li>
-</ul>
-<h3 id="3-ai_docsgenerator">3. Генерация документации (<code>ai_docs.generator</code>)</h3>
-<ul>
-<li><strong>Основные функции</strong>:</li>
-<li><code>summarize_file()</code>: генерирует краткое описание файла с помощью LLM.</li>
-<li>Поддержка чанкинга: большие файлы разбиваются на части, суммируются, затем объединяются.</li>
-<li>Нормализация вывода: удаление лишних markdown-элементов, приведение к единому формату.</li>
-<li><strong>Разделы документации</strong>:</li>
-<li>Архитектура (с диаграммами Mermaid).</li>
-<li>Зависимости.</li>
-<li>Тестирование.</li>
-<li>Изменения (<code>changes.md</code>).</li>
-<li>Глоссарий.</li>
-</ul>
-<h3 id="4-ai_docscache">4. Кэширование (<code>ai_docs.cache</code>)</h3>
-<ul>
-<li><strong>Менеджер кэша</strong>:</li>
-<li><code>CacheManager</code> отслеживает изменения файлов через <code>index.json</code>.</li>
-<li><code>llm_cache.json</code> хранит ответы LLM по хешу запроса.</li>
-<li><strong>Оптимизация</strong>:</li>
-<li>Повторные запуски обрабатывают только изменённые файлы.</li>
-<li>Кэш потокобезопасен (<code>threading.Lock</code>).</li>
-<li><strong>Управление</strong>: <code>--no-cache</code> отключает кэширование.</li>
-</ul>
-<h3 id="5-llm-ai_docsllm">5. LLM-клиент (<code>ai_docs.llm</code>)</h3>
-<ul>
-<li><strong>Функции</strong>:</li>
-<li><code>LLMClient</code>: отправка запросов к OpenAI-совместимым API.</li>
-<li>Поддержка кастомных <code>base_url</code> (например, для локальных моделей).</li>
-<li><strong>Параметры</strong>:</li>
-<li><code>model</code>, <code>temperature</code>, <code>max_tokens</code>, <code>context_limit</code>.</li>
-<li>Таймауты: 120 с (подключение), 480 с (ответ).</li>
-<li><strong>Кэширование</strong>: на основе SHA256 от payload.</li>
-</ul>
-<h3 id="6-mkdocs-ai_docsmkdocs">6. Генерация MkDocs (<code>ai_docs.mkdocs</code>)</h3>
-<ul>
-<li><strong>Функции</strong>:</li>
-<li><code>build_mkdocs_yaml()</code>: формирует <code>mkdocs.yml</code> с динамической навигацией.</li>
-<li><code>write_docs_files()</code>: записывает <code>.md</code>-файлы в <code>.ai-docs/</code>.</li>
-<li><strong>Навигация</strong>:</li>
-<li>Автоматическое построение дерева по структуре <code>docs/</code>.</li>
-<li>Группировка через <code>__</code> в именах файлов (например, <code>modules__network.md</code> → вложенность).</li>
-<li><strong>Плагины</strong>:</li>
-<li><code>search</code>, <code>mermaid2</code> (диаграммы), расширенные Markdown-расширения.</li>
-</ul>
-<h3 id="7-ai_docstokenizer">7. Токенизация (<code>ai_docs.tokenizer</code>)</h3>
-<ul>
-<li><strong>Функции</strong>:</li>
-<li><code>count_tokens()</code>: подсчёт токенов с учётом модели.</li>
-<li><code>chunk_text()</code>: разбиение текста на части по лимиту токенов.</li>
-<li><strong>Библиотека</strong>: <code>tiktoken</code>.</li>
-<li><strong>Использование</strong>: контроль длины контекста при запросах к LLM.</li>
-</ul>
-<hr/>
-<h2 id="_4">Работа с инструментом</h2>
-<h3 id="_5">Установка</h3>
-<pre class="highlight"><code class="language-bash">pip install ai-docs</code></pre>
-<h3 id="_6">Базовое использование</h3>
+<h2 id="_3">Установка и запуск</h2>
+<h3 id="_4">Установка</h3>
+<pre class="highlight"><code class="language-bash">pip install ai-documentery</code></pre>
+<p>Или из исходников:</p>
+<pre class="highlight"><code class="language-bash">pip install -e .</code></pre>
+<h3 id="_5">Быстрый старт</h3>
 <pre class="highlight"><code class="language-bash">ai-docs --source . --readme --mkdocs --language ru</code></pre>
-<h3 id="cli">Параметры CLI</h3>
+<p>Сгенерирует <code>README.md</code> и сайт MkDocs на русском языке.</p>
+<hr/>
+<h2 id="_6">Основные команды</h2>
+<pre class="highlight"><code class="language-bash">ai-docs --source &lt;путь_или_url&gt; [опции]</code></pre>
+<h3 id="_7">Обязательный параметр</h3>
+<ul>
+<li><code>--source</code> — путь к локальной директории или URL Git-репозитория.</li>
+</ul>
+<h3 id="_8">Опции вывода</h3>
 <table>
 <thead>
 <tr>
 <th>Флаг</th>
-<th>Описание</th>
-<th>По умолчанию</th>
+<th>Назначение</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--source</code></td>
-<td>Путь или URL репозитория</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>--output</code></td>
-<td>Директория вывода</td>
-<td><code>.ai-docs/</code></td>
-</tr>
-<tr>
 <td><code>--readme</code></td>
 <td>Генерировать <code>README.md</code></td>
-<td><code>False</code></td>
 </tr>
 <tr>
 <td><code>--mkdocs</code></td>
-<td>Генерировать сайт MkDocs</td>
-<td><code>False</code></td>
+<td>Генерировать конфиг и структуру для MkDocs</td>
 </tr>
 <tr>
-<td><code>--language</code></td>
-<td>Язык документации (<code>ru</code>/<code>en</code>)</td>
-<td><code>ru</code></td>
-</tr>
-<tr>
-<td><code>--include</code></td>
-<td>Glob-шаблоны для включения</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>--exclude</code></td>
-<td>Glob-шаблоны для исключения</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>--max-size</code></td>
-<td>Макс. размер файла (байт)</td>
-<td>200000</td>
-</tr>
-<tr>
-<td><code>--threads</code></td>
-<td>Количество потоков</td>
-<td><code>AI_DOCS_THREADS</code> или 4</td>
-</tr>
-<tr>
-<td><code>--no-cache</code></td>
-<td>Отключить кэширование</td>
-<td><code>False</code></td>
-</tr>
-<tr>
-<td><code>--force</code></td>
-<td>Перезаписать <code>README.md</code></td>
-<td><code>False</code></td>
-</tr>
-<tr>
-<td><code>--local-site</code></td>
-<td>Режим локального сайта</td>
-<td><code>AI_DOCS_LOCAL_SITE</code></td>
+<td><code>--output DIR</code></td>
+<td>Каталог вывода (по умолчанию: <code>.</code> для README, <code>.ai-docs</code> для MkDocs)</td>
 </tr>
 </tbody>
 </table>
-<h3 id="_7">Переменные окружения</h3>
+<h3 id="_9">Фильтрация файлов</h3>
 <table>
 <thead>
 <tr>
-<th>Переменная</th>
+<th>Флаг</th>
 <th>Назначение</th>
-<th>По умолчанию</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--include GLOB</code></td>
+<td>Включить файлы по шаблону (можно указать несколько раз)</td>
+</tr>
+<tr>
+<td><code>--exclude GLOB</code></td>
+<td>Исключить файлы по шаблону (можно указать несколько раз)</td>
+</tr>
+<tr>
+<td><code>--max-size N</code></td>
+<td>Макс. размер файла в байтах (по умолчанию: 200 000)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="llm">Настройки LLM</h3>
+<table>
+<thead>
+<tr>
+<th>Переменная окружения</th>
+<th>Назначение</th>
+<th>Значение по умолчанию</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>OPENAI_API_KEY</code></td>
 <td>Ключ API</td>
-<td>Обязательна</td>
+<td>Обязательно</td>
 </tr>
 <tr>
 <td><code>OPENAI_BASE_URL</code></td>
@@ -372,7 +294,7 @@
 </tr>
 <tr>
 <td><code>OPENAI_MODEL</code></td>
-<td>Модель LLM</td>
+<td>Модель</td>
 <td><code>gpt-4o-mini</code></td>
 </tr>
 <tr>
@@ -386,39 +308,54 @@
 <td><code>1200</code></td>
 </tr>
 <tr>
+<td><code>OPENAI_CONTEXT_TOKENS</code></td>
+<td>Лимит контекста</td>
+<td><code>8192</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_10">Прочие опции</h3>
+<table>
+<thead>
+<tr>
+<th>Флаг / Переменная</th>
+<th>Назначение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--force</code></td>
+<td>Перезаписать существующий <code>README.md</code></td>
+</tr>
+<tr>
+<td><code>--no-cache</code></td>
+<td>Отключить кэширование LLM-запросов</td>
+</tr>
+<tr>
+<td><code>--threads N</code></td>
+<td>Количество потоков (по умолчанию: 4)</td>
+</tr>
+<tr>
 <td><code>AI_DOCS_THREADS</code></td>
-<td>Количество потоков</td>
-<td><code>4</code></td>
+<td>Альтернатива <code>--threads</code></td>
+</tr>
+<tr>
+<td><code>--local-site</code></td>
+<td>Настроить MkDocs для локального запуска</td>
 </tr>
 <tr>
 <td><code>AI_DOCS_LOCAL_SITE</code></td>
-<td>Локальный режим MkDocs</td>
-<td><code>False</code></td>
+<td>Альтернатива <code>--local-site</code></td>
+</tr>
+<tr>
+<td><code>--language ru/en</code></td>
+<td>Язык документации</td>
 </tr>
 </tbody>
 </table>
 <hr/>
-<h2 id="_8">Конфигурация</h2>
-<h3 id="ai-docsyaml"><code>.ai-docs.yaml</code></h3>
-<pre class="highlight"><code class="language-yaml">code_extensions:
-  - .py
-  - .js
-  - .go
-doc_extensions:
-  - .md
-  - .rst
-config_extensions:
-  - .yaml
-  - .toml
-exclude:
-  - .env.local
-  - temp/</code></pre>
-<ul>
-<li>Создаётся автоматически при отсутствии.</li>
-<li>Позволяет расширить стандартные наборы и исключения.</li>
-</ul>
-<hr/>
-<h2 id="_9">Генерируемые артефакты</h2>
+<h2 id="_11">Артефакты</h2>
+<p>После выполнения генерируются:</p>
 <table>
 <thead>
 <tr>
@@ -433,7 +370,7 @@ exclude:
 </tr>
 <tr>
 <td><code>.ai-docs/</code></td>
-<td>Полная документация (MkDocs)</td>
+<td>Полная документация (модули, конфиги, зависимости)</td>
 </tr>
 <tr>
 <td><code>mkdocs.yml</code></td>
@@ -441,49 +378,135 @@ exclude:
 </tr>
 <tr>
 <td><code>ai_docs_site/</code></td>
-<td>Собранный сайт (результат <code>mkdocs build</code>)</td>
+<td>Собранный сайт (после <code>mkdocs build</code>)</td>
 </tr>
 <tr>
 <td><code>.ai_docs_cache/</code></td>
-<td>Кэш файлов и LLM-ответов</td>
-</tr>
-<tr>
-<td><code>_index.json</code></td>
-<td>Навигационный индекс (приоритеты, структура)</td>
+<td>Кэш LLM-запросов и хэшей файлов</td>
 </tr>
 </tbody>
 </table>
 <hr/>
-<h2 id="_10">Игнорируемые файлы</h2>
+<h2 id="_12">Конфигурация</h2>
+<h3 id="ai-docsyaml"><code>.ai-docs.yaml</code></h3>
+<p>Позволяет кастомизировать поведение сканера:</p>
+<pre class="highlight"><code class="language-yaml">code_extensions:
+  - .py
+  - .js
+  - .go
+
+doc_extensions:
+  - .md
+  - .rst
+
+config_extensions:
+  - .yaml
+  - .toml
+
+exclude:
+  - temp/
+  - *.log</code></pre>
+<p>Если файл отсутствует — создаётся автоматически с настройками по умолчанию.</p>
+<h3 id="_13">Игнорируемые файлы</h3>
 <p>Учитываются:
 - <code>.gitignore</code>
 - <code>.build_ignore</code>
-- <code>.ai-docs.yaml</code> (поле <code>exclude</code>)
-- Стандартные паттерны: <code>.git</code>, <code>__pycache__</code>, <code>.venv</code>, <code>node_modules</code>, <code>dist</code>, <code>build</code>, <code>.ai-docs</code>, <code>.ai_docs_cache</code>, <code>ai_docs_site</code>.</p>
+- Настройки в <code>.ai-docs.yaml</code></p>
+<p>По умолчанию исключаются:
+<pre class="highlight"><code>.git, __pycache__, .venv, venv, node_modules, dist, build, 
+.ai-docs, .ai_docs_cache, ai_docs_site, *.pyc, *.log</code></pre></p>
 <hr/>
-<h2 id="_11">Сборка сайта</h2>
-<p><pre class="highlight"><code class="language-bash">mkdocs build -f mkdocs.yml</code></pre>
-- Вывод: <code>ai_docs_site/</code>
-- Для предпросмотра: <code>mkdocs serve -f mkdocs.yml</code></p>
+<h2 id="_14">Работа с кэшем</h2>
+<p>Кэширование включено по умолчанию. Используется два файла в <code>.ai_docs_cache/</code>:</p>
+<ul>
+<li><code>index.json</code> — хэши файлов и метаданные (для отслеживания изменений)</li>
+<li><code>llm_cache.json</code> — ответы LLM (ключ — SHA256 от payload)</li>
+</ul>
+<p>При повторном запуске:
+- Неизменённые файлы не перепроцессируются.
+- Повторные LLM-запросы возвращаются из кэша.</p>
+<p>Отключить: <code>--no-cache</code>.</p>
 <hr/>
-<h2 id="_12">Разработка</h2>
-<h3 id="_13">Зависимости</h3>
+<h2 id="_15">Поддерживаемые домены</h2>
+<p>Автоматически определяются по наличию характерных файлов:</p>
+<table>
+<thead>
+<tr>
+<th>Домен</th>
+<th>Файлы</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kubernetes</td>
+<td><code>k8s.yaml</code>, <code>deployment.yaml</code></td>
+</tr>
+<tr>
+<td>Helm</td>
+<td><code>Chart.yaml</code>, <code>values.yaml</code></td>
+</tr>
+<tr>
+<td>Terraform</td>
+<td><code>.tf</code>, <code>terraform.tfstate</code></td>
+</tr>
+<tr>
+<td>Docker</td>
+<td><code>Dockerfile</code>, <code>docker-compose.yml</code></td>
+</tr>
+<tr>
+<td>CI/CD</td>
+<td><code>.gitlab-ci.yml</code>, <code>.github/workflows/</code></td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>pyproject.toml</code>, <code>requirements.txt</code></td>
+</tr>
+<tr>
+<td>Node.js</td>
+<td><code>package.json</code>, <code>npm</code>/<code>yarn</code>-файлы</td>
+</tr>
+</tbody>
+</table>
+<p>Используется для формирования разделов в документации.</p>
+<hr/>
+<h2 id="_16">Структура документации</h2>
+<p>Сгенерированная документация в <code>.ai-docs/</code> включает:</p>
+<pre class="highlight"><code>.ai-docs/
+├── index.md               # Обзор проекта
+├── architecture.md        # Архитектура (с Mermaid-диаграммами)
+├── dependencies.md        # Зависимости
+├── testing.md             # Тестирование
+├── changes.md             # История изменений
+├── glossary.md            # Глоссарий
+├── modules/               # Описание модулей
+├── configs/               # Описание конфигураций
+└── _index.json            # Навигационный индекс</code></pre>
+<p><code>_index.json</code> используется для построения навигации в MkDocs.</p>
+<hr/>
+<h2 id="_17">Сборка сайта</h2>
+<p>После генерации:</p>
+<pre class="highlight"><code class="language-bash">mkdocs build -f mkdocs.yml</code></pre>
+<p>Сайт будет доступен в <code>ai_docs_site/</code>.</p>
+<p>Для предпросмотра:</p>
+<pre class="highlight"><code class="language-bash">mkdocs serve -f mkdocs.yml</code></pre>
+<hr/>
+<h2 id="_18">Разработка</h2>
+<h3 id="_19">Зависимости</h3>
 <p>Указаны в <code>pyproject.toml</code>:
-- <code>requests</code>, <code>tiktoken</code>, <code>PyYAML</code>, <code>mkdocs</code>, <code>mkdocs-material</code>, <code>pathspec</code>, <code>python-dotenv</code>.</p>
-<h3 id="_14">Точки входа</h3>
-<ul>
-<li>CLI: <code>ai_docs.cli:main</code></li>
-<li>Запуск: <code>python -m ai_docs</code> или <code>ai-docs</code></li>
-</ul>
-<h3 id="_15">Тестирование</h3>
-<ul>
-<li><code>test_scanner.py</code>: проверка фильтрации и сканирования.</li>
-<li><code>test_cache.py</code>: валидация <code>CacheManager.diff_files()</code>.</li>
-<li><code>test_changes.py</code>: проверка генерации <code>changes.md</code>.</li>
-</ul>
+- <code>requests</code>, <code>tiktoken</code>, <code>PyYAML</code>, <code>python-dotenv</code>
+- <code>mkdocs</code>, <code>mkdocs-mermaid2</code>, <code>pymdown-extensions</code></p>
+<h3 id="_20">Запуск в режиме разработки</h3>
+<pre class="highlight"><code class="language-bash">python -m ai_docs.cli --source . --readme</code></pre>
+<h3 id="_21">Тестирование</h3>
+<pre class="highlight"><code class="language-bash">pytest tests/</code></pre>
+<p>Тестируются:
+- Сканирование файлов
+- Кэширование (<code>CacheManager</code>)
+- Форматирование отчётов (<code>format_changes_md</code>)
+- Обработка игнорируемых файлов</p>
 <hr/>
-<h2 id="_16">Лицензия</h2>
-<p>MIT. Проект открыт для PR и предложений.</p></div>
+<h2 id="_22">Лицензия</h2>
+<p>MIT. Проект принимает PR и предложения.</p></div>
 </div>
 </div>
 <footer class="col-md-12">
@@ -561,5 +584,5 @@ exclude:
 </html>
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2026-02-01 18:39:23.061824+00:00
+Build Date UTC : 2026-02-01 18:51:06.966601+00:00
 -->

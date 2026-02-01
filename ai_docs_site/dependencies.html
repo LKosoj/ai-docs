@@ -69,7 +69,7 @@
 <a class="dropdown-item" href="modules/index.html">Обзор</a>
 </li>
 <li class="dropdown-submenu">
-<a class="dropdown-item" href="#">ai_docs</a>
+<a class="dropdown-item" href="#">/ai_docs</a>
 <ul class="dropdown-menu">
 <li>
 <a class="dropdown-item" href="modules/ai_docs/__init____py.html">__init__.py</a>
@@ -154,19 +154,19 @@
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Системные зависимости</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Опциональные зависимости</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Опциональные зависимости</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Управление зависимостями</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_4">Внешние инструменты</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_7">Особенности использования</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_5">Управление зависимостями</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_8">Системные требования</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -178,41 +178,42 @@
 <div class="col-md-9" role="main">
 <h1 id="_1">Зависимости</h1>
 <h2 id="pyprojecttoml">Основные зависимости (pyproject.toml)</h2>
-<p>Зависимости проекта определены в <code>pyproject.toml</code> и включают следующие ключевые пакеты:</p>
-<pre class="highlight"><code class="language-toml">dependencies = [
-    "requests",
-    "tiktoken",
-    "PyYAML",
-    "mkdocs",
-    "mkdocs-material",
-    "mkdocs-mermaid2-plugin",
-    "python-dotenv"
-]</code></pre>
+<p>Зависимости определены в секции <code>[project.dependencies]</code> и необходимы для работы всех компонентов <code>ai_docs</code>:</p>
 <ul>
-<li><strong><code>requests</code></strong> — для HTTP-запросов к LLM API.</li>
-<li><strong><code>tiktoken</code></strong> — подсчёт токенов и разбиение текста на чанки с учётом ограничений модели.</li>
-<li><strong><code>PyYAML</code></strong> — парсинг конфигурационного файла <code>.ai-docs.yaml</code>.</li>
-<li><strong><code>mkdocs</code></strong>, <strong><code>mkdocs-material</code></strong>, <strong><code>mkdocs-mermaid2-plugin</code></strong> — генерация и рендеринг сайта документации с поддержкой диаграмм Mermaid.</li>
-<li><strong><code>python-dotenv</code></strong> — загрузка переменных окружения из <code>.env</code>.</li>
+<li><code>requests</code> — HTTP-запросы к LLM API.</li>
+<li><code>tiktoken</code> — токенизация текста для контроля длины контекста.</li>
+<li><code>PyYAML</code> — парсинг конфигурационных файлов <code>.ai-docs.yaml</code>.</li>
+<li><code>python-dotenv</code> — загрузка переменных окружения из <code>.env</code>.</li>
+<li><code>pathspec</code> — обработка шаблонов игнорирования (<code>.gitignore</code>, <code>.build_ignore</code>).</li>
+<li><code>mkdocs</code> — генерация статического сайта документации.</li>
+<li><code>mkdocs-mermaid2-plugin</code> — поддержка диаграмм Mermaid в MkDocs.</li>
+<li><code>mkdocs-pymdown-extensions</code> — расширенные Markdown-функции (подсветка, таблицы и др.).</li>
 </ul>
-<h2 id="_2">Системные зависимости</h2>
+<h2 id="_2">Опциональные зависимости</h2>
 <ul>
-<li><strong><code>git</code></strong> — обязательно установлен в системе. Используется для клонирования удалённых репозиториев по URL.</li>
-<li><strong>Python ≥ 3.8</strong> — минимальная поддерживаемая версия.</li>
+<li><code>git</code> (системный) — клонирование удалённых репозиториев по URL. Должен быть установлен в системе.</li>
 </ul>
-<h2 id="_3">Опциональные зависимости</h2>
-<ul>
-<li><strong><code>setuptools</code></strong>, <strong><code>wheel</code></strong> — требуются только при сборке пакета (указаны в <code>build-system.requires</code>).</li>
-</ul>
-<h2 id="_4">Внешние инструменты</h2>
-<ul>
-<li><strong>OpenAI-совместимый API</strong> — для работы LLM-клиента. Поддерживаются как официальные эндпоинты OpenAI, так и сторонние (через <code>OPENAI_BASE_URL</code>).</li>
-<li><strong><code>dotenv</code>-файл</strong> — рекомендуется для хранения <code>OPENAI_API_KEY</code> и других параметров.</li>
-</ul>
-<h2 id="_5">Управление зависимостями</h2>
-<p>Для установки зависимостей в режиме разработки:</p>
+<h2 id="_3">Управление зависимостями</h2>
+<h3 id="_4">Установка</h3>
 <pre class="highlight"><code class="language-bash">pip install -e .</code></pre>
-<p>Зависимости автоматически устанавливаются при установке пакета через <code>pip</code>. Сборка пакета требует наличия <code>setuptools&gt;=68</code> и <code>wheel</code>.</p></div>
+<p>Команда устанавливает пакет в режиме разработки с зависимостями из <code>pyproject.toml</code>.</p>
+<h3 id="_5">Проверка</h3>
+<p>Убедитесь, что установлены:
+- Python ≥ 3.8
+- <code>git</code> в <code>PATH</code> (для работы с URL-репозиториями)</p>
+<h3 id="_6">Контроль версий</h3>
+<p>Версии зависимостей не зафиксированы жёстко — используются минимальные совместимые версии. Для воспроизводимости используйте <code>pip freeze &gt; requirements.txt</code> после установки.</p>
+<h2 id="_7">Особенности использования</h2>
+<ul>
+<li>Кэширование LLM-запросов (<code>tiktoken</code>, <code>pathspec</code>) критично для производительности.</li>
+<li><code>mkdocs</code> и его плагины требуются только при генерации сайта (<code>--mkdocs</code>).</li>
+<li><code>python-dotenv</code> автоматически загружает <code>.env</code> при запуске <code>main.py</code>.</li>
+</ul>
+<h2 id="_8">Системные требования</h2>
+<ul>
+<li>Операционная система: Linux, macOS, Windows (с поддержкой Python и git).</li>
+<li>Свободное место: минимум 100 МБ (с учётом временных файлов и кэша).</li>
+</ul></div>
 </div>
 </div>
 <footer class="col-md-12">
