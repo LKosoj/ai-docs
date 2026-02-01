@@ -118,7 +118,8 @@ def _tree_to_nav(tree: Dict[str, object]) -> List[Dict[str, object]]:
     for key in sorted(tree.keys(), key=lambda k: (not isinstance(tree[k], dict), k.lower())):
         value = tree[key]
         if isinstance(value, dict):
-            nav.append({key: _tree_to_nav(value)})
+            label = key if key.startswith("/") else f"/{key}"
+            nav.append({label: _tree_to_nav(value)})
         else:
             nav.append({key: value})
     return nav
