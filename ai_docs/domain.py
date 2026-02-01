@@ -23,8 +23,9 @@ K8S_FILENAMES = {
     "ingress.yaml", "ingress.yml", "kustomization.yaml", "kustomization.yml",
 }
 
-
 CI_FILENAMES = {".gitlab-ci.yml", "Jenkinsfile", "azure-pipelines.yml"}
+CI_PATH_MARKERS = {".github/workflows", ".circleci", ".buildkite"}
+CI_FILENAMES_EXTRA = {"bitbucket-pipelines.yml", "buildkite.yml", "pipeline.yml"}
 
 
 HELM_FILENAMES = {"Chart.yaml", "Chart.yml", "values.yaml", "values.yml"}
@@ -32,6 +33,24 @@ HELM_FILENAMES = {"Chart.yaml", "Chart.yml", "values.yaml", "values.yml"}
 
 DOCKER_FILENAMES = {"Dockerfile", "docker-compose.yml", "docker-compose.yaml", "compose.yaml", "compose.yml"}
 
+OBSERVABILITY_FILENAMES = {
+    "prometheus.yml", "prometheus.yaml", "alertmanager.yml", "alertmanager.yaml",
+    "loki.yml", "loki.yaml", "promtail.yml", "promtail.yaml", "tempo.yml", "tempo.yaml",
+    "otel-collector.yml", "otel-collector.yaml", "opentelemetry-collector.yml", "opentelemetry-collector.yaml",
+    "jaeger.yml", "jaeger.yaml", "zipkin.yml", "zipkin.yaml",
+}
+OBSERVABILITY_PATH_MARKERS = {
+    "prometheus", "grafana", "loki", "tempo", "otel", "opentelemetry",
+    "jaeger", "zipkin", "logstash", "fluentd", "fluent-bit",
+}
+SERVICE_MESH_MARKERS = {
+    "istio", "linkerd", "consul", "cilium", "envoy", "traefik", "nginx-ingress",
+    "service-mesh", "servicemesh", "ingress", "gateway",
+}
+DATA_STORAGE_MARKERS = {
+    "postgres", "mysql", "mariadb", "redis", "mongo", "mongodb", "cassandra",
+    "clickhouse", "elasticsearch", "opensearch", "kafka", "minio", "s3",
+}
 
 TERRAFORM_EXTENSIONS = {".tf", ".tfvars"}
 
@@ -41,7 +60,7 @@ def classify_type(path: Path) -> str:
     suffix = path.suffix.lower()
     if name in DOCKER_FILENAMES or name.startswith("Dockerfile"):
         return "infra"
-    if name in CI_FILENAMES or ".github/workflows" in path.as_posix():
+    if name in CI_FILENAMES or name in CI_FILENAMES_EXTRA or any(marker in path.as_posix() for marker in CI_PATH_MARKERS):
         return "ci"
     if suffix in TERRAFORM_EXTENSIONS:
         return "infra"
@@ -69,7 +88,7 @@ def detect_domains(path: Path, content_snippet: str) -> Set[str]:
     if "docker" in posix_path and (suffix in {".yml", ".yaml"} or name.startswith("Dockerfile")):
         domains.add("docker")
 
-    if name in CI_FILENAMES or ".github/workflows" in posix_path:
+    if name in CI_FILENAMES or name in CI_FILENAMES_EXTRA or any(marker in posix_path for marker in CI_PATH_MARKERS):
         domains.add("ci")
 
     if name in HELM_FILENAMES or "charts/" in posix_path or "/templates/" in posix_path:
@@ -88,9 +107,40 @@ def detect_domains(path: Path, content_snippet: str) -> Set[str]:
         if "apiVersion" in content and "kind" in content:
             domains.add("kubernetes")
 
+    if name in OBSERVABILITY_FILENAMES or any(marker in posix_path for marker in OBSERVABILITY_PATH_MARKERS):
+        domains.add("observability")
+
+    if any(marker in posix_path for marker in SERVICE_MESH_MARKERS):
+        domains.add("service_mesh")
+        if "ingress" in posix_path:
+            domains.add("kubernetes")
+
+    if suffix in {".yml", ".yaml"}:
+        if "kind: Ingress" in content or "kind: Gateway" in content:
+            domains.add("service_mesh")
+            domains.add("kubernetes")
+        if "VirtualService" in content or "DestinationRule" in content or "ServiceEntry" in content:
+            domains.add("service_mesh")
+
+    if any(marker in posix_path for marker in DATA_STORAGE_MARKERS):
+        domains.add("data_storage")
+
     return domains
 
 
 def is_infra(domains: Set[str]) -> bool:
-    return bool(domains.intersection({"kubernetes", "helm", "terraform", "ansible", "docker", "ci"}))
-
+    return bool(
+        domains.intersection(
+            {
+                "kubernetes",
+                "helm",
+                "terraform",
+                "ansible",
+                "docker",
+                "ci",
+                "observability",
+                "service_mesh",
+                "data_storage",
+            }
+        )
+    )

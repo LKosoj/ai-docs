@@ -6,7 +6,7 @@
 Генерирует `README.md` и MkDocs‑сайт (с автоматической сборкой).
 
 Ключевые возможности:
-- Автоопределение доменов инфраструктуры (Kubernetes, Helm, Terraform, Ansible, Docker, CI/CD)
+- Автоопределение доменов инфраструктуры (Kubernetes, Helm, Terraform, Ansible, Docker, CI/CD, Observability, Service Mesh / Ingress, Data / Storage)
 - Инкрементальная генерация и кэширование
 - Учет `.gitignore` и фильтрация файлов
 - Параллельная LLM‑суммаризация (`--threads` / `AI_DOCS_THREADS`)

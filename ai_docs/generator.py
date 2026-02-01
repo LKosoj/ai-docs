@@ -36,6 +36,9 @@ DOMAIN_TITLES = {
     "ansible": "Ansible",
     "docker": "Docker",
     "ci": "CI/CD",
+    "observability": "Observability",
+    "service_mesh": "Service Mesh / Ingress",
+    "data_storage": "Data / Storage",
 }
 
 def _is_test_path(path: str) -> bool:
