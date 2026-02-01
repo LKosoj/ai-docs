@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 import os
 import shutil
 import subprocess
@@ -119,6 +120,75 @@ def _truncate_context(context: str, model: str, max_tokens: int) -> str:
         return context
     chunks = chunk_text(context, model=model, max_tokens=max_tokens)
     return chunks[0]
+
+
+def _first_paragraph(text: str) -> str:
+    lines: List[str] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line:
+            if lines:
+                break
+            continue
+        if line.startswith("#") or line.startswith("```"):
+            continue
+        lines.append(line)
+        if len(lines) >= 2:
+            break
+    return " ".join(lines).strip()
+
+
+def _build_docs_index(
+    output_root: Path,
+    docs_dir: Path,
+    docs_files: Dict[str, str],
+    file_map: Dict[str, Dict],
+    module_pages: Dict[str, str],
+) -> Dict[str, object]:
+    existing_files: Set[str] = set()
+    if docs_dir.exists():
+        for path in docs_dir.rglob("*.md"):
+            try:
+                existing_files.add(path.relative_to(docs_dir).as_posix())
+            except Exception:
+                continue
+    sections = []
+    for key, title in SECTION_TITLES.items():
+        path = f"{key}.md"
+        if path in docs_files or path in existing_files:
+            sections.append({"id": key, "title": title, "path": path})
+
+    modules = []
+    for path, meta in file_map.items():
+        if _is_test_path(path):
+            continue
+        summary_path = meta.get("module_summary_path")
+        if not summary_path:
+            continue
+        module_rel = Path("modules") / Path(path).with_suffix("")
+        module_rel_str = module_rel.as_posix() + ".md"
+        summary_text = read_text_file(Path(summary_path))
+        modules.append(
+            {
+                "name": Path(path).with_suffix("").as_posix(),
+                "path": module_rel_str,
+                "source_path": path,
+                "summary": _first_paragraph(summary_text),
+            }
+        )
+
+    return {
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "docs_dir": ".ai-docs",
+        "rules": {
+            "priority": ["modules/index.md", "modules/*", "index.md", "architecture.md", "conventions.md"],
+            "ranking": "keyword frequency + file priority",
+            "usage": "use this index to choose a narrow route before reading full docs",
+        },
+        "sections": sections,
+        "modules": modules,
+        "files": sorted(set(docs_files.keys()) | existing_files | {"_index.json"}),
+    }
 
 
 def generate_docs(
@@ -568,6 +638,10 @@ def generate_docs(
 
     changes_md = format_changes_md(added, modified, deleted, regenerated_sections, summary)
     docs_files["changes.md"] = changes_md
+
+    # Docs index for navigation
+    docs_index = _build_docs_index(output_root, docs_dir, docs_files, file_map, module_pages)
+    docs_files["_index.json"] = json.dumps(docs_index, ensure_ascii=False, indent=2) + "\n"
 
     write_docs_files(docs_dir, docs_files)
 
