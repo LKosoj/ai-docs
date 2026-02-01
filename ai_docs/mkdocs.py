@@ -4,6 +4,21 @@ from typing import Dict, List
 import yaml
 
 
+class _YamlPythonName(str):
+    pass
+
+
+class _YamlSafeDumper(yaml.SafeDumper):
+    pass
+
+
+def _python_name_representer(dumper: yaml.Dumper, data: _YamlPythonName) -> yaml.nodes.ScalarNode:
+    return dumper.represent_scalar(f"tag:yaml.org,2002:python/name:{data}", "")
+
+
+_YamlSafeDumper.add_representer(_YamlPythonName, _python_name_representer)
+
+
 def build_mkdocs_yaml(
     site_name: str,
     sections: Dict[str, str],
@@ -69,14 +84,24 @@ def build_mkdocs_yaml(
             "footnotes",
             "admonition",
             "fenced_code",
-            "pymdownx.superfences",
+            {
+                "pymdownx.superfences": {
+                    "custom_fences": [
+                        {
+                            "name": "mermaid",
+                            "class": "mermaid",
+                            "format": _YamlPythonName("pymdownx.superfences.fence_code_format"),
+                        }
+                    ]
+                }
+            },
         ],
         "nav": nav,
     }
     if local_site:
         data["site_url"] = ""
         data["use_directory_urls"] = False
-    return yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
+    return yaml.dump(data, allow_unicode=True, sort_keys=False, Dumper=_YamlSafeDumper)
 
 
 def _build_tree_nav(paths: List[str], strip_prefix: str) -> List[Dict[str, object]]:
