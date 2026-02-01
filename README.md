@@ -35,7 +35,7 @@ python3 -m venv .venv
 pip install -e .
 ```
 
-2) Настройка `.env` (пример — `.env.example`):
+2) Настройка переменных окружения (пример — `.env.example`):
 ```env
 OPENAI_API_KEY=your_api_key_here
 OPENAI_BASE_URL=https://api.openai.com/v1
@@ -45,6 +45,18 @@ OPENAI_CONTEXT_TOKENS=8192
 OPENAI_TEMPERATURE=0.2
 AI_DOCS_THREADS=1
 AI_DOCS_LOCAL_SITE=false
+```
+
+Если инструмент установлен как пакет, можно задать переменные окружения так:
+```bash
+export OPENAI_API_KEY="your_api_key_here"
+export OPENAI_BASE_URL="https://api.openai.com/v1"
+export OPENAI_MODEL="gpt-4o-mini"
+export OPENAI_MAX_TOKENS="1200"
+export OPENAI_CONTEXT_TOKENS="8192"
+export OPENAI_TEMPERATURE="0.2"
+export AI_DOCS_THREADS="1"
+export AI_DOCS_LOCAL_SITE="false"
 ```
 
 3) Генерация README и MkDocs:
@@ -60,6 +72,22 @@ python ai_docs --source .
 Если установлен как пакет:
 ```bash
 ai-docs --source .
+```
+
+Примечание для Windows:
+- Пути обрабатываются корректно, но внутри всегда нормализуются в формат с `/`.
+- Если используете PowerShell, пример активации venv и переменных окружения:
+```powershell
+python -m venv .venv
+.\\.venv\\Scripts\\Activate.ps1
+$env:OPENAI_API_KEY="your_api_key_here"
+$env:OPENAI_BASE_URL="https://api.openai.com/v1"
+$env:OPENAI_MODEL="gpt-4o-mini"
+$env:OPENAI_MAX_TOKENS="1200"
+$env:OPENAI_CONTEXT_TOKENS="8192"
+$env:OPENAI_TEMPERATURE="0.2"
+$env:AI_DOCS_THREADS="1"
+$env:AI_DOCS_LOCAL_SITE="false"
 ```
 
 ## Примеры использования
