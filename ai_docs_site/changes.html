@@ -170,11 +170,15 @@
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_7">Основные изменения и функции</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_7">Основные изменения</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_8">Итог</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_8">Генерируемые артефакты</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_9">Особенности реализации</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -203,61 +207,114 @@
 <li>Тестирование</li>
 <li>Модули</li>
 <li>Конфигурация проекта</li>
-<li>Архитектура</li>
-<li>Запуск и окружение</li>
-<li>Соглашения</li>
-<li>Глоссарий</li>
 <li>Зависимости</li>
+<li>Соглашения</li>
+<li>Запуск и окружение</li>
+<li>Архитектура</li>
+<li>Глоссарий</li>
 <li>Документация проекта</li>
 </ul>
 <h2 id="_6">Краткое резюме</h2>
-<p>Модуль автоматизирует создание и поддержку технической документации на основе структуры проекта с использованием LLM и MkDocs. Все сгенерированные файлы размещаются в директории <code>.ai-docs</code>, а финальный сайт — в <code>ai_docs_site</code>.</p>
-<h2 id="_7">Основные изменения и функции</h2>
+<p>Внесённые изменения реализуют автоматизированную генерацию технической документации на основе анализа структуры проекта с использованием LLM. Основной акцент — на создании актуальной, иерархически организованной документации в формате MkDocs и <code>README.md</code> с поддержкой кэширования, локализации и модульной сборки.</p>
+<h2 id="_7">Основные изменения</h2>
 <ul>
 <li><strong>Генерация <code>mkdocs.yml</code></strong><br/>
-  Функция <code>build_mkdocs_yaml</code> формирует валидный конфигурационный файл для MkDocs с поддержкой:</li>
-<li>Настраиваемых разделов: архитектура, тестирование, зависимости.</li>
-<li>Автоматической навигации через <code>project_config_nav_paths</code> и <code>module_nav_paths</code>.</li>
-<li>Поддержки Mermaid-диаграмм через <code>pymdownx.superfences</code> (включены JS-скрипты).</li>
-<li>Кастомной сериализации Python-объектов в YAML с помощью <code>_YamlPythonName</code> и <code>_YamlSafeDumper</code>.</li>
+  Функция <code>build_mkdocs_yaml</code> формирует конфигурационный файл на лету с учётом:</li>
+<li>Названия сайта (<code>site_name</code>).</li>
+<li>Пути к директориям (<code>docs_dir</code>, <code>site_dir</code>).</li>
+<li>Плагинов: <code>search</code>, <code>mermaid2</code> (для визуализации диаграмм).</li>
+<li>Markdown-расширений: поддержка таблиц, подчёркивания, fenced code с Mermaid.</li>
 <li>
-<p>Локального режима (<code>local_site</code>) — корректировка путей и URL для запуска без развёртывания.</p>
+<p>Навигации: динамически строится через <code>_build_tree_nav</code> из списка файлов.</p>
 </li>
 <li>
-<p><strong>Запись файлов документации</strong><br/>
-  Функция <code>write_docs_files</code> сохраняет Markdown-файлы в указанную директорию, создавая промежуточные подкаталоги при необходимости. Обеспечивает чистоту структуры и актуальность контента.</p>
+<p><strong>Динамическая навигация</strong><br/>
+<code>_build_tree_nav</code> преобразует плоский список путей в древовидную структуру меню, поддерживая вложенность для:</p>
+</li>
+<li>Модулей (<code>modules/</code>).</li>
+<li>
+<p>Конфигураций (<code>configs/</code>).
+  Пример: <code>modules/core/utils.py</code> → <code>Модули &gt; Core &gt; Utils</code>.</p>
 </li>
 <li>
-<p><strong>Структура документации</strong><br/>
-  Автоматически формируются:</p>
+<p><strong>Корректный вывод в YAML</strong><br/>
+  Используется кастомный <code>_YamlSafeDumper</code> для корректного представления:</p>
 </li>
-<li><code>README.md</code> — краткое описание проекта.</li>
-<li><code>index.md</code> и <code>_index.json</code> — оглавление и метаданные навигации.</li>
+<li>Python-объектов (например, <code>!python/name:mermaid2.fence_mermaid</code>).</li>
 <li>
-<p>Детальные страницы по модулям, конфигурациям (Kubernetes, Helm, Terraform и др.) и тестам.</p>
-</li>
-<li>
-<p><strong>Оптимизация и управление</strong> </p>
-</li>
-<li>Кэширование через <code>CacheManager</code> и <code>llm_cache</code> — избегание повторной обработки.</li>
-<li>Поддержка <code>force</code> и <code>use_cache</code> — контроль перегенерации.</li>
-<li>Ограничение токенов (<code>input_budget</code>) и обрезка контекста (<code>_truncate_context</code>) — стабильность LLM-запросов.</li>
-<li>
-<p>Параллельная обработка файлов (настраиваемое число потоков, макс. 4 для секций).</p>
+<p>Специальных типов без потери форматирования.</p>
 </li>
 <li>
-<p><strong>Интеграция и совместимость</strong> </p>
+<p><strong>Запись Markdown-файлов</strong><br/>
+<code>write_docs_files</code> массово записывает сгенерированные <code>.md</code>-файлы в указанную директорию (по умолчанию <code>.ai-docs/docs</code>), создавая структуру:
+  <div class="highlight"><pre><span></span><code>docs/
+├── index.md
+├── modules/
+├── configs/
+├── dependencies.md
+├── changes.md
+└── glossary.md
+</code></pre></div></p>
 </li>
-<li>Поддержка мультиформатных конфигов: TOML, JSON, YAML.</li>
-<li>Локализованные заголовки через <code>SECTION_TITLES</code> и <code>DOMAIN_TITLES</code>.</li>
-<li>Автоопределение тестовых команд (<code>pytest</code>, <code>npm test</code>) и инфраструктурных доменов.</li>
+<li>
+<p><strong>Оптимизация для локальной сборки</strong><br/>
+  При генерации локального сайта:</p>
+</li>
+<li><code>site_url</code> устанавливается в <code>null</code>.</li>
+<li>
+<p><code>use_directory_urls: false</code> — для корректной работы без веб-сервера.</p>
+</li>
+<li>
+<p><strong>Интеграция с кэшированием</strong><br/>
+  Все генерируемые разделы и сводки файлов кэшируются через <code>CacheManager</code> и <code>llm_cache</code>, что позволяет:</p>
+</li>
+<li>Избегать повторных запросов к LLM.</li>
+<li>
+<p>Обновлять только изменённые разделы при частичной перегенерации.</p>
+</li>
+<li>
+<p><strong>Поддержка локализации</strong><br/>
+  Заголовки разделов локализованы через словари:</p>
+</li>
+<li><code>SECTION_TITLES</code> — общие разделы (архитектура, зависимости).</li>
+<li><code>DOMAIN_TITLES</code> — домены (инфраструктура, тесты, конфигурации).</li>
 </ul>
-<h2 id="_8">Итог</h2>
-<p>Модуль обеспечивает:
-- Актуальную, структурированную документацию в Markdown.
-- Полностью автоматизированную сборку под MkDocs.
-- Поддержку визуализаций (Mermaid), кэширование, локализацию и отказоустойчивость.
-- Простое развертывание и локальное тестирование.</p></div>
+<h2 id="_8">Генерируемые артефакты</h2>
+<table>
+<thead>
+<tr>
+<th>Артефакт</th>
+<th>Назначение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mkdocs.yml</code></td>
+<td>Конфигурация сайта документации.</td>
+</tr>
+<tr>
+<td><code>.ai-docs/docs/</code></td>
+<td>Корневая директория Markdown-файлов.</td>
+</tr>
+<tr>
+<td><code>_index.json</code></td>
+<td>Навигационный индекс для внутреннего использования.</td>
+</tr>
+<tr>
+<td><code>README.md</code></td>
+<td>Краткая сводка проекта (опционально).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_9">Особенности реализации</h2>
+<ul>
+<li>Автоматическая очистка устаревших файлов в <code>docs/</code> перед записью новых.</li>
+<li>Поддержка мультиформатных конфигов: TOML, JSON, YAML.</li>
+<li>Обработка инфраструктурных доменов (<code>is_infra</code>) с отдельной секциональной логикой.</li>
+<li>Ограничение контекста LLM через <code>input_budget</code> и <code>_truncate_context</code>.</li>
+<li>Параллельная обработка файлов (<code>threads</code>, <code>section_workers</code>).</li>
+</ul>
+<p>Система обеспечивает воспроизводимую, масштабируемую и локализованную документацию с минимальным ручным вмешательством.</p></div>
 </div>
 </div>
 <footer class="col-md-12">
@@ -270,8 +327,6 @@
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
 <script src="js/base.js"></script>
-<script src="https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js"></script>
-<script src="js/mermaid-init.js"></script>
 <script src="search/main.js"></script>
 <div aria-hidden="true" aria-labelledby="searchModalLabel" class="modal" id="mkdocs_search_modal" role="dialog" tabindex="-1">
 <div class="modal-dialog modal-lg">

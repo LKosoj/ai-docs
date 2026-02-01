@@ -171,87 +171,83 @@
 </tr>
 <tr>
 <td><strong>Кэширование</strong></td>
-<td>Механизм сохранения результатов анализа файлов и ответов LLM в <code>.ai_docs_cache/</code> для ускорения последующих запусков. Отключается флагом <code>--no-cache</code>.</td>
+<td>Механизм сохранения результатов обработки файлов и ответов LLM в <code>.ai_docs_cache/</code> для ускорения повторной генерации. Отключается флагом <code>--no-cache</code>.</td>
 </tr>
 <tr>
 <td><strong>Инкрементальная обработка</strong></td>
-<td>Обновление документации только для изменённых, добавленных или удалённых файлов, определяемых через сравнение хэшей в <code>index.json</code>.</td>
-</tr>
-<tr>
-<td><strong><code>.ai-docs</code></strong></td>
-<td>Рабочая директория, содержащая сгенерированные документы, навигационный индекс <code>_index.json</code>, отчёт <code>changes.md</code> и промежуточные данные.</td>
-</tr>
-<tr>
-<td><strong><code>.ai_docs_cache</code></strong></td>
-<td>Каталог для хранения закэшированных ответов LLM (<code>llm_cache.json</code>) и метаданных файлов (<code>index.json</code>). Автоматически создаётся при первом запуске.</td>
+<td>Обновление только тех разделов документации, которые затронуты изменениями в исходных файлах. Основана на сравнении хэшей файлов через <code>CacheManager</code>.</td>
 </tr>
 <tr>
 <td><strong><code>ScanResult</code></strong></td>
 <td>Объект, возвращаемый сканером, содержащий список файлов с метаданными, корневой путь, источник и имя репозитория. Используется как вход для генерации документации.</td>
 </tr>
 <tr>
-<td><strong>Технологический домен</strong></td>
-<td>Категория инфраструктурной или программной технологии, автоматически распознаваемая по файлам: Kubernetes, Helm, Terraform, Docker, CI/CD, Observability, Service Mesh, Data/Storage.</td>
-</tr>
-<tr>
-<td><strong><code>FIXED_INCLUDE_PATTERNS</code></strong></td>
-<td>Список шаблонов имён и расширений файлов, которые всегда включаются в сканирование (например, <code>Dockerfile</code>, <code>*.tf</code>, <code>requirements.txt</code>), независимо от правил исключения.</td>
-</tr>
-<tr>
-<td><strong><code>DEFAULT_EXCLUDE_PATTERNS</code></strong></td>
-<td>Стандартные шаблоны исключения: <code>.git</code>, <code>__pycache__</code>, <code>node_modules</code>, <code>.venv</code>, <code>dist</code>, <code>build</code>, <code>.ai-docs</code>, <code>.ai_docs_cache</code>.</td>
-</tr>
-<tr>
-<td><strong><code>.build_ignore</code></strong></td>
-<td>Дополнительный файл с пользовательскими правилами игнорирования, аналогичный <code>.gitignore</code>. Используется вместе с <code>.gitignore</code> и конфигом <code>.ai-docs.yaml</code>.</td>
-</tr>
-<tr>
 <td><strong><code>.ai-docs.yaml</code></strong></td>
-<td>Конфигурационный файл для кастомизации сканирования: расширения файлов, дополнительные правила исключения, настройки фильтрации. Создаётся автоматически при отсутствии.</td>
+<td>Конфигурационный файл проекта для кастомизации: расширений файлов, шаблонов исключения, фильтрации. Создаётся автоматически, если отсутствует.</td>
 </tr>
 <tr>
-<td><strong><code>chunk_text</code></strong></td>
-<td>Утилита разбиения текста на части по лимиту токенов модели, чтобы уложиться в контекст LLM. Использует <code>tiktoken</code> для подсчёта.</td>
+<td><strong><code>.gitignore</code> / <code>.build_ignore</code></strong></td>
+<td>Файлы с правилами игнорирования путей при сканировании. Используются <code>pathspec</code> для сопоставления. <code>.build_ignore</code> — дополнительный пользовательский файл.</td>
 </tr>
 <tr>
 <td><strong><code>CacheManager</code></strong></td>
-<td>Класс для управления кэшем: загрузка/сохранение <code>index.json</code> и <code>llm_cache.json</code>, сравнение состояния файлов (<code>diff_files</code>).</td>
-</tr>
-<tr>
-<td><strong><code>llm_cache</code></strong></td>
-<td>Словарь в памяти, синхронизируемый с <code>llm_cache.json</code>, где ключ — SHA256 хеш запроса, значение — ответ LLM. Обеспечивает повторное использование без обращения к API.</td>
-</tr>
-<tr>
-<td><strong><code>summarize_file</code></strong></td>
-<td>Функция генерации краткого описания файла с помощью LLM. Поддерживает режимы: общий обзор, описание модуля, описание конфигурации.</td>
-</tr>
-<tr>
-<td><strong><code>build_mkdocs_yaml</code></strong></td>
-<td>Функция генерации конфигурации <code>mkdocs.yml</code> с поддержкой навигации, секций, Mermaid-диаграмм и локального режима (<code>--local-site</code>).</td>
-</tr>
-<tr>
-<td><strong><code>write_docs_files</code></strong></td>
-<td>Утилита записи Markdown-файлов в <code>.ai-docs</code>, создающая необходимые подкаталоги. Используется при генерации документации.</td>
+<td>Класс, управляющий двумя JSON-файлами: <code>index.json</code> (хэши файлов) и <code>llm_cache.json</code> (ответы LLM). Определяет добавленные, изменённые, удалённые и неизменные файлы.</td>
 </tr>
 <tr>
 <td><strong><code>file_map</code></strong></td>
-<td>Внутренняя структура данных, содержащая метаданные всех файлов проекта: тип, домены, хэш, путь к сводке. Основа для построения индекса и навигации.</td>
+<td>Внутренняя структура данных, сопоставляющая каждый файл с его типом, доменами, хэшем и путём к сгенерированной сводке. Используется для построения навигации и генерации разделов.</td>
 </tr>
 <tr>
-<td><strong><code>format_changes_md</code></strong></td>
-<td>Функция формирования отчёта <code>changes.md</code> с перечислением добавленных, изменённых, удалённых файлов и перегенерированных разделов.</td>
+<td><strong>Домен (технологический)</strong></td>
+<td>Категория технологий, определяемая по расширениям и именам файлов: <code>Kubernetes</code>, <code>Terraform</code>, <code>Docker</code>, <code>CI/CD</code>, <code>Observability</code> и др. Используется для группировки в документации.</td>
+</tr>
+<tr>
+<td><strong><code>SUMMARY_PROMPT</code>, <code>MODULE_SUMMARY_PROMPT</code>, <code>CONFIG_SUMMARY_PROMPT</code></strong></td>
+<td>Шаблоны промптов для LLM, применяемые в зависимости от типа файла: общий обзор, описание модуля, описание конфигурации.</td>
+</tr>
+<tr>
+<td><strong><code>chunk_text</code></strong></td>
+<td>Утилита разбиения текста на части по ограничению токенов модели. Использует <code>tiktoken</code> для точного подсчёта. Применяется при превышении лимита контекста.</td>
 </tr>
 <tr>
 <td><strong><code>_index.json</code></strong></td>
-<td>JSON-файл в <code>.ai-docs</code>, содержащий структуру навигации, приоритеты модулей и метаданные для быстрой ориентации в проекте.</td>
+<td>Навигационный индекс в <code>.ai-docs/</code>, содержащий структуру документации, приоритеты модулей и связи между файлами. Используется для построения <code>mkdocs.yml</code> и внутренних ссылок.</td>
+</tr>
+<tr>
+<td><strong><code>mkdocs.yml</code></strong></td>
+<td>Конфигурационный файл для генерации сайта документации. Создаётся автоматически с поддержкой плагинов (<code>mermaid2</code>, <code>search</code>) и локализованных заголовков.</td>
+</tr>
+<tr>
+<td><strong><code>changes.md</code></strong></td>
+<td>Автоматически генерируемый отчёт о внесённых изменениях: добавленные, изменённые, удалённые файлы и перегенерированные разделы.</td>
 </tr>
 <tr>
 <td><strong><code>--local-site</code></strong></td>
-<td>Флаг, настраивающий MkDocs для локального запуска: отключает публикацию, использует относительные пути. Можно задать через <code>AI_DOCS_LOCAL_SITE</code>.</td>
+<td>Флаг, отключающий <code>site_url</code> и <code>use_directory_urls</code> в <code>mkdocs.yml</code>, что позволяет корректно запускать сайт локально через <code>mkdocs serve</code>.</td>
 </tr>
 <tr>
 <td><strong><code>AI_DOCS_THREADS</code></strong></td>
-<td>Переменная окружения, определяющая количество потоков для параллельной обработки файлов. По умолчанию — многопоточная обработка.</td>
+<td>Переменная окружения, задающая количество потоков для параллельной обработки файлов. По умолчанию зависит от системы.</td>
+</tr>
+<tr>
+<td><strong><code>OPENAI_API_KEY</code>, <code>OPENAI_BASE_URL</code>, <code>OPENAI_MODEL</code></strong></td>
+<td>Обязательные переменные окружения для настройки LLM-клиента. Поддерживают кастомные эндпоинты (например, локальные LLM через Ollama).</td>
+</tr>
+<tr>
+<td><strong><code>.ai_docs_cache/</code></strong></td>
+<td>Директория для хранения кэша LLM-ответов и временных данных. Не коммитится в репозиторий.</td>
+</tr>
+<tr>
+<td><strong><code>.ai-docs/</code></strong></td>
+<td>Рабочая директория инструмента, содержащая промежуточные артефакты: <code>docs/</code>, <code>_index.json</code>, <code>changes.md</code>, <code>dependencies.md</code>, <code>glossary.md</code>.</td>
+</tr>
+<tr>
+<td><strong><code>classify_type</code></strong></td>
+<td>Функция определения типа файла (код, конфигурация, документация) по расширению и имени. Используется при сканировании.</td>
+</tr>
+<tr>
+<td><strong><code>detect_domains</code></strong></td>
+<td>Функция распознавания технологических доменов по пути и содержимому файла. Определяет принадлежность к <code>Terraform</code>, <code>Docker</code>, <code>Helm</code> и др.</td>
 </tr>
 </tbody>
 </table></div>
@@ -267,8 +263,6 @@
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
 <script src="js/base.js"></script>
-<script src="https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js"></script>
-<script src="js/mermaid-init.js"></script>
 <script src="search/main.js"></script>
 <div aria-hidden="true" aria-labelledby="searchModalLabel" class="modal" id="mkdocs_search_modal" role="dialog" tabindex="-1">
 <div class="modal-dialog modal-lg">

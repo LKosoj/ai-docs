@@ -8,167 +8,149 @@
 pip install ai-docs-gen
 ```
 
-Или в режиме разработки из корня проекта:
+Или локально в режиме разработки:
 
 ```bash
 pip install -e .
 ```
 
+Требуется Python ≥ 3.8.
+
 ## Переменные окружения
 
-Инструмент использует следующие переменные окружения. Рекомендуется задавать их в файле `.env` в корне проекта.
+Настройте LLM и поведение инструмента через переменные окружения. Создайте файл `.env` в корне проекта или экспортируйте переменные в shell.
 
-| Переменная               | Назначение                                      | По умолчанию                     |
-|--------------------------|-------------------------------------------------|----------------------------------|
-| `OPENAI_API_KEY`         | Ключ для доступа к OpenAI или совместимому API  | Обязательна                      |
-| `OPENAI_BASE_URL`        | Базовый URL API (для локальных LLM)             | `https://api.openai.com/v1`      |
-| `OPENAI_MODEL`           | Модель LLM для генерации                        | `gpt-4o-mini`                    |
-| `OPENAI_TEMPERATURE`     | Температура генерации (0.0 — строго, 1.0 — креативно) | `0.2`                        |
-| `OPENAI_MAX_TOKENS`      | Максимальное число токенов в ответе             | `1200`                           |
-| `OPENAI_CONTEXT_TOKENS`  | Общий лимит контекста модели                    | `8192`                           |
-| `AI_DOCS_THREADS`        | Количество потоков для параллельной обработки   | Автоопределение (CPU-cores)      |
-| `AI_DOCS_LOCAL_SITE`     | Режим локального сайта (без публикации)         | `false`                          |
+| Переменная               | Назначение                                      | Значение по умолчанию             |
+|--------------------------|-------------------------------------------------|-----------------------------------|
+| `OPENAI_API_KEY`         | Ключ API для OpenAI или совместимого эндпоинта  | Обязательно                        |
+| `OPENAI_BASE_URL`        | Базовый URL API (для локальных моделей)         | `https://api.openai.com/v1`       |
+| `OPENAI_MODEL`           | Модель LLM (например, `gpt-4o-mini`)            | `gpt-4o-mini`                     |
+| `OPENAI_TEMPERATURE`     | Температура генерации (0.0 — строго, 1.0 — креативно) | `0.2`                         |
+| `OPENAI_MAX_TOKENS`      | Максимальное число токенов в ответе             | `1200`                            |
+| `OPENAI_CONTEXT_TOKENS`  | Общий лимит контекста модели                    | `8192`                            |
+| `AI_DOCS_THREADS`        | Количество потоков для параллельной обработки   | `4`                               |
+| `AI_DOCS_LOCAL_SITE`     | Режим локального сайта (без `site_url`)         | `false`                           |
 
 Пример `.env`:
 
 ```env
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4o-mini
-AI_DOCS_THREADS=4
+AI_DOCS_THREADS=6
 AI_DOCS_LOCAL_SITE=true
 ```
 
 ## Запуск CLI
 
-### Базовый запуск (локальная директория)
+### Базовый запуск
+
+Генерация `README.md` и сайта MkDocs для локальной директории:
 
 ```bash
 ai-docs --source .
 ```
 
-Сгенерирует `README.md` и сайт MkDocs в `ai_docs_site/`.
-
-### Указание источника
-
-Поддерживается:
-- Локальная директория: `--source ./my-project`
-- Git-репозиторий: `--source https://github.com/user/repo.git`
+Для удалённого Git-репозитория:
 
 ```bash
-ai-docs --source https://github.com/example/project.git
+ai-docs --source https://github.com/user/repo.git
 ```
 
 ### Выбор формата вывода
 
+Только `README.md`:
+
 ```bash
-# Только README
 ai-docs --source . --readme
+```
 
-# Только MkDocs
+Только MkDocs-сайт:
+
+```bash
 ai-docs --source . --mkdocs
-
-# Оба (по умолчанию)
-ai-docs --source .
 ```
 
 ### Язык документации
 
-```bash
-ai-docs --source . --language ru  # или en
-```
-
-По умолчанию: `ru`.
-
-### Управление производительностью
+Поддерживается русский (`ru`) и английский (`en`):
 
 ```bash
-ai-docs --source . --threads 8
+ai-docs --source . --language ru
 ```
 
-Или через переменную окружения: `AI_DOCS_THREADS=8`.
+### Фильтрация файлов
 
-### Кэширование
+Используйте glob-шаблоны:
 
-По умолчанию включено. Для отключения:
+```bash
+ai-docs --source . --include "*.py" --include "src/**" --exclude "tests/**"
+```
+
+Ограничение по размеру файла (в байтах):
+
+```bash
+ai-docs --source . --max-size 500000
+```
+
+### Управление кэшированием
+
+Отключить кэширование LLM-ответов:
 
 ```bash
 ai-docs --source . --no-cache
 ```
 
-Кэш хранится в `.ai_docs_cache/`. Промежуточные данные — в `.ai-docs/`.
-
-### Принудительная перезапись
+Принудительная перезапись `README.md`:
 
 ```bash
 ai-docs --source . --force
 ```
 
-Перезапишет существующий `README.md`.
+### Режим отладки
 
-### Фильтрация файлов
-
-```bash
-ai-docs --source . --include "*.py" --include "Dockerfile" --exclude "*.test.py"
-```
-
-Используются glob-шаблоны. Также учитывается `.gitignore` и `.build_ignore`.
-
-### Ограничение размера файлов
+Запуск напрямую через Python (полезно при разработке):
 
 ```bash
-ai-docs --source . --max-size 500000  # 500 КБ
+python -m ai_docs --source . --readme --threads 2
 ```
 
-Файлы больше игнорируются.
+## Рабочие директории
 
-## Режимы работы
+- `.ai-docs/` — основной каталог вывода:  
+  - `docs/` — Markdown-файлы для MkDocs  
+  - `index.md`, `architecture.md`, `dependencies.md` и др.  
+  - `_index.json` — навигационный индекс проекта  
+  - `changes.md` — отчёт об изменениях
 
-### Локальный сайт (без публикации)
+- `.ai_docs_cache/` — кэш:  
+  - `index.json` — хэши файлов для инкрементального анализа  
+  - `llm_cache.json` — закэшированные ответы LLM
+
+- Временные файлы (при работе с Git) удаляются автоматически.
+
+## Интеграция с MkDocs
+
+После генерации выполните:
 
 ```bash
-ai-docs --source . --local-site
+cd .ai-docs
+mkdocs serve  # локальный просмотр
+mkdocs build  # сборка статики
 ```
 
-Или через переменную: `AI_DOCS_LOCAL_SITE=true`.  
-Настройки MkDocs адаптируются под локальный запуск.
+Конфигурация `mkdocs.yml` генерируется автоматически с поддержкой:
+- Поиска
+- Mermaid-диаграмм (`mkdocs-mermaid2-plugin`)
+- Расширенной разметки (`pymdown-extensions`)
 
-### Отладка
+При `AI_DOCS_LOCAL_SITE=true` или `--local-site`:
+- `site_url` не задаётся
+- `use_directory_urls: false` — для корректной работы локально
 
-Для запуска без установки пакета:
+## Требования к окружению
 
-```bash
-python -m ai_docs --source . --readme --language ru
-```
+- Python ≥ 3.8
+- `git` — для клонирования репозиториев
+- Доступ к OpenAI API или OpenAI-совместимому эндпоинту (например, Ollama, LocalAI)
 
-## Структура выходных данных
-
-После выполнения создаются:
-
-```
-.ai-docs/           # Промежуточные данные, навигация, changes.md
-.ai_docs_cache/     # Кэш LLM и хэши файлов
-README.md           # Краткая документация (если --readme)
-mkdocs.yml          # Конфиг сайта
-ai_docs_site/       # Сборка сайта (если --mkdocs)
-```
-
-## Требования
-
-- Python 3.8+
-- `git` (для обработки удалённых репозиториев)
-- Доступ к OpenAI-совместимому API
-
-## Пример полного запуска
-
-```bash
-AI_DOCS_THREADS=6 AI_DOCS_LOCAL_SITE=true \
-ai-docs \
-  --source . \
-  --readme \
-  --mkdocs \
-  --language ru \
-  --include "*.py" \
-  --include "Dockerfile" \
-  --max-size 300000 \
-  --force
-```
+Убедитесь, что `git` доступен в `PATH`, если используете URL-источники.

@@ -75,7 +75,10 @@ def build_mkdocs_yaml(
         "site_name": site_name,
         "docs_dir": ".ai-docs",
         "site_dir": "ai_docs_site",
-        "plugins": ["search", "mermaid2"],
+        "plugins": [
+            "search",
+            {"mermaid2": {"javascript": "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs"}},
+        ],
         "markdown_extensions": [
             "tables",
             "sane_lists",
@@ -90,15 +93,11 @@ def build_mkdocs_yaml(
                         {
                             "name": "mermaid",
                             "class": "mermaid",
-                            "format": _YamlPythonName("pymdownx.superfences.fence_code_format"),
+                            "format": _YamlPythonName("mermaid2.fence_mermaid"),
                         }
                     ]
                 }
             },
-        ],
-        "extra_javascript": [
-            "https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js",
-            "js/mermaid-init.js",
         ],
         "nav": nav,
     }

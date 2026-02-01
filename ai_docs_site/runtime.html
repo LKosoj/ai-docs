@@ -162,19 +162,15 @@
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_13">Режимы работы</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_10">Рабочие директории</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_16">Структура выходных данных</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#mkdocs">Интеграция с MkDocs</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_17">Требования</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_18">Пример полного запуска</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_11">Требования к окружению</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -189,33 +185,34 @@
 <p>Установите пакет через <code>pip</code>:</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>ai-docs-gen
 </code></pre></div>
-<p>Или в режиме разработки из корня проекта:</p>
+<p>Или локально в режиме разработки:</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </code></pre></div>
+<p>Требуется Python ≥ 3.8.</p>
 <h2 id="_3">Переменные окружения</h2>
-<p>Инструмент использует следующие переменные окружения. Рекомендуется задавать их в файле <code>.env</code> в корне проекта.</p>
+<p>Настройте LLM и поведение инструмента через переменные окружения. Создайте файл <code>.env</code> в корне проекта или экспортируйте переменные в shell.</p>
 <table>
 <thead>
 <tr>
 <th>Переменная</th>
 <th>Назначение</th>
-<th>По умолчанию</th>
+<th>Значение по умолчанию</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>OPENAI_API_KEY</code></td>
-<td>Ключ для доступа к OpenAI или совместимому API</td>
-<td>Обязательна</td>
+<td>Ключ API для OpenAI или совместимого эндпоинта</td>
+<td>Обязательно</td>
 </tr>
 <tr>
 <td><code>OPENAI_BASE_URL</code></td>
-<td>Базовый URL API (для локальных LLM)</td>
+<td>Базовый URL API (для локальных моделей)</td>
 <td><code>https://api.openai.com/v1</code></td>
 </tr>
 <tr>
 <td><code>OPENAI_MODEL</code></td>
-<td>Модель LLM для генерации</td>
+<td>Модель LLM (например, <code>gpt-4o-mini</code>)</td>
 <td><code>gpt-4o-mini</code></td>
 </tr>
 <tr>
@@ -236,11 +233,11 @@
 <tr>
 <td><code>AI_DOCS_THREADS</code></td>
 <td>Количество потоков для параллельной обработки</td>
-<td>Автоопределение (CPU-cores)</td>
+<td><code>4</code></td>
 </tr>
 <tr>
 <td><code>AI_DOCS_LOCAL_SITE</code></td>
-<td>Режим локального сайта (без публикации)</td>
+<td>Режим локального сайта (без <code>site_url</code>)</td>
 <td><code>false</code></td>
 </tr>
 </tbody>
@@ -248,91 +245,86 @@
 <p>Пример <code>.env</code>:</p>
 <div class="highlight"><pre><span></span><code>OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4o-mini
-AI_DOCS_THREADS=4
+AI_DOCS_THREADS=6
 AI_DOCS_LOCAL_SITE=true
 </code></pre></div>
 <h2 id="cli">Запуск CLI</h2>
-<h3 id="_4">Базовый запуск (локальная директория)</h3>
+<h3 id="_4">Базовый запуск</h3>
+<p>Генерация <code>README.md</code> и сайта MkDocs для локальной директории:</p>
 <div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.
 </code></pre></div>
-<p>Сгенерирует <code>README.md</code> и сайт MkDocs в <code>ai_docs_site/</code>.</p>
-<h3 id="_5">Указание источника</h3>
-<p>Поддерживается:
-- Локальная директория: <code>--source ./my-project</code>
-- Git-репозиторий: <code>--source https://github.com/user/repo.git</code></p>
-<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>https://github.com/example/project.git
+<p>Для удалённого Git-репозитория:</p>
+<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>https://github.com/user/repo.git
 </code></pre></div>
-<h3 id="_6">Выбор формата вывода</h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># Только README</span>
-ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--readme
-
-<span class="c1"># Только MkDocs</span>
-ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--mkdocs
-
-<span class="c1"># Оба (по умолчанию)</span>
-ai-docs<span class="w"> </span>--source<span class="w"> </span>.
+<h3 id="_5">Выбор формата вывода</h3>
+<p>Только <code>README.md</code>:</p>
+<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--readme
 </code></pre></div>
-<h3 id="_7">Язык документации</h3>
-<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--language<span class="w"> </span>ru<span class="w">  </span><span class="c1"># или en</span>
+<p>Только MkDocs-сайт:</p>
+<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--mkdocs
 </code></pre></div>
-<p>По умолчанию: <code>ru</code>.</p>
-<h3 id="_8">Управление производительностью</h3>
-<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--threads<span class="w"> </span><span class="m">8</span>
+<h3 id="_6">Язык документации</h3>
+<p>Поддерживается русский (<code>ru</code>) и английский (<code>en</code>):</p>
+<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--language<span class="w"> </span>ru
 </code></pre></div>
-<p>Или через переменную окружения: <code>AI_DOCS_THREADS=8</code>.</p>
-<h3 id="_9">Кэширование</h3>
-<p>По умолчанию включено. Для отключения:</p>
+<h3 id="_7">Фильтрация файлов</h3>
+<p>Используйте glob-шаблоны:</p>
+<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--include<span class="w"> </span><span class="s2">"*.py"</span><span class="w"> </span>--include<span class="w"> </span><span class="s2">"src/**"</span><span class="w"> </span>--exclude<span class="w"> </span><span class="s2">"tests/**"</span>
+</code></pre></div>
+<p>Ограничение по размеру файла (в байтах):</p>
+<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--max-size<span class="w"> </span><span class="m">500000</span>
+</code></pre></div>
+<h3 id="_8">Управление кэшированием</h3>
+<p>Отключить кэширование LLM-ответов:</p>
 <div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--no-cache
 </code></pre></div>
-<p>Кэш хранится в <code>.ai_docs_cache/</code>. Промежуточные данные — в <code>.ai-docs/</code>.</p>
-<h3 id="_10">Принудительная перезапись</h3>
+<p>Принудительная перезапись <code>README.md</code>:</p>
 <div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--force
 </code></pre></div>
-<p>Перезапишет существующий <code>README.md</code>.</p>
-<h3 id="_11">Фильтрация файлов</h3>
-<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--include<span class="w"> </span><span class="s2">"*.py"</span><span class="w"> </span>--include<span class="w"> </span><span class="s2">"Dockerfile"</span><span class="w"> </span>--exclude<span class="w"> </span><span class="s2">"*.test.py"</span>
+<h3 id="_9">Режим отладки</h3>
+<p>Запуск напрямую через Python (полезно при разработке):</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>ai_docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--readme<span class="w"> </span>--threads<span class="w"> </span><span class="m">2</span>
 </code></pre></div>
-<p>Используются glob-шаблоны. Также учитывается <code>.gitignore</code> и <code>.build_ignore</code>.</p>
-<h3 id="_12">Ограничение размера файлов</h3>
-<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--max-size<span class="w"> </span><span class="m">500000</span><span class="w">  </span><span class="c1"># 500 КБ</span>
-</code></pre></div>
-<p>Файлы больше игнорируются.</p>
-<h2 id="_13">Режимы работы</h2>
-<h3 id="_14">Локальный сайт (без публикации)</h3>
-<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--local-site
-</code></pre></div>
-<p>Или через переменную: <code>AI_DOCS_LOCAL_SITE=true</code>.<br/>
-Настройки MkDocs адаптируются под локальный запуск.</p>
-<h3 id="_15">Отладка</h3>
-<p>Для запуска без установки пакета:</p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>ai_docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--readme<span class="w"> </span>--language<span class="w"> </span>ru
-</code></pre></div>
-<h2 id="_16">Структура выходных данных</h2>
-<p>После выполнения создаются:</p>
-<div class="highlight"><pre><span></span><code>.ai-docs/           # Промежуточные данные, навигация, changes.md
-.ai_docs_cache/     # Кэш LLM и хэши файлов
-README.md           # Краткая документация (если --readme)
-mkdocs.yml          # Конфиг сайта
-ai_docs_site/       # Сборка сайта (если --mkdocs)
-</code></pre></div>
-<h2 id="_17">Требования</h2>
+<h2 id="_10">Рабочие директории</h2>
 <ul>
-<li>Python 3.8+</li>
-<li><code>git</code> (для обработки удалённых репозиториев)</li>
-<li>Доступ к OpenAI-совместимому API</li>
+<li><code>.ai-docs/</code> — основной каталог вывода:  </li>
+<li><code>docs/</code> — Markdown-файлы для MkDocs  </li>
+<li><code>index.md</code>, <code>architecture.md</code>, <code>dependencies.md</code> и др.  </li>
+<li><code>_index.json</code> — навигационный индекс проекта  </li>
+<li>
+<p><code>changes.md</code> — отчёт об изменениях</p>
+</li>
+<li>
+<p><code>.ai_docs_cache/</code> — кэш:  </p>
+</li>
+<li><code>index.json</code> — хэши файлов для инкрементального анализа  </li>
+<li>
+<p><code>llm_cache.json</code> — закэшированные ответы LLM</p>
+</li>
+<li>
+<p>Временные файлы (при работе с Git) удаляются автоматически.</p>
+</li>
 </ul>
-<h2 id="_18">Пример полного запуска</h2>
-<div class="highlight"><pre><span></span><code><span class="nv">AI_DOCS_THREADS</span><span class="o">=</span><span class="m">6</span><span class="w"> </span><span class="nv">AI_DOCS_LOCAL_SITE</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
-ai-docs<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--source<span class="w"> </span>.<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--readme<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--mkdocs<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--language<span class="w"> </span>ru<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--include<span class="w"> </span><span class="s2">"*.py"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--include<span class="w"> </span><span class="s2">"Dockerfile"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--max-size<span class="w"> </span><span class="m">300000</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--force
-</code></pre></div></div>
+<h2 id="mkdocs">Интеграция с MkDocs</h2>
+<p>После генерации выполните:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>.ai-docs
+mkdocs<span class="w"> </span>serve<span class="w">  </span><span class="c1"># локальный просмотр</span>
+mkdocs<span class="w"> </span>build<span class="w">  </span><span class="c1"># сборка статики</span>
+</code></pre></div>
+<p>Конфигурация <code>mkdocs.yml</code> генерируется автоматически с поддержкой:
+- Поиска
+- Mermaid-диаграмм (<code>mkdocs-mermaid2-plugin</code>)
+- Расширенной разметки (<code>pymdown-extensions</code>)</p>
+<p>При <code>AI_DOCS_LOCAL_SITE=true</code> или <code>--local-site</code>:
+- <code>site_url</code> не задаётся
+- <code>use_directory_urls: false</code> — для корректной работы локально</p>
+<h2 id="_11">Требования к окружению</h2>
+<ul>
+<li>Python ≥ 3.8</li>
+<li><code>git</code> — для клонирования репозиториев</li>
+<li>Доступ к OpenAI API или OpenAI-совместимому эндпоинту (например, Ollama, LocalAI)</li>
+</ul>
+<p>Убедитесь, что <code>git</code> доступен в <code>PATH</code>, если используете URL-источники.</p></div>
 </div>
 </div>
 <footer class="col-md-12">
@@ -345,8 +337,6 @@ ai-docs<span class="w"> </span><span class="se">\</span>
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
 <script src="js/base.js"></script>
-<script src="https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js"></script>
-<script src="js/mermaid-init.js"></script>
 <script src="search/main.js"></script>
 <div aria-hidden="true" aria-labelledby="searchModalLabel" class="modal" id="mkdocs_search_modal" role="dialog" tabindex="-1">
 <div class="modal-dialog modal-lg">
