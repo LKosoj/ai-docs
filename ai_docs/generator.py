@@ -890,6 +890,9 @@ def generate_docs(
     docs_index = _build_docs_index(output_root, docs_dir, docs_files, file_map, module_pages, config_pages)
     docs_files["_index.json"] = json.dumps(docs_index, ensure_ascii=False, indent=2) + "\n"
 
+    # Mermaid init script (ensures rendering with non-material themes)
+    docs_files["js/mermaid-init.js"] = "if (window.mermaid) { mermaid.initialize({ startOnLoad: true }); }\n"
+
     write_docs_files(docs_dir, docs_files)
 
     if write_readme:

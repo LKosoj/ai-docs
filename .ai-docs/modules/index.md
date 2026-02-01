@@ -1,224 +1,243 @@
 # Модули
 
-## `scanner` — Сканирование исходных файлов
+## `scanner` — сканирование исходных файлов
 
-Модуль отвечает за рекурсивный анализ файловой структуры проекта (локального или удалённого через Git) и формирование метаданных для последующей обработки. Поддерживает фильтрацию по расширениям, размеру файлов и правилам игнорирования (`.gitignore`, `.build_ignore`).
+Модуль отвечает за рекурсивный анализ файловой структуры проекта (локального или удалённого), фильтрацию файлов по расширениям, размеру и правилам игнорирования. Результат — объект `ScanResult` с метаданными и содержимым подходящих файлов.
 
-### Ключевые структуры данных
-
-- **`ScanResult`** — результат сканирования:
-  - `root: Path` — абсолютный путь к корневой директории.
-  - `files: List[FileEntry]` — список обработанных файлов.
-  - `source: str` — исходный путь или URL.
-  - `repo_name: str` — имя репозитория.
+### Ключевые структуры
+- `ScanResult` — результат сканирования: корневой путь, список файлов, источник, имя репозитория.
+- `FileEntry` — запись о файле: путь, размер, содержимое, тип, домены.
 
 ### Основные функции
+- `scan_source(source, include=None, exclude=None, max_size=200000)`  
+  Сканирует локальную директорию или Git-репозиторий.  
+  Автоматически загружает `.ai-docs.yaml` и `.gitignore`.  
+  Возвращает `ScanResult`.  
+  Исключения: `FileNotFoundError` (если путь не существует), `RuntimeError` (ошибка клонирования).
 
-- `scan_source(source: str, include=None, exclude=None, max_size=200000) -> ScanResult`  
-  Сканирует локальную директорию или клонирует удалённый репозиторий. Применяет фильтры включения/исключения и ограничение по размеру.  
-  **Исключения**: `FileNotFoundError` — если локальный путь не существует.
+- `_load_extension_config(root: Path)`  
+  Загружает `.ai-docs.yaml` из корня проекта. Возвращает конфиг с полями:  
+  `code_extensions`, `doc_extensions`, `config_extensions`, `exclude`.
 
-- `_load_extension_config(root: Path) -> Dict`  
-  Загружает `.ai-docs.yaml` из корня проекта. Возвращает конфиг с полями: `code_extensions`, `doc_extensions`, `config_extensions`, `exclude`.
+- `_load_ignore_specs(root: Path)`  
+  Загружает и компилирует правила из `.gitignore` и `.build_ignore` в `pathspec.PathSpec`.
 
-- `_load_ignore_specs(root: Path) -> List[PathSpec]`  
-  Компилирует правила из `.gitignore` и `.build_ignore` для последующей проверки соответствия путей.
+- `_should_include(rel_path, include, exclude, ignore_specs)`  
+  Проверяет, должен ли файл быть включён. Учитывает glob-паттерны, исключения и `.gitignore`.
 
-- `_should_include(rel_path, include, exclude, ignore_specs) -> bool`  
-  Проверяет, должен ли файл быть включён в результат. Учитывает glob-паттерны, исключения и `.gitignore`.
+- `_scan_directory(root, include, exclude, max_size)`  
+  Рекурсивно сканирует директорию. Возвращает список словарей с полями:  
+  `path`, `abs_path`, `size`, `content`, `type`, `domains`.  
+  Двоичные файлы и превышающие `max_size` пропускаются.
 
-- `_scan_directory(root, include, exclude, max_size) -> List[Dict]`  
-  Рекурсивно сканирует директорию. Возвращает список словарей с полями: `path`, `abs_path`, `size`, `content`, `type`, `domains`.  
-  **Исключения**: `OSError` — игнорируются, файл пропускается.
+- `_clone_repo(repo_url)`  
+  Клонирует репозиторий во временную директорию. Возвращает `(temp_path, repo_name)`.
 
 ---
 
-## `main` — Точка входа CLI
+## `llm` — взаимодействие с языковой моделью
 
-Модуль обрабатывает аргументы командной строки, инициирует сканирование, настраивает LLM и запускает генерацию документации.
+Модуль предоставляет клиент для отправки запросов к LLM через OpenAI-совместимый API с поддержкой кэширования.
 
-### Аргументы командной строки
+### Ключевые структуры
+- `LLMClient` — клиент с настройками модели, температурой, лимитами токенов и кэшированием.
 
-| Аргумент | Описание |
-|--------|--------|
-| `--source` | Путь к папке или URL Git-репозитория (обязательный) |
-| `--output` | Директория вывода (по умолчанию: `./output/<repo>`) |
-| `--readme` | Генерировать `README.md` |
-| `--mkdocs` | Генерировать MkDocs-сайт |
-| `--language` | Язык документации (`ru` или `en`, по умолчанию: `ru`) |
-| `--max-size` | Макс. размер файла в байтах (по умолчанию: 200 000) |
-| `--no-cache` | Отключить кэширование LLM |
-| `--threads` | Количество потоков обработки |
+### Методы `LLMClient`
+- `__init__(api_key, base_url, model, temperature=0.2, max_tokens=1200, context_limit=8192)`  
+  Инициализирует клиент. `base_url` может включать `/v1`.
 
-### Основные функции
+- `chat(messages, cache=None)`  
+  Отправляет список сообщений вида `{"role": "user", "content": "..."}`.  
+  Если передан `cache`, использует хеш тела запроса для повторного использования ответа.  
+  Возвращает строку с ответом модели.  
+  Исключение: `RuntimeError`, если ответ не содержит контента.
 
-- `parse_args() -> Namespace`  
-  Парсит аргументы CLI. Не выбрасывает исключения.
+- `_cache_key(payload)`  
+  Генерирует SHA256-хеш JSON-представления запроса.
 
-- `resolve_output(source, output, repo_name) -> Path`  
-  Определяет итоговую директорию вывода на основе входных параметров.
-
-- `main()`  
-  Основная логика: сканирование → генерация → запись.  
-  **Исключения**: возможны при ошибках доступа к LLM, файловой системе или сети.
+- `from_env()`  
+  Создаёт клиент на основе переменных окружения:  
+  `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `LLM_MODEL`, `LLM_TEMPERATURE`, `LLM_MAX_TOKENS`.  
+  Исключение: `RuntimeError`, если `OPENAI_API_KEY` не задан.
 
 ---
 
-## `llm` — Взаимодействие с языковой моделью
+## `summarizer` — генерация и нормализация описаний
 
-Предоставляет клиент для отправки запросов к LLM с поддержкой кэширования и управления контекстом.
+Модуль обрабатывает содержимое файлов, генерирует и форматирует аннотации с помощью LLM.
 
-### Класс `LLMClient`
+### Основные функции
+- `summarize_file(content, file_type, domains, llm_client, llm_cache, model, detailed=False)`  
+  Генерирует резюме файла. Типы: `config`, `infra`, `module`.  
+  Использует кэш для ускорения. Возвращает Markdown.
 
-- **Поля**:
-  - `api_key`, `base_url`, `model`, `temperature`, `max_tokens`, `context_limit`
+- `_normalize_module_summary(summary, llm_client, llm_cache)`  
+  Приводит описание модуля к Doxygen-формату (удаляет Markdown, списки, заголовки).
 
-- **Методы**:
-  - `__init__()` — инициализация клиента.
-  - `chat(messages: list[dict], cache: dict = None) -> str` — отправка запроса.  
-    **Исключения**: `RuntimeError`, если ответ не содержит контента.
-  - `_cache_key(payload) -> str` — генерация SHA256-хеша тела запроса.
-  - `from_env() -> LLMClient` — создание клиента из переменных окружения.  
-    **Исключения**: `RuntimeError`, если `OPENAI_API_KEY` не задан.
+- `_normalize_config_summary(summary, llm_client, llm_cache)`  
+  Нормализует описание конфигурации в единый структурированный вид.
+
+- `_format_config_blocks(text)`  
+  Форматирует секции конфигурации: объединяет строки через `<br>`, разделяет блоки пустыми строками.
+
+- `_needs_doxygen_fix(text)`  
+  Проверяет, содержит ли текст Markdown-элементы (списки, заголовки, код).
+
+- `_strip_fenced_markdown(text)`  
+  Удаляет обрамляющие ```` ```lang ``` ```` из текста.
+
+- `chunk_text(content, model, max_tokens)`  
+  Разбивает текст на части по токенам с использованием `tiktoken`.
+
+- `write_summary(summary_dir, rel_path, summary)`  
+  Сохраняет резюме в `summary_dir` с именем, производным от `rel_path`. Возвращает путь к файлу.
 
 ---
 
-## `summarizer` — Генерация и нормализация описаний
+## `generator` — генерация документации
 
-Модуль обрабатывает содержимое файлов, генерирует и форматирует резюме с помощью LLM.
+Модуль строит структуру документации, генерирует README и MkDocs-сайт.
+
+### Ключевые структуры
+- `DOMAIN_TITLES` — маппинг доменов (`kubernetes`, `docker`) в локализованные заголовки.
+- `SECTION_TITLES` — стандартные названия секций (например, "Зависимости").
 
 ### Основные функции
+- `_generate_readme(llm, llm_cache, project_name, overview_context, language)`  
+  Генерирует `README.md` на основе контекста проекта.
 
-- `summarize_file(content, file_type, domains, llm_client, llm_cache, model, detailed=False) -> str`  
-  Генерирует Markdown-резюме файла с учётом типа и доменов.
+- `_submit_section(path, title, context)`  
+  Асинхронно отправляет задачу на генерацию секции.
 
-- `_normalize_module_summary(summary, llm_client, llm_cache) -> str`  
-  Приводит описание модуля к Doxygen-формату.
+- `_generate_section(llm, llm_cache, title, context, language)`  
+  Генерирует одну секцию документации.
 
-- `_normalize_config_summary(summary, llm_client, llm_cache) -> str`  
-  Нормализует описание конфигурационного файла.
+- `_render_project_configs_index(nav_paths)`  
+  Формирует индекс страниц конфигураций в Markdown.
 
-- `_needs_doxygen_fix(text) -> bool`  
-  Проверяет, содержит ли текст Markdown-элементы, требующие очистки.
+- `_collect_dependencies(file_map)`  
+  Извлекает зависимости из карты файлов.
 
-- `_strip_fenced_markdown(text) -> str`  
-  Удаляет ``` из начала и конца текста.
+- `format_changes_md(added, modified, deleted, regenerated_sections, summary)`  
+  Формирует отчёт об изменениях в Markdown.
 
-- `chunk_text(content, model, max_tokens) -> List[str]`  
-  Разбивает текст на части по лимиту токенов.
-
-- `write_summary(summary_dir, rel_path, summary) -> Path`  
-  Сохраняет резюме в файл `.md`. Возвращает путь к созданному файлу.
+- `_build_docs_index(output_root, docs_dir, docs_files, file_map, module_pages, config_pages)`  
+  Строит JSON-индекс навигации.
 
 ---
 
-## `builder` — Генерация документации и MkDocs
+## `writer` — запись и конфигурация документации
 
-Формирует структуру документации, генерирует `mkdocs.yml` и записывает файлы на диск.
+Модуль генерирует `mkdocs.yml` и записывает файлы на диск.
 
 ### Основные функции
+- `build_mkdocs_yaml(site_name, sections, configs, local_site=False, has_modules=False, module_nav_paths=None, project_config_nav_paths=None)`  
+  Генерирует YAML-конфиг для MkDocs. При `local_site=True` отключает `site_url` и `use_directory_urls`.
 
-- `build_mkdocs_yaml(site_name, sections, configs, local_site=False, has_modules=False, module_nav_paths=None, project_config_nav_paths=None) -> str`  
-  Генерирует YAML-конфигурацию для MkDocs.
-
-- `_build_tree_nav(paths, strip_prefix) -> List[Dict]`  
-  Строит иерархическую навигацию из списка путей.
+- `_build_tree_nav(paths, strip_prefix)`  
+  Строит древовидную навигацию из списка путей.
 
 - `_insert_nav_node(tree, parts, rel_path)`  
-  Вставляет узел в дерево навигации по частям пути.
+  Рекурсивно вставляет узел в дерево по частям пути.
 
-- `_tree_to_nav(tree) -> List[Dict]`  
-  Преобразует дерево в упорядоченный список для MkDocs (папки перед файлами).
+- `_tree_to_nav(tree)`  
+  Преобразует внутреннее дерево в формат, пригодный для `mkdocs.yml`.
 
 - `write_docs_files(docs_dir, files)`  
-  Записывает все файлы из словаря `path → content`.  
-  **Исключения**: возможны при ошибках ввода-вывода.
+  Записывает все файлы из словаря `путь → содержимое` в `docs_dir`.  
+  Исключения: `OSError` при ошибках записи.
 
 ---
 
-## `utils` — Вспомогательные функции
+## `utils` — вспомогательные функции
 
-Набор утилит для работы с путями, хешированием, типами файлов и URL.
+Набор утилит для работы с файлами, путями, хешированием и типами.
 
 ### Основные функции
+- `sha256_bytes(data)` / `sha256_text(text)`  
+  Возвращают SHA-256 хеш в hex-формате.
 
-- `sha256_bytes(data: bytes) -> str` — хеш от байтов.
-- `sha256_text(text: str) -> str` — хеш от строки UTF-8.
-- `read_text_file(path: Path) -> str` — чтение текстового файла.  
-  **Исключения**: `OSError` при ошибках доступа.
-- `safe_slug(path: str) -> str` — преобразует строку в безопасный слаг.
-- `ensure_dir(path: Path)` — создаёт директорию и родителей.  
-  **Исключения**: `OSError` при сбое создания.
-- `is_binary_file(path: Path, sample_size=2048) -> bool` — проверка на двоичный файл.  
-  **Исключения**: при ошибках доступа возвращает `True`.
-- `is_url(value: str) -> bool` — проверка, является ли строка URL (`http://`, `https://`, `git@`).
-- `to_posix(path: Path) -> str` — преобразует путь в POSIX-формат (`/`).
+- `read_text_file(path)`  
+  Читает файл в UTF-8. Исключение: `OSError`.
 
----
+- `safe_slug(path)`  
+  Заменяет все неалфавитно-цифровые символы на `_`.
 
-## `classifier` — Классификация файлов
+- `ensure_dir(path)`  
+  Создаёт директорию и все родительские. Исключение: `OSError`.
 
-Определяет тип файла и связанные инфраструктурные домены.
+- `is_binary_file(path, sample_size=2048)`  
+  Проверяет наличие нулевых байтов в первых `sample_size` байтах. При ошибках чтения возвращает `True`.
 
-### Основные функции
+- `is_url(value)`  
+  Проверяет, начинается ли строка с `http://`, `https://` или `git@`.
 
-- `classify_type(path: Path) -> str`  
-  Возвращает тип: `code`, `docs`, `config`, `data`, `ci`, `infra`, `other`.
-
-- `detect_domains(path: Path, content_snippet: str) -> Set[str]`  
-  Определяет домены по имени, пути и содержимому (например, `kubernetes`, `docker`, `ci`).
-
-- `is_infra(domains: Set[str]) -> bool`  
-  Проверяет, относится ли файл к инфраструктуре.
+- `to_posix(path)`  
+  Преобразует `Path` в строку с `/`, независимо от ОС.
 
 ---
 
-## `cache` — Управление кэшем
+## `classifier` — классификация файлов
 
-Хранит и обновляет индекс файлов и кэш LLM-ответов в JSON-файлах.
+Определяет тип файла и домены инфраструктуры.
+
+### Функции
+- `classify_type(path)`  
+  Возвращает: `code`, `docs`, `config`, `data`, `ci`, `infra`, `other`.
+
+- `detect_domains(path, content_snippet)`  
+  Возвращает множество доменов: `kubernetes`, `docker`, `terraform`, `ci`, `helm`, `auth`, `billing` и др.
+
+- `is_infra(domains)`  
+  Проверяет, содержит ли множество доменов инфраструктурные (`kubernetes`, `docker`, `terraform`, `ci`, `helm`).
+
+---
+
+## `tokenizer` — подсчёт и разбиение токенов
+
+Работает с `tiktoken` для оценки длины текста в токенах.
+
+### Функции
+- `get_encoding(model)`  
+  Возвращает кодировку для модели. Резервная — `cl100k_base`.
+
+- `count_tokens(text, model)`  
+  Возвращает количество токенов в тексте.
+
+- `chunk_text(text, model, max_tokens)`  
+  Разбивает текст на части по `max_tokens`.
+
+---
+
+## `cache` — управление кэшем
+
+Хранит индекс файлов и кэш LLM-ответов в JSON-файлах.
 
 ### Класс `CacheManager`
-
-- **Поля**:
-  - `cache_dir`, `index_path`, `llm_cache_path`
-
-- **Методы**:
-  - `__init__(cache_dir)` — создаёт директорию и файлы кэша.
-  - `load_index() -> Dict` — загружает индекс. Если нет — возвращает `{}`.
+- Поля: `cache_dir`, `index_path`, `llm_cache_path`.
+- Методы:
+  - `load_index()` — загружает `index.json`, возвращает словарь.
   - `save_index(data)` — сохраняет индекс.
-  - `load_llm_cache() -> Dict[str, str]` — загружает кэш LLM.
+  - `load_llm_cache()` — загружает `llm_cache.json`.
   - `save_llm_cache(data)` — сохраняет кэш LLM.
-  - `diff_files(current_files) -> (added, modified, deleted, unchanged)`  
-    Сравнивает текущие файлы с предыдущим состоянием.
+  - `diff_files(current_files)` — сравнивает текущие файлы с кэшированными. Возвращает кортеж: `(added, modified, deleted, unchanged)`.
 
 ---
 
-## `tokenizer` — Подсчёт и разбиение токенов
+## `main` — точка входа CLI
 
-Работает с `tiktoken` для оценки длины текста и его фрагментации.
+Запускает полный цикл: парсинг аргументов, сканирование, генерация, запись.
 
-### Основные функции
+### Функции
+- `parse_args()`  
+  Парсит аргументы командной строки: `--source`, `--output`, `--readme`, `--mkdocs`, `--language`, `--max-size`, `--cache-dir`, `--threads` и др.
 
-- `get_encoding(model: str)`  
-  Возвращает кодировку модели или `cl100k_base` по умолчанию.
+- `resolve_output(source, output, repo_name)`  
+  Определяет путь вывода. Если не задан — использует `./output/<repo_name>`.
 
-- `count_tokens(text: str, model: str) -> int`  
-  Подсчитывает токены в тексте.
-
-- `chunk_text(text: str, model: str, max_tokens: int) -> List[str]`  
-  Разбивает текст на части, укладываясь в лимит токенов.
-
----
-
-## `changes` — Формирование отчёта об изменениях
-
-Генерирует Markdown-отчёт о добавленных, изменённых и удалённых файлах.
-
-### Функция
-
-- `format_changes_md(added, modified, deleted, regenerated_sections, summary) -> str`  
-  Возвращает отчёт в формате Markdown с заголовками и списками.  
-  **Исключения**: отсутствуют.
+- `main()`  
+  Основная логика: сканирование, генерация, запись.  
+  Исключения: ошибки сканирования, LLM, записи файлов.
 
 ## Список модулей
 

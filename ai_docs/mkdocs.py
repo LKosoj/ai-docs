@@ -96,6 +96,10 @@ def build_mkdocs_yaml(
                 }
             },
         ],
+        "extra_javascript": [
+            "https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js",
+            "js/mermaid-init.js",
+        ],
         "nav": nav,
     }
     if local_site:

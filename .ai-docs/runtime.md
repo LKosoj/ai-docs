@@ -8,7 +8,7 @@
 pip install ai-docs-gen
 ```
 
-Или в режиме разработки (из корня проекта):
+Или в режиме разработки из корня проекта:
 
 ```bash
 pip install -e .
@@ -23,88 +23,152 @@ pip install -e .
 | `OPENAI_API_KEY`         | Ключ для доступа к OpenAI или совместимому API  | Обязательна                      |
 | `OPENAI_BASE_URL`        | Базовый URL API (для локальных LLM)             | `https://api.openai.com/v1`      |
 | `OPENAI_MODEL`           | Модель LLM для генерации                        | `gpt-4o-mini`                    |
-| `OPENAI_TEMPERATURE`     | Температура генерации (0.0 – 2.0)               | `0.2`                            |
+| `OPENAI_TEMPERATURE`     | Температура генерации (0.0 — строго, 1.0 — креативно) | `0.2`                        |
 | `OPENAI_MAX_TOKENS`      | Максимальное число токенов в ответе             | `1200`                           |
-| `OPENAI_CONTEXT_TOKENS`  | Общий лимит токенов контекста                   | `8192`                           |
-| `AI_DOCS_THREADS`        | Количество потоков для параллельной обработки   | `4`                              |
-| `AI_DOCS_LOCAL_SITE`     | Режим локальной сборки MkDocs (без публикации)   | `false`                          |
+| `OPENAI_CONTEXT_TOKENS`  | Общий лимит контекста модели                    | `8192`                           |
+| `AI_DOCS_THREADS`        | Количество потоков для параллельной обработки   | Автоопределение (CPU-cores)      |
+| `AI_DOCS_LOCAL_SITE`     | Режим локального сайта (без публикации)         | `false`                          |
 
 Пример `.env`:
 
 ```env
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4o-mini
-AI_DOCS_THREADS=6
+AI_DOCS_THREADS=4
 AI_DOCS_LOCAL_SITE=true
 ```
 
-## Базовый запуск
+## Запуск CLI
 
-Сгенерировать `README.md` и сайт MkDocs для локального проекта:
+### Базовый запуск (локальная директория)
 
 ```bash
 ai-docs --source .
 ```
 
-Для удалённого Git-репозитория:
+Сгенерирует `README.md` и сайт MkDocs в `ai_docs_site/`.
+
+### Указание источника
+
+Поддерживается:
+- Локальная директория: `--source ./my-project`
+- Git-репозиторий: `--source https://github.com/user/repo.git`
 
 ```bash
-ai-docs --source https://github.com/user/repo.git
+ai-docs --source https://github.com/example/project.git
 ```
 
-## Флаги CLI
-
-| Флаг               | Описание                                                                 |
-|--------------------|--------------------------------------------------------------------------|
-| `--source`         | Путь к директории или URL Git-репозитория (обязательный)                 |
-| `--readme`         | Генерировать только `README.md`                                         |
-| `--mkdocs`         | Генерировать только сайт MkDocs                                         |
-| `--language ru/en` | Язык документации (по умолчанию: `ru`)                                   |
-| `--threads N`      | Количество потоков (переопределяет `AI_DOCS_THREADS`)                   |
-| `--force`          | Перезаписать существующий `README.md`                                    |
-| `--no-cache`       | Отключить кэширование запросов к LLM                                    |
-| `--local-site`     | Настроить MkDocs для локального просмотра (переопределяет переменную)   |
-| `--include GLOB`   | Дополнительные шаблоны включения файлов (например, `*.yaml`)            |
-| `--exclude GLOB`   | Дополнительные шаблоны исключения (например, `*.test.*`)                |
-| `--max-size N`     | Максимальный размер файла в байтах (по умолчанию: 200000)                |
-
-Пример: генерация только README на английском с кастомными путями:
+### Выбор формата вывода
 
 ```bash
-ai-docs --source . --readme --language en --include "*.yaml" --exclude "temp/*"
+# Только README
+ai-docs --source . --readme
+
+# Только MkDocs
+ai-docs --source . --mkdocs
+
+# Оба (по умолчанию)
+ai-docs --source .
 ```
+
+### Язык документации
+
+```bash
+ai-docs --source . --language ru  # или en
+```
+
+По умолчанию: `ru`.
+
+### Управление производительностью
+
+```bash
+ai-docs --source . --threads 8
+```
+
+Или через переменную окружения: `AI_DOCS_THREADS=8`.
+
+### Кэширование
+
+По умолчанию включено. Для отключения:
+
+```bash
+ai-docs --source . --no-cache
+```
+
+Кэш хранится в `.ai_docs_cache/`. Промежуточные данные — в `.ai-docs/`.
+
+### Принудительная перезапись
+
+```bash
+ai-docs --source . --force
+```
+
+Перезапишет существующий `README.md`.
+
+### Фильтрация файлов
+
+```bash
+ai-docs --source . --include "*.py" --include "Dockerfile" --exclude "*.test.py"
+```
+
+Используются glob-шаблоны. Также учитывается `.gitignore` и `.build_ignore`.
+
+### Ограничение размера файлов
+
+```bash
+ai-docs --source . --max-size 500000  # 500 КБ
+```
+
+Файлы больше игнорируются.
 
 ## Режимы работы
 
-- **Полная генерация** (по умолчанию): создаётся `README.md` и сайт MkDocs.
-- **Только README**: с флагом `--readme`.
-- **Только MkDocs**: с флагом `--mkdocs`.
-- **Инкрементальная обработка**: при повторном запуске анализируются только изменённые файлы (на основе `.ai_docs_cache/`).
-
-## Структура рабочих директорий
-
-При запуске создаются служебные каталоги:
-
-- `.ai_docs_cache/` — кэш LLM-ответов и хэшей файлов.
-- `.ai-docs/` — промежуточные данные: `_index.json`, `changes.md`, `modules/`, `configs/`.
-
-Генерируемая документация:
-- `README.md` — в корне проекта.
-- `docs/` — исходники MkDocs.
-- `site/` — собранный сайт (результат `mkdocs build`).
-
-## Требования к окружению
-
-- Python ≥ 3.8
-- `git` — для клонирования удалённых репозиториев
-- `mkdocs` — устанавливается автоматически как зависимость
-
-## Отладка
-
-Для запуска без установки (в режиме разработки):
+### Локальный сайт (без публикации)
 
 ```bash
-python -m ai_docs.cli --source . --readme --no-cache
+ai-docs --source . --local-site
 ```
 
-Логи выводятся в stdout. Ошибки обработки файлов регистрируются, но не прерывают выполнение.
+Или через переменную: `AI_DOCS_LOCAL_SITE=true`.  
+Настройки MkDocs адаптируются под локальный запуск.
+
+### Отладка
+
+Для запуска без установки пакета:
+
+```bash
+python -m ai_docs --source . --readme --language ru
+```
+
+## Структура выходных данных
+
+После выполнения создаются:
+
+```
+.ai-docs/           # Промежуточные данные, навигация, changes.md
+.ai_docs_cache/     # Кэш LLM и хэши файлов
+README.md           # Краткая документация (если --readme)
+mkdocs.yml          # Конфиг сайта
+ai_docs_site/       # Сборка сайта (если --mkdocs)
+```
+
+## Требования
+
+- Python 3.8+
+- `git` (для обработки удалённых репозиториев)
+- Доступ к OpenAI-совместимому API
+
+## Пример полного запуска
+
+```bash
+AI_DOCS_THREADS=6 AI_DOCS_LOCAL_SITE=true \
+ai-docs \
+  --source . \
+  --readme \
+  --mkdocs \
+  --language ru \
+  --include "*.py" \
+  --include "Dockerfile" \
+  --max-size 300000 \
+  --force
+```

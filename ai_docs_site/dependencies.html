@@ -150,19 +150,27 @@
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="1"><a class="nav-link" href="#_1">Зависимости</a>
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Внешние системные зависимости</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#pyprojecttoml">Основные зависимости (из pyproject.toml)</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#python-pyprojecttoml">Python-зависимости (из pyproject.toml)</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Внешние инструменты</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_4">Переменные окружения</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Условные зависимости</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_5">Кэширование и производительность</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_4">Управление зависимостями</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_5">Совместимость</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_6">Кэширование и производительность</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -173,110 +181,95 @@
 </div></div>
 <div class="col-md-9" role="main">
 <h1 id="_1">Зависимости</h1>
-<p>Проект <code>ai_docs</code> зависит от внешних инструментов и Python-пакетов для корректной работы. Ниже приведены обязательные и опциональные зависимости с пояснением их назначения.</p>
-<h2 id="_2">Внешние системные зависимости</h2>
+<p>Проект <code>ai_docs</code> зависит от набора библиотек и внешних инструментов, обеспечивающих работу анализа кода, взаимодействия с LLM, генерации документации и управления конфигурацией.</p>
+<h2 id="pyprojecttoml">Основные зависимости (из <code>pyproject.toml</code>)</h2>
+<table>
+<thead>
+<tr>
+<th>Пакет</th>
+<th>Назначение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>requests</code></td>
+<td>HTTP-запросы к LLM API</td>
+</tr>
+<tr>
+<td><code>tiktoken</code></td>
+<td>Токенизация текста для расчёта длины контекста</td>
+</tr>
+<tr>
+<td><code>PyYAML</code></td>
+<td>Парсинг и запись YAML-конфигов (<code>.ai-docs.yaml</code>, <code>mkdocs.yml</code>)</td>
+</tr>
+<tr>
+<td><code>python-dotenv</code></td>
+<td>Загрузка переменных окружения из <code>.env</code></td>
+</tr>
+<tr>
+<td><code>mkdocs</code></td>
+<td>Генерация статического сайта документации</td>
+</tr>
+<tr>
+<td><code>mkdocs-mermaid2-plugin</code></td>
+<td>Поддержка Mermaid-диаграмм в MkDocs</td>
+</tr>
+<tr>
+<td><code>pymdown-extensions</code></td>
+<td>Дополнительные Markdown-расширения (включая <code>superfences</code> для диаграмм)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_2">Внешние инструменты</h2>
 <table>
 <thead>
 <tr>
 <th>Инструмент</th>
-<th>Назначение</th>
-<th>Обязательность</th>
+<th>Требуется для</th>
+<th>Проверка</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>git</code></td>
-<td>Клонирование удалённых репозиториев при указании <code>--source</code> как URL</td>
-<td>Обязательно при работе с Git</td>
+<td>Клонирование удалённых репозиториев</td>
+<td>Проверяется при запуске с <code>--source &lt;URL&gt;</code></td>
 </tr>
 <tr>
-<td><code>mkdocs</code></td>
-<td>Сборка сайта документации (<code>mkdocs build</code>)</td>
-<td>Обязательно при использовании <code>--mkdocs</code></td>
-</tr>
-<tr>
-<td><code>mermaid-cli</code> (опционально)</td>
-<td>Рендеринг Mermaid-диаграмм в статические изображения</td>
-<td>Опционально, требуется при публикации</td>
+<td><code>pathspec</code></td>
+<td>Сопоставление путей с шаблонами <code>.gitignore</code> и <code>.build_ignore</code></td>
+<td>Устанавливается автоматически</td>
 </tr>
 </tbody>
 </table>
-<h2 id="python-pyprojecttoml">Python-зависимости (из <code>pyproject.toml</code>)</h2>
-<h3 id="_3">Основные</h3>
+<h2 id="_3">Условные зависимости</h2>
 <ul>
-<li><code>requests</code> — HTTP-запросы к LLM API.</li>
-<li><code>tiktoken</code> — токенизация текста для контроля длины контекста модели.</li>
-<li><code>PyYAML</code> — парсинг конфигурационных файлов <code>.ai-docs.yaml</code> и <code>mkdocs.yml</code>.</li>
-<li><code>python-dotenv</code> — загрузка переменных окружения из <code>.env</code>.</li>
-<li><code>pathspec</code> — сопоставление путей с шаблонами <code>.gitignore</code> и <code>.build_ignore</code>.</li>
+<li><strong>Для разработки</strong>:</li>
+<li><code>pytest</code> — запуск модульных тестов.</li>
+<li><code>setuptools</code>, <code>wheel</code> — сборка пакета (указаны в <code>build-system</code>).</li>
 </ul>
-<h3 id="mkdocs">Для генерации документации (MkDocs)</h3>
-<ul>
-<li><code>mkdocs&gt;=1.4</code> — фреймворк для сборки сайта документации.</li>
-<li><code>mkdocs-mermaid2-plugin</code> — поддержка диаграмм Mermaid в Markdown.</li>
-<li><code>pymdown-extensions</code> — расширенные Markdown-функции (например, <code>superfences</code> для кастомных блоков).</li>
-</ul>
-<h2 id="_4">Переменные окружения</h2>
-<table>
-<thead>
-<tr>
-<th>Переменная</th>
-<th>Назначение</th>
-<th>По умолчанию</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>OPENAI_API_KEY</code></td>
-<td>Ключ для доступа к LLM API</td>
-<td>Обязательна</td>
-</tr>
-<tr>
-<td><code>OPENAI_BASE_URL</code></td>
-<td>Базовый URL API (поддерживает OpenAI-совместимые эндпоинты)</td>
-<td><code>https://api.openai.com/v1</code></td>
-</tr>
-<tr>
-<td><code>OPENAI_MODEL</code></td>
-<td>Модель для генерации (например, <code>gpt-4o-mini</code>)</td>
-<td><code>gpt-4o-mini</code></td>
-</tr>
-<tr>
-<td><code>OPENAI_TEMPERATURE</code></td>
-<td>Уровень креативности генерации</td>
-<td><code>0.2</code></td>
-</tr>
-<tr>
-<td><code>OPENAI_MAX_TOKENS</code></td>
-<td>Макс. токенов в ответе</td>
-<td><code>1200</code></td>
-</tr>
-<tr>
-<td><code>OPENAI_CONTEXT_TOKENS</code></td>
-<td>Общий лимит контекста</td>
-<td><code>8192</code></td>
-</tr>
-<tr>
-<td><code>AI_DOCS_THREADS</code></td>
-<td>Количество потоков обработки файлов</td>
-<td><code>4</code></td>
-</tr>
-<tr>
-<td><code>AI_DOCS_LOCAL_SITE</code></td>
-<td>Режим локальной сборки (отключает <code>site_url</code> в <code>mkdocs.yml</code>)</td>
-<td><code>false</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="_5">Кэширование и производительность</h2>
-<ul>
-<li>Кэш LLM-ответов хранится в <code>.ai_docs_cache/llm_cache.json</code> (ключ — SHA256 от payload).</li>
-<li>Индекс файлов и их хэшей — <code>.ai-docs/index.json</code>.</li>
-<li>Кэширование включено по умолчанию; отключается флагом <code>--no-cache</code>.</li>
-</ul>
+<h2 id="_4">Управление зависимостями</h2>
+<p>Зависимости объявлены в <code>pyproject.toml</code>. Установка:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</code></pre></div>
+<p>Для разработки с тестами:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
+</code></pre></div>
 <blockquote>
-<p><strong>Примечание</strong>: При использовании сторонних LLM-провайдеров (например, Ollama, LocalAI) укажите <code>OPENAI_BASE_URL</code> соответствующего локального эндпоинта.</p>
-</blockquote></div>
+<p><strong>Примечание</strong>: Проект использует <code>setuptools</code> как бэкенд сборки. Убедитесь, что установлены актуальные версии <code>pip</code>, <code>setuptools</code> и <code>wheel</code>.</p>
+</blockquote>
+<h2 id="_5">Совместимость</h2>
+<ul>
+<li><strong>Python</strong>: 3.8+</li>
+<li><strong>LLM API</strong>: OpenAI-совместимые эндпоинты (поддерживаются кастомные <code>base_url</code>)</li>
+</ul>
+<h2 id="_6">Кэширование и производительность</h2>
+<ul>
+<li>Кэш LLM-ответов хранится в <code>.ai_docs_cache/llm_cache.json</code>.</li>
+<li>Индекс файлов — в <code>.ai-docs/index.json</code>.</li>
+<li>Кэширование ускоряет повторную генерацию; отключается флагом <code>--no-cache</code>.</li>
+</ul></div>
 </div>
 </div>
 <footer class="col-md-12">
@@ -289,6 +282,8 @@
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
 <script src="js/base.js"></script>
+<script src="https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js"></script>
+<script src="js/mermaid-init.js"></script>
 <script src="search/main.js"></script>
 <div aria-hidden="true" aria-labelledby="searchModalLabel" class="modal" id="mkdocs_search_modal" role="dialog" tabindex="-1">
 <div class="modal-dialog modal-lg">

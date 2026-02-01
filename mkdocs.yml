@@ -17,6 +17,9 @@ markdown_extensions:
     - name: mermaid
       class: mermaid
       format: !!python/name:pymdownx.superfences.fence_code_format ''
+extra_javascript:
+- https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js
+- js/mermaid-init.js
 nav:
 - Главная: index.md
 - Архитектура: architecture.md

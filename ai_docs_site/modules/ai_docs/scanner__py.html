@@ -1,188 +1,161 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        
-        
-        
-        <link rel="shortcut icon" href="../../img/favicon.ico">
-        <title>scanner.py - ai-docs</title>
-        <link href="../../css/bootstrap.min.css" rel="stylesheet">
-        <link href="../../css/fontawesome.min.css" rel="stylesheet">
-        <link href="../../css/brands.min.css" rel="stylesheet">
-        <link href="../../css/solid.min.css" rel="stylesheet">
-        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
-        <link href="../../css/base.css" rel="stylesheet">
-        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
-        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-        <script>hljs.highlightAll();</script> 
-    </head>
 
-    <body>
-        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
-            <div class="container">
-                <a class="navbar-brand" href="../../index.html">ai-docs</a>
-                <!-- Expander button -->
-                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <!-- Expanded navigation -->
-                <div id="navbar-collapse" class="navbar-collapse collapse">
-                        <!-- Main navigation -->
-                        <ul class="nav navbar-nav">
-                            <li class="nav-item">
-                                <a href="../../index.html" class="nav-link">Главная</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="../../architecture.html" class="nav-link">Архитектура</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="../../runtime.html" class="nav-link">Запуск</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="../../dependencies.html" class="nav-link">Зависимости</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="../../testing.html" class="nav-link">Тестирование</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="../../conventions.html" class="nav-link">Соглашения</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="../../glossary.html" class="nav-link">Глоссарий</a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Конфигурация проекта</a>
-                                <ul class="dropdown-menu">
-                                    
-<li>
-    <a href="../../configs/index.html" class="dropdown-item">Обзор</a>
+<html data-bs-theme="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="../../img/favicon.ico" rel="shortcut icon"/>
+<title>scanner.py - ai-docs</title>
+<link href="../../css/bootstrap.min.css" rel="stylesheet"/>
+<link href="../../css/fontawesome.min.css" rel="stylesheet"/>
+<link href="../../css/brands.min.css" rel="stylesheet"/>
+<link href="../../css/solid.min.css" rel="stylesheet"/>
+<link href="../../css/v4-font-face.min.css" rel="stylesheet"/>
+<link href="../../css/base.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" id="hljs-light" rel="stylesheet"/>
+<link disabled="" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" id="hljs-dark" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</head>
+<body>
+<div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+<div class="container">
+<a class="navbar-brand" href="../../index.html">ai-docs</a>
+<!-- Expander button -->
+<button aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler" data-bs-target="#navbar-collapse" data-bs-toggle="collapse" type="button">
+<span class="navbar-toggler-icon"></span>
+</button>
+<!-- Expanded navigation -->
+<div class="navbar-collapse collapse" id="navbar-collapse">
+<!-- Main navigation -->
+<ul class="nav navbar-nav">
+<li class="nav-item">
+<a class="nav-link" href="../../index.html">Главная</a>
 </li>
-                                    
-<li>
-    <a href="../../configs/files/pyproject__toml.html" class="dropdown-item">pyproject.toml</a>
+<li class="nav-item">
+<a class="nav-link" href="../../architecture.html">Архитектура</a>
 </li>
-                                </ul>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Модули</a>
-                                <ul class="dropdown-menu">
-                                    
-<li>
-    <a href="../index.html" class="dropdown-item">Обзор</a>
+<li class="nav-item">
+<a class="nav-link" href="../../runtime.html">Запуск</a>
 </li>
-                                    
-  <li class="dropdown-submenu">
-    <a href="#" class="dropdown-item">/ai_docs</a>
-    <ul class="dropdown-menu">
-            
-<li>
-    <a href="__init____py.html" class="dropdown-item">__init__.py</a>
+<li class="nav-item">
+<a class="nav-link" href="../../dependencies.html">Зависимости</a>
 </li>
-            
-<li>
-    <a href="__main____py.html" class="dropdown-item">__main__.py</a>
+<li class="nav-item">
+<a class="nav-link" href="../../testing.html">Тестирование</a>
 </li>
-            
-<li>
-    <a href="cache__py.html" class="dropdown-item">cache.py</a>
+<li class="nav-item">
+<a class="nav-link" href="../../conventions.html">Соглашения</a>
 </li>
-            
-<li>
-    <a href="changes__py.html" class="dropdown-item">changes.py</a>
+<li class="nav-item">
+<a class="nav-link" href="../../glossary.html">Глоссарий</a>
 </li>
-            
+<li class="nav-item dropdown">
+<a aria-expanded="false" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">Конфигурация проекта</a>
+<ul class="dropdown-menu">
 <li>
-    <a href="cli__py.html" class="dropdown-item">cli.py</a>
+<a class="dropdown-item" href="../../configs/index.html">Обзор</a>
 </li>
-            
 <li>
-    <a href="domain__py.html" class="dropdown-item">domain.py</a>
+<a class="dropdown-item" href="../../configs/files/pyproject__toml.html">pyproject.toml</a>
 </li>
-            
+</ul>
+</li>
+<li class="nav-item dropdown">
+<a aria-current="page" aria-expanded="false" class="nav-link dropdown-toggle active" data-bs-toggle="dropdown" href="#" role="button">Модули</a>
+<ul class="dropdown-menu">
 <li>
-    <a href="generator__py.html" class="dropdown-item">generator.py</a>
+<a class="dropdown-item" href="../index.html">Обзор</a>
 </li>
-            
+<li class="dropdown-submenu">
+<a class="dropdown-item" href="#">/ai_docs</a>
+<ul class="dropdown-menu">
 <li>
-    <a href="llm__py.html" class="dropdown-item">llm.py</a>
+<a class="dropdown-item" href="__init____py.html">__init__.py</a>
 </li>
-            
 <li>
-    <a href="mkdocs__py.html" class="dropdown-item">mkdocs.py</a>
+<a class="dropdown-item" href="__main____py.html">__main__.py</a>
 </li>
-            
 <li>
-    <a href="scanner__py.html" class="dropdown-item active" aria-current="page">scanner.py</a>
+<a class="dropdown-item" href="cache__py.html">cache.py</a>
 </li>
-            
 <li>
-    <a href="summary__py.html" class="dropdown-item">summary.py</a>
+<a class="dropdown-item" href="changes__py.html">changes.py</a>
 </li>
-            
 <li>
-    <a href="tokenizer__py.html" class="dropdown-item">tokenizer.py</a>
+<a class="dropdown-item" href="cli__py.html">cli.py</a>
 </li>
-            
 <li>
-    <a href="utils__py.html" class="dropdown-item">utils.py</a>
+<a class="dropdown-item" href="domain__py.html">domain.py</a>
 </li>
-    </ul>
-  </li>
-                                </ul>
-                            </li>
-                            <li class="nav-item">
-                                <a href="../../changes.html" class="nav-link">Изменения</a>
-                            </li>
-                        </ul>
-
-                    <ul class="nav navbar-nav ms-md-auto">
-                        <li class="nav-item">
-                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
-                                <i class="fa fa-search"></i> Search
+<li>
+<a class="dropdown-item" href="generator__py.html">generator.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="llm__py.html">llm.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="mkdocs__py.html">mkdocs.py</a>
+</li>
+<li>
+<a aria-current="page" class="dropdown-item active" href="scanner__py.html">scanner.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="summary__py.html">summary.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="tokenizer__py.html">tokenizer.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="utils__py.html">utils.py</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="nav-item">
+<a class="nav-link" href="../../changes.html">Изменения</a>
+</li>
+</ul>
+<ul class="nav navbar-nav ms-md-auto">
+<li class="nav-item">
+<a class="nav-link" data-bs-target="#mkdocs_search_modal" data-bs-toggle="modal" href="#">
+<i class="fa fa-search"></i> Search
                             </a>
-                        </li>
-                            <li class="nav-item">
-                                <a rel="prev" href="mkdocs__py.html" class="nav-link">
-                                    <i class="fa fa-arrow-left"></i> Previous
+</li>
+<li class="nav-item">
+<a class="nav-link" href="mkdocs__py.html" rel="prev">
+<i class="fa fa-arrow-left"></i> Previous
                                 </a>
-                            </li>
-                            <li class="nav-item">
-                                <a rel="next" href="summary__py.html" class="nav-link">
+</li>
+<li class="nav-item">
+<a class="nav-link" href="summary__py.html" rel="next">
                                     Next <i class="fa fa-arrow-right"></i>
-                                </a>
-                            </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="container">
-            <div class="row">
-                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
-    <div class="navbar-header">
-        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
-            <span class="fa fa-angle-down"></span>
-        </button>
-    </div>
-
-    
-    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
-        <ul class="nav flex-column">
-            
-            <li class="nav-item" data-bs-level="1"><a href="#ai_docsscanner" class="nav-link">ai_docs/scanner</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-        </ul>
-    </div>
+</a>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="container">
+<div class="row">
+<div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+<div class="navbar-header">
+<button class="navbar-toggler collapsed" data-bs-target="#toc-collapse" data-bs-toggle="collapse" title="Table of Contents" type="button">
+<span class="fa fa-angle-down"></span>
+</button>
+</div>
+<div class="navbar-collapse collapse card bg-body-tertiary" id="toc-collapse">
+<ul class="nav flex-column">
+<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#ai_docsscanner">ai_docs/scanner</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+</ul>
+</div>
 </div></div>
-                    <div class="col-md-9" role="main">
-
+<div class="col-md-9" role="main">
 <h1 id="ai_docsscanner">ai_docs/scanner</h1>
 <p>/*<em>
  * Результат сканирования исходного кода: содержит метаданные и список обработанных файлов.
@@ -191,7 +164,7 @@
  * Ключевые структуры данных
  * ScanResult — результат сканирования: содержит корневой путь, список файлов, источник и имя репозитория
  </em>/</p>
-<hr />
+<hr/>
 <p>def _normalize_extensions(raw: object, defaults: Dict[str, str]) -&gt; Dict[str, str]
 Приводит пользовательские расширения из конфига к нормальному виду с описаниями
 Аргументы
@@ -199,35 +172,35 @@ raw — входные данные (словарь или список расш
 defaults — словарь описаний по умолчанию
 Возвращает
 Словарь вида {".ext": "описание"}, дополненный значениями по умолчанию</p>
-<hr />
+<hr/>
 <p>def _normalize_excludes(raw: object) -&gt; Set[str]
 Преобразует входные данные в множество строковых шаблонов исключения
 Аргументы
 raw — входной объект (ожидается список строк)
 Возвращает
 Множество непустых строк шаблонов исключения</p>
-<hr />
+<hr/>
 <p>def _load_extension_config(root: Path) -&gt; Dict[str, object]
 Загружает или создаёт конфигурацию расширений из .ai-docs.yaml в корне проекта
 Аргументы
 root — корневой путь проекта
 Возвращает
 Словарь с ключами code_extensions, doc_extensions, config_extensions, exclude</p>
-<hr />
+<hr/>
 <p>def _build_default_include_patterns(extension_config: Dict[str, object]) -&gt; Set[str]
 Формирует набор шаблонов включения на основе расширений из конфигурации и фиксированных паттернов
 Аргументы
 extension_config — конфигурация расширений (результат _load_extension_config)
 Возвращает
 Множество строковых шаблонов включения файлов</p>
-<hr />
+<hr/>
 <p>def _load_ignore_specs(root: Path) -&gt; List[pathspec.PathSpec]
 Загружает правила игнорирования из .gitignore и .build_ignore
 Аргументы
 root — корневой путь проекта
 Возвращает
 Список скомпилированных pathspec.PathSpec для проверки соответствия путей</p>
-<hr />
+<hr/>
 <p>def _should_include(rel_path: str, include: Optional[Set[str]], exclude: Optional[Set[str]], ignore_specs: List[pathspec.PathSpec]) -&gt; bool
 Определяет, должен ли файл быть включён в сканирование
 Аргументы
@@ -237,7 +210,7 @@ exclude — множество шаблонов исключения
 ignore_specs — список скомпилированных спецификаций игнорирования (например, из .gitignore)
 Возвращает
 True, если файл должен быть включён в результат сканирования</p>
-<hr />
+<hr/>
 <p>def _scan_directory(root: Path, include: Optional[Set[str]], exclude: Optional[Set[str]], max_size: int) -&gt; List[Dict]
 Рекурсивно сканирует директорию и возвращает список подходящих файлов с содержимым и метаданными
 Аргументы
@@ -249,7 +222,7 @@ max_size — максимальный размер файла в байтах (0
 Список словарей с полями: path, abs_path, size, content, type, domains
 Исключения
 OSError — при ошибках доступа к файлам (игнорируются, файл пропускается)</p>
-<hr />
+<hr/>
 <p>def _clone_repo(repo_url: str) -&gt; Tuple[Path, str]
 Клонирует удалённый репозиторий в временную директорию
 Аргументы
@@ -258,7 +231,7 @@ repo_url — URL Git-репозитория
 Кортеж из пути к временной директории и имени репозитория
 Исключения
 RuntimeError — при ошибке клонирования репозитория</p>
-<hr />
+<hr/>
 <p>def scan_source(source: str, include: Optional[Set[str]] = None, exclude: Optional[Set[str]] = None, max_size: int = 200000) -&gt; ScanResult
 Сканирует локальную директорию или удалённый репозиторий по URL, фильтруя файлы по расширениям и размеру.
 Аргументы
@@ -270,7 +243,7 @@ max_size — максимальный размер файла в байтах, �
 Объект ScanResult, содержащий информацию о просканированных файлах, корневой директории, источнике и имени репозитория
 Исключения
 FileNotFoundError — если указанный локальный путь не существует</p>
-<hr />
+<hr/>
 <p>class ScanResult
 Результат сканирования исходного кода: список файлов, корневая директория, источник и имя репозитория.
 Поля
@@ -280,81 +253,80 @@ source — исходная строка (путь или URL), с которо�
 repo_name — имя репозитория (для URL — извлекается из URL, для локальной директории — имя самой директории)
 Методы
 <strong>init</strong>(root: Path, files: List[FileEntry], source: str, repo_name: str) — создаёт объект результата сканирования</p></div>
-            </div>
-        </div>
-
-        <footer class="col-md-12">
-            <hr>
-            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
-        </footer>
-        <script src="../../js/bootstrap.bundle.min.js"></script>
-        <script>
+</div>
+</div>
+<footer class="col-md-12">
+<hr/>
+<p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+</footer>
+<script src="../../js/bootstrap.bundle.min.js"></script>
+<script>
             var base_url = "../..",
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
-        <script src="../../js/base.js"></script>
-        <script src="../../search/main.js"></script>
-
-        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="searchModalLabel">Search</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>From here you can search these documents. Enter your search terms below.</p>
-                <form>
-                    <div class="form-group">
-                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
-                    </div>
-                </form>
-                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
-            </div>
-            <div class="modal-footer">
-            </div>
-        </div>
-    </div>
-</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th style="width: 20%;">Keys</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="help shortcut"><kbd>?</kbd></td>
-                    <td>Open this help</td>
-                  </tr>
-                  <tr>
-                    <td class="next shortcut"><kbd>n</kbd></td>
-                    <td>Next page</td>
-                  </tr>
-                  <tr>
-                    <td class="prev shortcut"><kbd>p</kbd></td>
-                    <td>Previous page</td>
-                  </tr>
-                  <tr>
-                    <td class="search shortcut"><kbd>s</kbd></td>
-                    <td>Search</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="modal-footer">
-            </div>
-        </div>
-    </div>
+<script src="../../js/base.js"></script>
+<script src="https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js"></script>
+<script src="../../js/mermaid-init.js"></script>
+<script src="../../search/main.js"></script>
+<div aria-hidden="true" aria-labelledby="searchModalLabel" class="modal" id="mkdocs_search_modal" role="dialog" tabindex="-1">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+<div class="modal-header">
+<h4 class="modal-title" id="searchModalLabel">Search</h4>
+<button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
 </div>
-
-    </body>
+<div class="modal-body">
+<p>From here you can search these documents. Enter your search terms below.</p>
+<form>
+<div class="form-group">
+<input class="form-control" id="mkdocs-search-query" placeholder="Search..." title="Type search term here" type="search"/>
+</div>
+</form>
+<div data-no-results-text="No results found" id="mkdocs-search-results"></div>
+</div>
+<div class="modal-footer">
+</div>
+</div>
+</div>
+</div><div aria-hidden="true" aria-labelledby="keyboardModalLabel" class="modal" id="mkdocs_keyboard_modal" role="dialog" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content">
+<div class="modal-header">
+<h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+<button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+<table class="table">
+<thead>
+<tr>
+<th style="width: 20%;">Keys</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="help shortcut"><kbd>?</kbd></td>
+<td>Open this help</td>
+</tr>
+<tr>
+<td class="next shortcut"><kbd>n</kbd></td>
+<td>Next page</td>
+</tr>
+<tr>
+<td class="prev shortcut"><kbd>p</kbd></td>
+<td>Previous page</td>
+</tr>
+<tr>
+<td class="search shortcut"><kbd>s</kbd></td>
+<td>Search</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="modal-footer">
+</div>
+</div>
+</div>
+</div>
+</body>
 </html>

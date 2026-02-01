@@ -170,6 +170,14 @@
 <ul class="nav flex-column">
 </ul>
 </li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_7">Основные изменения и функции</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_8">Итог</a>
+<ul class="nav flex-column">
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -183,6 +191,7 @@
 </ul>
 <h2 id="_3">Изменённые файлы</h2>
 <ul>
+<li>ai_docs/generator.py</li>
 <li>ai_docs/mkdocs.py</li>
 </ul>
 <h2 id="_4">Удалённые файлы</h2>
@@ -196,48 +205,59 @@
 <li>Конфигурация проекта</li>
 <li>Архитектура</li>
 <li>Запуск и окружение</li>
+<li>Соглашения</li>
 <li>Глоссарий</li>
 <li>Зависимости</li>
-<li>Соглашения</li>
 <li>Документация проекта</li>
 </ul>
 <h2 id="_6">Краткое резюме</h2>
-<p>Модуль обеспечивает автоматическую генерацию конфигурации MkDocs и запись Markdown-файлов в файловую систему. Основные изменения и возможности:</p>
+<p>Модуль автоматизирует создание и поддержку технической документации на основе структуры проекта с использованием LLM и MkDocs. Все сгенерированные файлы размещаются в директории <code>.ai-docs</code>, а финальный сайт — в <code>ai_docs_site</code>.</p>
+<h2 id="_7">Основные изменения и функции</h2>
 <ul>
+<li><strong>Генерация <code>mkdocs.yml</code></strong><br/>
+  Функция <code>build_mkdocs_yaml</code> формирует валидный конфигурационный файл для MkDocs с поддержкой:</li>
+<li>Настраиваемых разделов: архитектура, тестирование, зависимости.</li>
+<li>Автоматической навигации через <code>project_config_nav_paths</code> и <code>module_nav_paths</code>.</li>
+<li>Поддержки Mermaid-диаграмм через <code>pymdownx.superfences</code> (включены JS-скрипты).</li>
+<li>Кастомной сериализации Python-объектов в YAML с помощью <code>_YamlPythonName</code> и <code>_YamlSafeDumper</code>.</li>
 <li>
-<p><strong>Генерация <code>mkdocs.yml</code></strong>:<br/>
-  Функция <code>build_mkdocs_yaml</code> формирует валидный YAML-конфиг на основе входных данных: название сайта, структура разделов, пути к конфигам, настройки навигации. Поддерживается локализация заголовков навигации.</p>
+<p>Локального режима (<code>local_site</code>) — корректировка путей и URL для запуска без развёртывания.</p>
 </li>
 <li>
-<p><strong>Динамическая навигация</strong>:<br/>
-  Реализовано построение иерархического меню через вспомогательные функции <code>_tree_to_nav</code>, <code>_build_tree_nav</code>, <code>_insert_nav_node</code>. Структура навигации (<code>nav</code>) генерируется на основе путей файлов, поддерживает вложенность по модулям, конфигурациям, артефактам.</p>
+<p><strong>Запись файлов документации</strong><br/>
+  Функция <code>write_docs_files</code> сохраняет Markdown-файлы в указанную директорию, создавая промежуточные подкаталоги при необходимости. Обеспечивает чистоту структуры и актуальность контента.</p>
 </li>
 <li>
-<p><strong>Стандартные разделы документации</strong>:<br/>
-  Автоматически включаются ключевые разделы:  </p>
+<p><strong>Структура документации</strong><br/>
+  Автоматически формируются:</p>
 </li>
-<li>Архитектура  </li>
-<li>Запуск  </li>
-<li>Тестирование  </li>
-<li>Конфигурации  </li>
-<li>Модули  </li>
+<li><code>README.md</code> — краткое описание проекта.</li>
+<li><code>index.md</code> и <code>_index.json</code> — оглавление и метаданные навигации.</li>
 <li>
-<p>Глоссарий  </p>
+<p>Детальные страницы по модулям, конфигурациям (Kubernetes, Helm, Terraform и др.) и тестам.</p>
 </li>
 <li>
-<p><strong>Поддержка визуализаций</strong>:<br/>
-  Включён плагин <code>mermaid2</code> и расширение <code>pymdownx.superfences</code> с кастомной обработкой Mermaid-диаграмм через <code>_YamlPythonName</code>.</p>
+<p><strong>Оптимизация и управление</strong> </p>
+</li>
+<li>Кэширование через <code>CacheManager</code> и <code>llm_cache</code> — избегание повторной обработки.</li>
+<li>Поддержка <code>force</code> и <code>use_cache</code> — контроль перегенерации.</li>
+<li>Ограничение токенов (<code>input_budget</code>) и обрезка контекста (<code>_truncate_context</code>) — стабильность LLM-запросов.</li>
+<li>
+<p>Параллельная обработка файлов (настраиваемое число потоков, макс. 4 для секций).</p>
 </li>
 <li>
-<p><strong>Локальная разработка</strong>:<br/>
-  При <code>local_site=True</code> отключаются <code>site_url</code> и <code>use_directory_urls</code>, что позволяет корректно просматривать документацию без веб-сервера.</p>
+<p><strong>Интеграция и совместимость</strong> </p>
 </li>
-<li>
-<p><strong>Запись файлов</strong>:<br/>
-  Функция <code>write_docs_files</code> сохраняет переданные Markdown-файлы в указанную директорию, воссоздавая структуру подкаталогов согласно путям.</p>
-</li>
+<li>Поддержка мультиформатных конфигов: TOML, JSON, YAML.</li>
+<li>Локализованные заголовки через <code>SECTION_TITLES</code> и <code>DOMAIN_TITLES</code>.</li>
+<li>Автоопределение тестовых команд (<code>pytest</code>, <code>npm test</code>) и инфраструктурных доменов.</li>
 </ul>
-<p>Конфигурация включает базовые параметры (<code>site_name</code>, <code>docs_dir</code>, <code>site_dir</code>), плагины (<code>search</code>, <code>mermaid2</code>) и расширенные Markdown-расширения для улучшенного форматирования.</p></div>
+<h2 id="_8">Итог</h2>
+<p>Модуль обеспечивает:
+- Актуальную, структурированную документацию в Markdown.
+- Полностью автоматизированную сборку под MkDocs.
+- Поддержку визуализаций (Mermaid), кэширование, локализацию и отказоустойчивость.
+- Простое развертывание и локальное тестирование.</p></div>
 </div>
 </div>
 <footer class="col-md-12">
@@ -250,6 +270,8 @@
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
 <script src="js/base.js"></script>
+<script src="https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js"></script>
+<script src="js/mermaid-init.js"></script>
 <script src="search/main.js"></script>
 <div aria-hidden="true" aria-labelledby="searchModalLabel" class="modal" id="mkdocs_search_modal" role="dialog" tabindex="-1">
 <div class="modal-dialog modal-lg">
