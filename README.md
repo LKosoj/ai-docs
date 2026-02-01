@@ -85,6 +85,10 @@ python -m ai_docs --source . --mkdocs --local-site
 - `ai_docs_site/` — собранный сайт MkDocs
 - `.ai_docs_cache/` — кэш и промежуточные summary‑файлы
 
+## Поддерживаемые языки и расширения
+Поддержка основана на расширениях кода в `ai_docs/domain.py`:
+`.py`, `.pyi`, `.pyx`, `.js`, `.jsx`, `.ts`, `.tsx`, `.go`, `.java`, `.c`, `.cc`, `.cpp`, `.h`, `.hpp`, `.rs`, `.rb`, `.php`, `.cs`, `.kt`, `.kts`, `.swift`, `.m`, `.mm`, `.vb`, `.bas`, `.sql`, `.pas`, `.dpr`, `.pp`, `.r`, `.pl`, `.pm`, `.f`, `.for`, `.f90`, `.f95`, `.f03`, `.f08`, `.sb3`, `.adb`, `.ads`, `.asm`, `.s`, `.ino`, `.htm`, `.html`, `.css`.
+
 ## Индекс документации
 Файл `.ai-docs/_index.json` строится автоматически при генерации и содержит:
 - список секций и модулей (пути и краткие описания);

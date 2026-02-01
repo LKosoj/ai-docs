@@ -6,6 +6,9 @@ CODE_EXTENSIONS = {
     ".py", ".pyi", ".pyx", ".js", ".jsx", ".ts", ".tsx", ".go", ".java",
     ".c", ".cc", ".cpp", ".h", ".hpp", ".rs", ".rb", ".php", ".cs",
     ".kt", ".kts", ".swift", ".m", ".mm",
+    ".vb", ".bas", ".sql", ".pas", ".dpr", ".pp", ".r", ".pl", ".pm",
+    ".f", ".for", ".f90", ".f95", ".f03", ".f08", ".sb3", ".adb", ".ads",
+    ".asm", ".s", ".ino", ".htm", ".html", ".css",
 }
 
 DOC_EXTENSIONS = {".md", ".rst", ".adoc", ".txt"}
