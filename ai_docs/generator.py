@@ -890,6 +890,13 @@ def generate_docs(
     docs_index = _build_docs_index(output_root, docs_dir, docs_files, file_map, module_pages, config_pages)
     docs_files["_index.json"] = json.dumps(docs_index, ensure_ascii=False, indent=2) + "\n"
 
+    # Mermaid JS asset for offline rendering (ship inside package)
+    mermaid_asset = Path(__file__).parent / "assets" / "mermaid.min.js"
+    if mermaid_asset.exists():
+        docs_files["js/mermaid.min.js"] = mermaid_asset.read_text(encoding="utf-8")
+    else:
+        print(f"[ai-docs] warning: mermaid asset not found: {mermaid_asset}")
+
     write_docs_files(docs_dir, docs_files)
 
     if write_readme:

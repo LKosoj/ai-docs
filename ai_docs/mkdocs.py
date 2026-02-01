@@ -77,7 +77,7 @@ def build_mkdocs_yaml(
         "site_dir": "ai_docs_site",
         "plugins": [
             "search",
-            {"mermaid2": {"javascript": "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs"}},
+            {"mermaid2": {"javascript": "js/mermaid.min.js"}},
         ],
         "markdown_extensions": [
             "tables",
