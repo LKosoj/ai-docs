@@ -99,7 +99,7 @@ def _insert_nav_node(tree: Dict[str, object], parts: List[str], rel_path: str) -
 
 def _tree_to_nav(tree: Dict[str, object]) -> List[Dict[str, object]]:
     nav: List[Dict[str, object]] = []
-    for key in sorted(tree.keys()):
+    for key in sorted(tree.keys(), key=lambda k: (not isinstance(tree[k], dict), k.lower())):
         value = tree[key]
         if isinstance(value, dict):
             nav.append({key: _tree_to_nav(value)})
