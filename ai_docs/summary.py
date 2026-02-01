@@ -8,7 +8,7 @@ from .utils import ensure_dir
 SUMMARY_PROMPT = """
 Ты эксперт по технической документации. Сформируй краткое, но информативное описание файла для включения в документацию.
 Укажи назначение, ключевые сущности и важные настройки. Если файл конфигурационный — перечисли ключевые параметры/секции.
-Ответ строго в Markdown, без заголовка.
+Ответ строго в Markdown, без заголовка. Не используй блоки кода и не оборачивай текст в ```markdown.
 """.strip()
 
 MODULE_SUMMARY_PROMPT = """
@@ -106,6 +106,15 @@ def _normalize_module_summary(
     return llm_client.chat(messages, cache=llm_cache).strip()
 
 
+def _strip_fenced_markdown(text: str) -> str:
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        lines = stripped.splitlines()
+        if len(lines) >= 2 and lines[0].startswith("```") and lines[-1].strip() == "```":
+            return "\n".join(lines[1:-1]).strip()
+    return text
+
+
 def summarize_file(
     content: str,
     file_type: str,
@@ -125,7 +134,7 @@ def summarize_file(
             {"role": "system", "content": prompt},
             {"role": "user", "content": chunk},
         ]
-        summaries.append(llm_client.chat(messages, cache=llm_cache).strip())
+        summaries.append(_strip_fenced_markdown(llm_client.chat(messages, cache=llm_cache).strip()))
 
     if len(summaries) == 1:
         result = summaries[0]
@@ -144,7 +153,7 @@ def summarize_file(
             {"role": "system", "content": "Собери единое краткое резюме для документации на основе частей ниже. Ответ в Markdown."},
             {"role": "user", "content": combined},
         ]
-    result = llm_client.chat(messages, cache=llm_cache).strip()
+    result = _strip_fenced_markdown(llm_client.chat(messages, cache=llm_cache).strip())
     if detailed:
         return _normalize_module_summary(result, llm_client, llm_cache)
     return result
