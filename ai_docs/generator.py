@@ -582,8 +582,8 @@ def generate_docs(
         summary_path = meta.get("module_summary_path")
         if not summary_path:
             continue
-        module_rel = Path("modules") / Path(path).with_suffix("")
-        module_rel_str = module_rel.as_posix() + ".md"
+        module_rel = Path("modules") / Path(path)
+        module_rel_str = module_rel.as_posix().replace(".", "__") + ".md"
         module_title = Path(path).with_suffix("").as_posix()
         summary = read_text_file(Path(summary_path))
         module_pages[module_rel_str] = f"# {module_title}\n\n{summary}\n"
