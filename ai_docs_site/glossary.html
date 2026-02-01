@@ -150,6 +150,66 @@
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="1"><a class="nav-link" href="#_1">Глоссарий</a>
 <ul class="nav flex-column">
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#scanresult">ScanResult</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#llmclient">LLMClient</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#ai_docs_cache">.ai_docs_cache/</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#ai-docs">.ai-docs/</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#file_map">file_map</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#domains">Домены (Domains)</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#summarize_file">summarize_file</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#chunk_text">chunk_text</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#cachemanager">CacheManager</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#mkdocsyml">mkdocs.yml</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#changesmd">changes.md</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#ai-docsyaml">.ai-docs.yaml</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#section_titles-domain_titles">SECTION_TITLES, DOMAIN_TITLES</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#ensure_dir">ensure_dir</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#classify_type-detect_domains">classify_type, detect_domains</a>
+<ul class="nav flex-column">
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -157,100 +217,129 @@
 </div></div>
 <div class="col-md-9" role="main">
 <h1 id="_1">Глоссарий</h1>
-<table>
-<thead>
-<tr>
-<th>Термин</th>
-<th>Определение</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>LLM</strong></td>
-<td>Large Language Model — языковая модель, используемая для генерации текста документации на основе анализа исходного кода. В <code>ai_docs</code> поддерживается через OpenAI-совместимые API.</td>
-</tr>
-<tr>
-<td><strong>Кэширование</strong></td>
-<td>Механизм сохранения результатов обработки файлов и ответов LLM в <code>.ai_docs_cache/</code> для ускорения повторной генерации. Отключается флагом <code>--no-cache</code>.</td>
-</tr>
-<tr>
-<td><strong>Инкрементальная обработка</strong></td>
-<td>Обновление только тех разделов документации, которые затронуты изменениями в исходных файлах. Основана на сравнении хэшей файлов через <code>CacheManager</code>.</td>
-</tr>
-<tr>
-<td><strong><code>ScanResult</code></strong></td>
-<td>Объект, возвращаемый сканером, содержащий список файлов с метаданными, корневой путь, источник и имя репозитория. Используется как вход для генерации документации.</td>
-</tr>
-<tr>
-<td><strong><code>.ai-docs.yaml</code></strong></td>
-<td>Конфигурационный файл проекта для кастомизации: расширений файлов, шаблонов исключения, фильтрации. Создаётся автоматически, если отсутствует.</td>
-</tr>
-<tr>
-<td><strong><code>.gitignore</code> / <code>.build_ignore</code></strong></td>
-<td>Файлы с правилами игнорирования путей при сканировании. Используются <code>pathspec</code> для сопоставления. <code>.build_ignore</code> — дополнительный пользовательский файл.</td>
-</tr>
-<tr>
-<td><strong><code>CacheManager</code></strong></td>
-<td>Класс, управляющий двумя JSON-файлами: <code>index.json</code> (хэши файлов) и <code>llm_cache.json</code> (ответы LLM). Определяет добавленные, изменённые, удалённые и неизменные файлы.</td>
-</tr>
-<tr>
-<td><strong><code>file_map</code></strong></td>
-<td>Внутренняя структура данных, сопоставляющая каждый файл с его типом, доменами, хэшем и путём к сгенерированной сводке. Используется для построения навигации и генерации разделов.</td>
-</tr>
-<tr>
-<td><strong>Домен (технологический)</strong></td>
-<td>Категория технологий, определяемая по расширениям и именам файлов: <code>Kubernetes</code>, <code>Terraform</code>, <code>Docker</code>, <code>CI/CD</code>, <code>Observability</code> и др. Используется для группировки в документации.</td>
-</tr>
-<tr>
-<td><strong><code>SUMMARY_PROMPT</code>, <code>MODULE_SUMMARY_PROMPT</code>, <code>CONFIG_SUMMARY_PROMPT</code></strong></td>
-<td>Шаблоны промптов для LLM, применяемые в зависимости от типа файла: общий обзор, описание модуля, описание конфигурации.</td>
-</tr>
-<tr>
-<td><strong><code>chunk_text</code></strong></td>
-<td>Утилита разбиения текста на части по ограничению токенов модели. Использует <code>tiktoken</code> для точного подсчёта. Применяется при превышении лимита контекста.</td>
-</tr>
-<tr>
-<td><strong><code>_index.json</code></strong></td>
-<td>Навигационный индекс в <code>.ai-docs/</code>, содержащий структуру документации, приоритеты модулей и связи между файлами. Используется для построения <code>mkdocs.yml</code> и внутренних ссылок.</td>
-</tr>
-<tr>
-<td><strong><code>mkdocs.yml</code></strong></td>
-<td>Конфигурационный файл для генерации сайта документации. Создаётся автоматически с поддержкой плагинов (<code>mermaid2</code>, <code>search</code>) и локализованных заголовков.</td>
-</tr>
-<tr>
-<td><strong><code>changes.md</code></strong></td>
-<td>Автоматически генерируемый отчёт о внесённых изменениях: добавленные, изменённые, удалённые файлы и перегенерированные разделы.</td>
-</tr>
-<tr>
-<td><strong><code>--local-site</code></strong></td>
-<td>Флаг, отключающий <code>site_url</code> и <code>use_directory_urls</code> в <code>mkdocs.yml</code>, что позволяет корректно запускать сайт локально через <code>mkdocs serve</code>.</td>
-</tr>
-<tr>
-<td><strong><code>AI_DOCS_THREADS</code></strong></td>
-<td>Переменная окружения, задающая количество потоков для параллельной обработки файлов. По умолчанию зависит от системы.</td>
-</tr>
-<tr>
-<td><strong><code>OPENAI_API_KEY</code>, <code>OPENAI_BASE_URL</code>, <code>OPENAI_MODEL</code></strong></td>
-<td>Обязательные переменные окружения для настройки LLM-клиента. Поддерживают кастомные эндпоинты (например, локальные LLM через Ollama).</td>
-</tr>
-<tr>
-<td><strong><code>.ai_docs_cache/</code></strong></td>
-<td>Директория для хранения кэша LLM-ответов и временных данных. Не коммитится в репозиторий.</td>
-</tr>
-<tr>
-<td><strong><code>.ai-docs/</code></strong></td>
-<td>Рабочая директория инструмента, содержащая промежуточные артефакты: <code>docs/</code>, <code>_index.json</code>, <code>changes.md</code>, <code>dependencies.md</code>, <code>glossary.md</code>.</td>
-</tr>
-<tr>
-<td><strong><code>classify_type</code></strong></td>
-<td>Функция определения типа файла (код, конфигурация, документация) по расширению и имени. Используется при сканировании.</td>
-</tr>
-<tr>
-<td><strong><code>detect_domains</code></strong></td>
-<td>Функция распознавания технологических доменов по пути и содержимому файла. Определяет принадлежность к <code>Terraform</code>, <code>Docker</code>, <code>Helm</code> и др.</td>
-</tr>
-</tbody>
-</table></div>
+<p>Ниже приведены ключевые термины и сущности, используемые в системе <code>ai_docs</code>, с краткими определениями и практическим контекстом применения.</p>
+<hr/>
+<h2 id="scanresult"><code>ScanResult</code></h2>
+<p>Объект, содержащий результат сканирования исходного кода. Включает:
+- Список файлов с метаданными: путь, размер, тип (код/конфиг/документация), домены (например, <code>kubernetes</code>, <code>terraform</code>), первые 4000 символов содержимого.
+- Корневой путь и имя репозитория.
+- Используется как вход для генерации документации.</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Передаётся в <code>generate_docs</code> для анализа структуры проекта и определения контекста.</p>
+</blockquote>
+<hr/>
+<h2 id="llmclient"><code>LLMClient</code></h2>
+<p>Клиент для взаимодействия с LLM через API. Поддерживает:
+- Отправку чат-запросов к OpenAI-совместимым эндпоинтам.
+- Кэширование ответов по SHA256-хешу payload.
+- Настройку модели, температуры, лимитов токенов.</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Используется в <code>summarize_file</code> для генерации описаний файлов. Кэширование ускоряет повторную обработку.</p>
+</blockquote>
+<hr/>
+<h2 id="ai_docs_cache"><code>.ai_docs_cache/</code></h2>
+<p>Директория для хранения закэшированных ответов LLM. Управляется <code>CacheManager</code>.</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: При повторном запуске <code>ai_docs</code> повторные запросы к LLM не выполняются, если содержимое файла не изменилось.</p>
+</blockquote>
+<hr/>
+<h2 id="ai-docs"><code>.ai-docs/</code></h2>
+<p>Рабочая директория инструмента. Содержит:
+- <code>_index.json</code> — навигационный индекс проекта.
+- <code>changes.md</code> — отчёт об изменениях после генерации.
+- <code>glossary.md</code>, <code>dependencies.md</code>, <code>modules/</code>, <code>configs/</code> — сгенерированные документы.
+- <code>mkdocs.yml</code> — конфигурация сайта (если включён режим MkDocs).</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Используется как источник данных для локальной навигации и рефакторинга. Не коммитится в репозиторий, если не требуется.</p>
+</blockquote>
+<hr/>
+<h2 id="file_map"><code>file_map</code></h2>
+<p>Структура данных, сопоставляющая каждый файл с его метаданными:
+- Тип (код, конфиг, документация),
+- Обнаруженные домены,
+- Хэш содержимого,
+- Путь к сгенерированной сводке (<code>.ai-docs/summaries/...</code>).</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Основа для определения, какие файлы нужно пересуммаризировать при инкрементальной обработке.</p>
+</blockquote>
+<hr/>
+<h2 id="domains">Домены (Domains)</h2>
+<p>Логические группы технологий, автоматически распознаваемые в проекте:
+- <code>kubernetes</code>, <code>helm</code>, <code>terraform</code>, <code>ansible</code>, <code>docker</code>, <code>ci/cd</code>, <code>observability</code>, <code>service-mesh</code>, <code>data-storage</code>.</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Используются для структурирования документации и генерации релевантных разделов (например, "Инфраструктура как код").</p>
+</blockquote>
+<hr/>
+<h2 id="summarize_file"><code>summarize_file</code></h2>
+<p>Функция, генерирующая краткое описание файла с помощью LLM. Поддерживает режимы:
+- Базовое резюме,
+- Описание модуля,
+- Описание конфигурации.</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Вызывается параллельно для всех файлов. Результат сохраняется в Markdown и используется в <code>README.md</code> и <code>modules/</code>.</p>
+</blockquote>
+<hr/>
+<h2 id="chunk_text"><code>chunk_text</code></h2>
+<p>Утилита разбиения текста на части по токенам. Использует <code>tiktoken</code> для точного подсчёта.</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Применяется при обработке больших файлов, превышающих лимит контекста модели (например, 8192 токенов).</p>
+</blockquote>
+<hr/>
+<h2 id="cachemanager"><code>CacheManager</code></h2>
+<p>Класс для управления кэшем:
+- <code>index.json</code> — хранит хэши файлов и их метаданные.
+- <code>llm_cache.json</code> — хранит ответы LLM.
+- Метод <code>diff_files()</code> определяет, какие файлы изменились, добавлены или удалены.</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Определяет, какие файлы нужно перепроцессировать при запуске с кэшированием.</p>
+</blockquote>
+<hr/>
+<h2 id="mkdocsyml"><code>mkdocs.yml</code></h2>
+<p>Генерируемый конфигурационный файл для MkDocs. Включает:
+- Навигацию по разделам,
+- Плагины (например, <code>mermaid2</code>),
+- Расширения Markdown.</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Автоматически создаётся при флаге <code>--mkdocs</code>. Используется для сборки сайта документации.</p>
+</blockquote>
+<hr/>
+<h2 id="changesmd"><code>changes.md</code></h2>
+<p>Автоматически генерируемый отчёт в формате Markdown. Содержит:
+- Список добавленных, изменённых, удалённых файлов,
+- Перечень перегенерированных разделов,
+- Итоговое резюме изменений.</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Полезен при интеграции в CI/CD для аудита изменений в документации.</p>
+</blockquote>
+<hr/>
+<h2 id="ai-docsyaml"><code>.ai-docs.yaml</code></h2>
+<p>Конфигурационный файл проекта. Позволяет:
+- Добавлять пользовательские расширения файлов,
+- Задавать правила включения/исключения,
+- Настроить поведение сканера.</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Используется для тонкой настройки анализа, например, включения <code>.tfvars</code> как конфигурационных файлов.</p>
+</blockquote>
+<hr/>
+<h2 id="section_titles-domain_titles"><code>SECTION_TITLES</code>, <code>DOMAIN_TITLES</code></h2>
+<p>Словари с локализованными заголовками разделов и доменов (поддержка <code>ru</code>, <code>en</code>).</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Обеспечивают соответствие языка документации заданному через <code>--language</code>.</p>
+</blockquote>
+<hr/>
+<h2 id="ensure_dir"><code>ensure_dir</code></h2>
+<p>Утилита для безопасного создания директорий. Проверяет существование, создаёт все промежуточные папки.</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Используется перед записью любых выходных файлов, например, в <code>write_docs_files</code>.</p>
+</blockquote>
+<hr/>
+<h2 id="classify_type-detect_domains"><code>classify_type</code>, <code>detect_domains</code></h2>
+<p>Функции классификации файлов по:
+- Типу (код, конфиг, документация) — на основе расширений и имён.
+- Доменам — по ключевым словам в пути или содержимом (например, <code>Dockerfile</code> → <code>docker</code>).</p>
+<blockquote>
+<p><strong>Практическое применение</strong>: Определяют, как обрабатывать и в какие разделы включать файл.</p>
+</blockquote></div>
 </div>
 </div>
 <footer class="col-md-12">

@@ -150,23 +150,27 @@
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="1"><a class="nav-link" href="#_1">Зависимости</a>
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Внешние системные зависимости</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Основные зависимости</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#python-">Основные Python-зависимости</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Встроенные ресурсы</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Опциональные зависимости</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_4">Условные зависимости</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_4">Управление зависимостями</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_5">Управление зависимостями</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_5">Особенности</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_6">Переменные окружения</a>
+<ul class="nav flex-column">
+</ul>
+</li>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_7">Локальные файлы конфигурации</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -177,99 +181,72 @@
 </div></div>
 <div class="col-md-9" role="main">
 <h1 id="_1">Зависимости</h1>
-<p>Проект <code>ai_docs</code> зависит от внешних инструментов и Python-пакетов для корректной работы. Ниже приведены обязательные и опциональные зависимости с пояснением их назначения.</p>
-<h2 id="_2">Внешние системные зависимости</h2>
-<table>
-<thead>
-<tr>
-<th>Инструмент</th>
-<th>Назначение</th>
-<th>Обязательность</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>git</code></td>
-<td>Клонирование удалённых репозиториев при указании <code>--source</code> как URL</td>
-<td>Обязательно при работе с Git-репозиториями</td>
-</tr>
-<tr>
-<td><code>python</code> (≥ 3.8)</td>
-<td>Выполнение CLI-скрипта и импорт модулей</td>
-<td>Обязательно</td>
-</tr>
-</tbody>
-</table>
-<h2 id="python-">Основные Python-зависимости</h2>
-<p>Указаны в <code>pyproject.toml</code> в секции <code>project.dependencies</code>.</p>
-<table>
-<thead>
-<tr>
-<th>Пакет</th>
-<th>Назначение</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>requests</code></td>
-<td>HTTP-запросы к LLM API</td>
-</tr>
-<tr>
-<td><code>tiktoken</code></td>
-<td>Токенизация текста для контроля длины контекста при работе с LLM</td>
-</tr>
-<tr>
-<td><code>PyYAML</code></td>
-<td>Парсинг конфигурационных файлов <code>.ai-docs.yaml</code> и <code>mkdocs.yml</code></td>
-</tr>
-<tr>
-<td><code>python-dotenv</code></td>
-<td>Загрузка переменных окружения из <code>.env</code></td>
-</tr>
-<tr>
-<td><code>pathspec</code></td>
-<td>Сопоставление путей с шаблонами <code>.gitignore</code> и <code>.build_ignore</code></td>
-</tr>
-<tr>
-<td><code>mkdocs</code></td>
-<td>Генерация статического сайта документации</td>
-</tr>
-<tr>
-<td><code>mkdocs-mermaid2-plugin</code></td>
-<td>Поддержка диаграмм Mermaid в MkDocs</td>
-</tr>
-<tr>
-<td><code>pymdown-extensions</code></td>
-<td>Дополнительные Markdown-расширения (например, подсветка кода, таблицы)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_3">Опциональные зависимости</h2>
-<table>
-<thead>
-<tr>
-<th>Пакет</th>
-<th>Условие использования</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>setuptools</code>, <code>wheel</code></td>
-<td>Только при сборке пакета (<code>build-system</code> в <code>pyproject.toml</code>)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="_4">Управление зависимостями</h2>
+<p>Проект <code>ai_docs</code> использует комбинацию прямых зависимостей и встроенных ресурсов для обеспечения функциональности генерации документации, работы с LLM и управления файлами.</p>
+<h2 id="_2">Основные зависимости</h2>
+<p>Указаны в <code>pyproject.toml</code> в секции <code>project.dependencies</code>:</p>
 <ul>
-<li>Установка: <code>pip install .</code> (в корне проекта).</li>
-<li>Для разработки: зависимости устанавливаются автоматически при выполнении <code>pip install -e .</code>.</li>
-<li>Все зависимости объявлены явно — не требуется ручная установка дополнительных пакетов.</li>
+<li><strong><code>tiktoken</code></strong> — для токенизации текста с учётом ограничений LLM (подсчёт токенов, разбиение на чанки).</li>
+<li><strong><code>pathspec</code></strong> — обработка правил из <code>.gitignore</code>, <code>.build_ignore</code> и пользовательских шаблонов.</li>
+<li><strong><code>python-dotenv</code></strong> — загрузка переменных окружения из <code>.env</code>.</li>
+<li><strong><code>requests</code></strong> — выполнение HTTP-запросов к OpenAI-совместимым API.</li>
+<li><strong><code>PyYAML</code></strong> — парсинг и генерация <code>mkdocs.yml</code>, <code>.ai-docs.yaml</code>.</li>
+<li><strong><code>colorama</code></strong> — кроссплатформенная раскраска логов в терминале.</li>
 </ul>
-<h2 id="_5">Особенности</h2>
+<h2 id="_3">Встроенные ресурсы</h2>
 <ul>
-<li>Нет зависимостей от проприетарных или платных инструментов.</li>
-<li>Поддержка OpenAI-совместимых API (через <code>OPENAI_BASE_URL</code>) позволяет использовать альтернативные провайдеры (например, локальные LLM через <code>ollama</code>, <code>vLLM</code>).</li>
-<li>Кэширование (<code>tiktoken</code>, <code>pathspec</code>) и многопоточность реализованы без внешних брокеров — работает «из коробки».</li>
+<li><strong><code>mermaid.min.js</code></strong> — JS-библиотека для рендеринга диаграмм Mermaid, включается в пакет и копируется в <code>js/</code> при генерации MkDocs-сайта.</li>
+<li>Расположение: <code>ai_docs/assets/mermaid.min.js</code>.</li>
+<li>Подключается автоматически через плагин <code>mermaid2</code> в <code>mkdocs.yml</code>.</li>
+</ul>
+<h2 id="_4">Условные зависимости</h2>
+<ul>
+<li><strong>Git</strong> — требуется в <code>PATH</code> для клонирования удалённых репозиториев (<code>git clone</code>).</li>
+<li><strong>MkDocs</strong> — необходим для сборки сайта (<code>mkdocs build</code>). Устанавливается отдельно, если используется флаг <code>--mkdocs</code>.</li>
+</ul>
+<h2 id="_5">Управление зависимостями</h2>
+<ul>
+<li>Сборка и установка: <code>pip install .</code> или <code>pip install -e .</code> (для разработки).</li>
+<li>Зависимости для сборки: <code>setuptools&gt;=68</code>, <code>wheel</code> — указаны в <code>build-system.requires</code>.</li>
+<li>Версия Python: <strong>3.8+</strong>.</li>
+</ul>
+<h2 id="_6">Переменные окружения</h2>
+<p>Критичные для работы:</p>
+<table>
+<thead>
+<tr>
+<th>Переменная</th>
+<th>Назначение</th>
+<th>Обязательная</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OPENAI_API_KEY</code></td>
+<td>Ключ для доступа к LLM</td>
+<td>Да</td>
+</tr>
+<tr>
+<td><code>OPENAI_BASE_URL</code></td>
+<td>Базовый URL API (по умолчанию <code>https://api.openai.com/v1</code>)</td>
+<td>Нет</td>
+</tr>
+<tr>
+<td><code>OPENAI_MODEL</code></td>
+<td>Модель LLM (по умолчанию <code>gpt-4o-mini</code>)</td>
+<td>Нет</td>
+</tr>
+</tbody>
+</table>
+<p>Опциональные:</p>
+<ul>
+<li><code>AI_DOCS_THREADS</code> — количество потоков обработки файлов.</li>
+<li><code>AI_DOCS_LOCAL_SITE</code> — режим локальной сборки MkDocs без публикации.</li>
+</ul>
+<h2 id="_7">Локальные файлы конфигурации</h2>
+<ul>
+<li><code>.ai-docs.yaml</code> — кастомизация расширений, шаблонов включения/исключения.</li>
+<li><code>.env</code> — загружается автоматически для переменных окружения.</li>
+<li><code>.gitignore</code>, <code>.build_ignore</code> — используются для фильтрации файлов при сканировании.</li>
 </ul></div>
 </div>
 </div>
