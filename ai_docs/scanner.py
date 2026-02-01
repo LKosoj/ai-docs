@@ -40,6 +40,7 @@ DEFAULT_EXCLUDE_PATTERNS = {
     ".github/*", ".github/**", "**/.github/*", "**/.github/**",
     "mkdocs.yml", "**/mkdocs.yml", "mkdocs_yml.md", "**/mkdocs_yml.md",
     ".ai-docs.yaml", "**/.ai-docs.yaml",
+    "ai_docs/assets/*", "ai_docs/assets/**", "**/ai_docs/assets/*", "**/ai_docs/assets/**",
 }
 
 
