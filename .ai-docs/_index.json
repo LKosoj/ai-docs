@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-02-01T14:09:11.959781Z",
+  "generated_at": "2026-02-01T15:14:56.291374Z",
   "docs_dir": ".ai-docs",
   "rules": {
     "priority": [
@@ -68,13 +68,13 @@
       "name": "ai_docs/mkdocs",
       "path": "modules/ai_docs/mkdocs.md",
       "source_path": "ai_docs/mkdocs.py",
-      "summary": "Модуль предоставляет инструменты для генерации конфигурации MkDocs (`mkdocs.yml`) и записи файлов документации на диск. Основная функция `build_mkdocs_yaml` формирует YAML-конфигурацию на основе структуры проекта, включая навигацию по разделам, конфигурационным файлам и модулям. Вспомогательные функции строят иерархическую навигацию для модулей на основе путей файлов. Функция `write_docs_files` сохраняет сгенерированные документы в указанную директорию."
+      "summary": "Модуль предоставляет инструменты для генерации конфигурации MkDocs (`mkdocs.yml`) и записи файлов документации на диск. Основной функцией является `build_mkdocs_yaml`, формирующая YAML-конфигурацию на основе структуры проекта."
     },
     {
       "name": "ai_docs/generator",
       "path": "modules/ai_docs/generator.md",
       "source_path": "ai_docs/generator.py",
-      "summary": "Модуль отвечает за генерацию технической документации проекта на основе анализа исходных файлов с использованием LLM. Собирает контекст, разбивает его на разделы, генерирует Markdown-документы, включая архитектуру, зависимости и модули. Поддерживает кэширование, многопоточную обработку и интеграцию с MkDocs. Результат — структурированная документация в формате, пригодном для публикации."
+      "summary": "Модуль отвечает за генерацию технической документации на основе анализа исходного кода и конфигурационных файлов проекта. Использует LLM для создания структурированных разделов документации, таких как архитектура, зависимости и соглашения. Поддерживает многоязычность, кэширование запросов к модели и интеграцию с MkDocs для построения документационного сайта. Результат включает README, разделённые по темам документы и индекс для навигации."
     },
     {
       "name": "ai_docs/__init__",
@@ -127,31 +127,18 @@
     "dependencies.md",
     "glossary.md",
     "index.md",
-    "modules/ai_docs/__init__.md",
     "modules/ai_docs/__init____py.md",
-    "modules/ai_docs/__main__.md",
     "modules/ai_docs/__main____py.md",
-    "modules/ai_docs/cache.md",
     "modules/ai_docs/cache__py.md",
-    "modules/ai_docs/changes.md",
     "modules/ai_docs/changes__py.md",
-    "modules/ai_docs/cli.md",
     "modules/ai_docs/cli__py.md",
-    "modules/ai_docs/domain.md",
     "modules/ai_docs/domain__py.md",
-    "modules/ai_docs/generator.md",
     "modules/ai_docs/generator__py.md",
-    "modules/ai_docs/llm.md",
     "modules/ai_docs/llm__py.md",
-    "modules/ai_docs/mkdocs.md",
     "modules/ai_docs/mkdocs__py.md",
-    "modules/ai_docs/scanner.md",
     "modules/ai_docs/scanner__py.md",
-    "modules/ai_docs/summary.md",
     "modules/ai_docs/summary__py.md",
-    "modules/ai_docs/tokenizer.md",
     "modules/ai_docs/tokenizer__py.md",
-    "modules/ai_docs/utils.md",
     "modules/ai_docs/utils__py.md",
     "modules/index.md",
     "runtime.md"

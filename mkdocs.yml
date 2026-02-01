@@ -23,19 +23,19 @@ nav:
 - Модули:
   - Обзор: modules/index.md
   - ai_docs:
-    - __init____py: modules/ai_docs/__init____py.md
-    - __main____py: modules/ai_docs/__main____py.md
-    - cache__py: modules/ai_docs/cache__py.md
-    - changes__py: modules/ai_docs/changes__py.md
-    - cli__py: modules/ai_docs/cli__py.md
-    - domain__py: modules/ai_docs/domain__py.md
-    - generator__py: modules/ai_docs/generator__py.md
-    - llm__py: modules/ai_docs/llm__py.md
-    - mkdocs__py: modules/ai_docs/mkdocs__py.md
-    - scanner__py: modules/ai_docs/scanner__py.md
-    - summary__py: modules/ai_docs/summary__py.md
-    - tokenizer__py: modules/ai_docs/tokenizer__py.md
-    - utils__py: modules/ai_docs/utils__py.md
+    - .init..py: modules/ai_docs/__init____py.md
+    - .main..py: modules/ai_docs/__main____py.md
+    - cache.py: modules/ai_docs/cache__py.md
+    - changes.py: modules/ai_docs/changes__py.md
+    - cli.py: modules/ai_docs/cli__py.md
+    - domain.py: modules/ai_docs/domain__py.md
+    - generator.py: modules/ai_docs/generator__py.md
+    - llm.py: modules/ai_docs/llm__py.md
+    - mkdocs.py: modules/ai_docs/mkdocs__py.md
+    - scanner.py: modules/ai_docs/scanner__py.md
+    - summary.py: modules/ai_docs/summary__py.md
+    - tokenizer.py: modules/ai_docs/tokenizer__py.md
+    - utils.py: modules/ai_docs/utils__py.md
 - Изменения: changes.md
 site_url: ''
 use_directory_urls: false
