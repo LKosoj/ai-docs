@@ -47,10 +47,26 @@
                                 <a href="../../dependencies.html" class="nav-link">Зависимости</a>
                             </li>
                             <li class="nav-item">
+                                <a href="../../testing.html" class="nav-link">Тестирование</a>
+                            </li>
+                            <li class="nav-item">
                                 <a href="../../conventions.html" class="nav-link">Соглашения</a>
                             </li>
                             <li class="nav-item">
                                 <a href="../../glossary.html" class="nav-link">Глоссарий</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Конфигурация проекта</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../configs/index.html" class="dropdown-item">Обзор</a>
+</li>
+                                    
+<li>
+    <a href="../../configs/files/pyproject__toml.html" class="dropdown-item">pyproject.toml</a>
+</li>
+                                </ul>
                             </li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Модули</a>
@@ -65,11 +81,11 @@
     <ul class="dropdown-menu">
             
 <li>
-    <a href="__init____py.html" class="dropdown-item">.init..py</a>
+    <a href="__init____py.html" class="dropdown-item">__init__.py</a>
 </li>
             
 <li>
-    <a href="__main____py.html" class="dropdown-item">.main..py</a>
+    <a href="__main____py.html" class="dropdown-item">__main__.py</a>
 </li>
             
 <li>
@@ -168,50 +184,67 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="ai_docsmkdocs">ai_docs/mkdocs</h1>
-<p>Модуль предоставляет инструменты для генерации конфигурации MkDocs (<code>mkdocs.yml</code>) и записи файлов документации на диск.<br />
-Основной функцией является <code>build_mkdocs_yaml</code>, формирующая YAML-конфигурацию на основе структуры проекта.<br />
-Вспомогательные функции строят иерархическую навигацию по модулям и управляют файловой структурой документации.</p>
-<p>Ключевые структуры данных<br />
-Dict[str, str] — Словарь соответствия идентификаторов конфигураций и имён файлов.<br />
-List[str] — Список путей к модулям для включения в навигацию.</p>
-<p>build_mkdocs_yaml(site_name: str, sections: Dict[str, str], configs: Dict[str, str], local_site: bool = False, has_modules: bool = False, module_nav_paths: List[str] | None = None) -&gt; str<br />
-Формирует строку YAML-конфигурации MkDocs на основе входных параметров.<br />
-Аргументы<br />
-site_name — Название сайта документации<br />
-sections — Словарь включённых разделов (ключи: например, "architecture", "runtime")<br />
-configs — Словарь конфигурационных систем и соответствующих им файлов<br />
-local_site — Флаг, указывающий, что сайт предназначен для локального просмотра<br />
-has_modules — Флаг наличия модулей в проекте<br />
-module_nav_paths — Список путей к файлам модулей для построения навигации<br />
-Возвращает<br />
-Строка в формате YAML, готовая для записи в mkdocs.yml</p>
-<hr />
-<p>_build_modules_nav(module_paths: List[str]) -&gt; List[Dict[str, object]]<br />
-Строит древовидную структуру навигации по модулям на основе списка путей.<br />
-Аргументы<br />
-module_paths — Список путей к markdown-файлам модулей<br />
-Возвращает<br />
-Список словарей, представляющих иерархию навигации по модулям</p>
-<hr />
-<p>_insert_nav_node(tree: Dict[str, object], parts: List[str], rel_path: str) -&gt; None<br />
-Рекурсивно вставляет узел в дерево навигации по частям пути.<br />
-Аргументы<br />
-tree — Словарь, представляющий текущий уровень дерева навигации<br />
-parts — Части пути, оставшиеся для обработки<br />
-rel_path — Полный относительный путь к файлу, привязываемому к листу</p>
-<hr />
-<p>_tree_to_nav(tree: Dict[str, object]) -&gt; List[Dict[str, object]]<br />
-Преобразует внутреннее дерево навигации в список словарей, подходящий для MkDocs.<br />
-Аргументы<br />
-tree — Дерево навигации, где ключи — названия, значения — поддеревья или пути<br />
-Возвращает<br />
-Список словарей с иерархической структурой навигации</p>
-<hr />
-<p>write_docs_files(docs_dir: Path, files: Dict[str, str]) -&gt; None<br />
-Записывает файлы документации в указанную директорию, создавая промежуточные каталоги.<br />
-Аргументы<br />
-docs_dir — Корневая директория для записи файлов документации<br />
-files — Словарь: относительный путь файла → его содержимое</p></div>
+<p>Модуль предоставляет инструменты для генерации конфигурационного файла <code>mkdocs.yml</code> и записи Markdown-документов на диск.<br />
+Основная функция <code>build_mkdocs_yaml</code> формирует структуру навигации и конфигурацию сайта MkDocs на основе входных параметров.<br />
+Вспомогательные функции строят древовидную структуру навигации по путям файлов, а <code>write_docs_files</code> сохраняет документы в указанную директорию.</p>
+<p>Ключевые структуры данных
+Path — объект для работы с путями файловой системы, обеспечивающий кроссплатформенную совместимость
+Dict[str, str] — словарь, сопоставляющий названия секций или конфигураций с именами файлов
+List[str] — список строк, представляющих относительные пути к файлам документации</p>
+<p>build_mkdocs_yaml(
+    site_name: str,
+    sections: Dict[str, str],
+    configs: Dict[str, str],
+    local_site: bool = False,
+    has_modules: bool = False,
+    module_nav_paths: List[str] | None = None,
+    project_config_nav_paths: List[str] | None = None,
+) -&gt; str
+Генерирует содержимое файла mkdocs.yml в формате YAML
+Аргументы
+site_name — Название сайта документации
+sections — Словарь включённых секций (например, "architecture", "testing") и соответствующих им файлов
+configs — Словарь типов конфигураций (например, "kubernetes", "helm") и имён файлов
+local_site — Если True, настраивает сайт для локального просмотра (без URL и с отключёнными directory URLs)
+has_modules — Указывает, что проект содержит модули, требующие отдельной секции в навигации
+module_nav_paths — Список путей к файлам модулей для построения древовидной навигации
+project_config_nav_paths — Список путей к файлам конфигурации проекта для построения навигации
+Возвращает
+Строка в формате YAML, представляющая конфигурацию MkDocs
+Исключения
+Не выбрасывает исключения</p>
+<p>_build_tree_nav(paths: List[str], strip_prefix: str) -&gt; List[Dict[str, object]]
+Строит древовидную структуру навигации из списка путей, удаляя указанный префикс
+Аргументы
+paths — Список относительных путей к файлам документации
+strip_prefix — Префикс пути, который следует удалить перед построением дерева
+Возвращает
+Список словарей, представляющих иерархию навигации (вложенные разделы и файлы)
+Исключения
+Не выбрасывает исключения</p>
+<p>_insert_nav_node(tree: Dict[str, object], parts: List[str], rel_path: str) -&gt; None
+Рекурсивно вставляет узел в дерево навигации по частям пути
+Аргументы
+tree — Словарь, представляющий текущий уровень дерева навигации
+parts — Список частей пути (разделённых '/') для вставки узла
+rel_path — Исходный относительный путь к файлу, привязываемый к листу дерева
+Исключения
+Не выбрасывает исключения</p>
+<p>_tree_to_nav(tree: Dict[str, object]) -&gt; List[Dict[str, object]]
+Преобразует вложенное дерево в список словарей для использования в mkdocs.yml
+Аргументы
+tree — Словарь с иерархической структурой навигации (вложенные dict и строки)
+Возвращает
+Отсортированный список словарей с ключами-названиями и значениями-путями или подразделами
+Исключения
+Не выбрасывает исключения</p>
+<p>write_docs_files(docs_dir: Path, files: Dict[str, str]) -&gt; None
+Записывает файлы документации в указанную директорию, создавая промежуточные каталоги при необходимости
+Аргументы
+docs_dir — Путь к директории, куда будут сохранены файлы документации
+files — Словарь, где ключ — относительный путь файла, значение — его содержимое в формате UTF-8
+Исключения
+Может выбросить IOError или OSError при ошибках записи файлов</p></div>
             </div>
         </div>
 

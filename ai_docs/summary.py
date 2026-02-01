@@ -70,6 +70,31 @@ class <имя>
 Ответ строго в Markdown без заголовка документа.
 """.strip()
 
+CONFIG_SUMMARY_PROMPT = """
+Ты технический писатель. Сформируй описание конфигурационного файла в универсальном стиле.
+Сначала дай краткое описание файла (2–4 предложения).
+Затем блок:
+Секции и ключи
+<секция/ключ> — <описание>
+
+Далее (если есть важные параметры) добавь блок:
+Важные параметры
+<параметр> — <описание>
+
+Не используй заголовки Markdown, списки, нумерацию и блоки кода.
+Ответ строго в Markdown без заголовка документа, соблюдай указанные блоки.
+""".strip()
+
+CONFIG_SUMMARY_REFORMAT_PROMPT = """
+Переформатируй текст в универсальный конфиг-стиль.
+Требования:
+- Без заголовков Markdown, списков, нумерации и блоков кода.
+- Структура: краткое описание файла; затем блок "Секции и ключи" с линиями "<секция/ключ> — <описание>".
+- Далее (если есть) блок "Важные параметры" с линиями "<параметр> — <описание>".
+Если блок пустой — не выводи его.
+Ответ строго в Markdown без заголовка документа.
+""".strip()
+
 
 def _needs_doxygen_fix(text: str) -> bool:
     if "```" in text:
@@ -106,6 +131,16 @@ def _normalize_module_summary(
     return llm_client.chat(messages, cache=llm_cache).strip()
 
 
+def _normalize_config_summary(summary: str, llm_client, llm_cache: Dict[str, str]) -> str:
+    if not _needs_doxygen_fix(summary):
+        return summary
+    messages = [
+        {"role": "system", "content": CONFIG_SUMMARY_REFORMAT_PROMPT},
+        {"role": "user", "content": summary},
+    ]
+    return llm_client.chat(messages, cache=llm_cache).strip()
+
+
 def _strip_fenced_markdown(text: str) -> str:
     stripped = text.strip()
     if stripped.startswith("```"):
@@ -127,7 +162,10 @@ def summarize_file(
     chunks = chunk_text(content, model=model, max_tokens=1800)
     summaries = []
     for chunk in chunks:
-        prompt = MODULE_SUMMARY_PROMPT if detailed else SUMMARY_PROMPT
+        if detailed and file_type == "config":
+            prompt = CONFIG_SUMMARY_PROMPT
+        else:
+            prompt = MODULE_SUMMARY_PROMPT if detailed else SUMMARY_PROMPT
         if not detailed and (file_type == "infra" or domains):
             prompt = SUMMARY_PROMPT + "\nФайл относится к инфраструктуре: " + ", ".join(domains)
         messages = [
@@ -138,12 +176,19 @@ def summarize_file(
 
     if len(summaries) == 1:
         result = summaries[0]
+        if detailed and file_type == "config":
+            return _normalize_config_summary(result, llm_client, llm_cache)
         if detailed:
             return _normalize_module_summary(result, llm_client, llm_cache)
         return result
 
     combined = "\n\n".join(summaries)
-    if detailed:
+    if detailed and file_type == "config":
+        messages = [
+            {"role": "system", "content": CONFIG_SUMMARY_REFORMAT_PROMPT},
+            {"role": "user", "content": combined},
+        ]
+    elif detailed:
         messages = [
             {"role": "system", "content": MODULE_SUMMARY_REFORMAT_PROMPT},
             {"role": "user", "content": combined},
@@ -154,6 +199,8 @@ def summarize_file(
             {"role": "user", "content": combined},
         ]
     result = _strip_fenced_markdown(llm_client.chat(messages, cache=llm_cache).strip())
+    if detailed and file_type == "config":
+        return _normalize_config_summary(result, llm_client, llm_cache)
     if detailed:
         return _normalize_module_summary(result, llm_client, llm_cache)
     return result

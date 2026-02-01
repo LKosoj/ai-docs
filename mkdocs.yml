@@ -18,13 +18,17 @@ nav:
 - Архитектура: architecture.md
 - Запуск: runtime.md
 - Зависимости: dependencies.md
+- Тестирование: testing.md
 - Соглашения: conventions.md
 - Глоссарий: glossary.md
+- Конфигурация проекта:
+  - Обзор: configs/index.md
+  - pyproject.toml: configs/files/pyproject__toml.md
 - Модули:
   - Обзор: modules/index.md
   - ai_docs:
-    - .init..py: modules/ai_docs/__init____py.md
-    - .main..py: modules/ai_docs/__main____py.md
+    - __init__.py: modules/ai_docs/__init____py.md
+    - __main__.py: modules/ai_docs/__main____py.md
     - cache.py: modules/ai_docs/cache__py.md
     - changes.py: modules/ai_docs/changes__py.md
     - cli.py: modules/ai_docs/cli__py.md

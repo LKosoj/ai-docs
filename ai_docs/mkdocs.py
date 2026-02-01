@@ -11,6 +11,7 @@ def build_mkdocs_yaml(
     local_site: bool = False,
     has_modules: bool = False,
     module_nav_paths: List[str] | None = None,
+    project_config_nav_paths: List[str] | None = None,
 ) -> str:
     nav = [
         {"Главная": "index.md"},
@@ -21,6 +22,8 @@ def build_mkdocs_yaml(
         nav.append({"Запуск": "runtime.md"})
     if "dependencies" in sections:
         nav.append({"Зависимости": "dependencies.md"})
+    if "testing" in sections:
+        nav.append({"Тестирование": "testing.md"})
     if "conventions" in sections:
         nav.append({"Соглашения": "conventions.md"})
     if "glossary" in sections:
@@ -40,10 +43,15 @@ def build_mkdocs_yaml(
             cfg_nav.append({title: f"configs/{filename}"})
         nav.append({"Конфиги": cfg_nav})
 
+    if project_config_nav_paths:
+        project_cfg_nav: List[Dict[str, object]] = [{"Обзор": "configs/index.md"}]
+        project_cfg_nav.extend(_build_tree_nav(project_config_nav_paths, "configs/files/"))
+        nav.append({"Конфигурация проекта": project_cfg_nav})
+
     if has_modules:
         modules_nav: List[Dict[str, object]] = [{"Обзор": "modules/index.md"}]
         if module_nav_paths:
-            modules_nav.extend(_build_modules_nav(module_nav_paths))
+            modules_nav.extend(_build_tree_nav(module_nav_paths, "modules/"))
         nav.append({"Модули": modules_nav})
 
     nav.append({"Изменения": "changes.md"})
@@ -71,16 +79,24 @@ def build_mkdocs_yaml(
     return yaml.safe_dump(data, allow_unicode=True, sort_keys=False)
 
 
-def _build_modules_nav(module_paths: List[str]) -> List[Dict[str, object]]:
+def _build_tree_nav(paths: List[str], strip_prefix: str) -> List[Dict[str, object]]:
     tree: Dict[str, object] = {}
 
-    for module_path in module_paths:
-        rel = Path(module_path).as_posix()
-        if rel.startswith("modules/"):
-            rel = rel[len("modules/") :]
+    for rel_path in paths:
+        rel = Path(rel_path).as_posix()
+        if rel.startswith(strip_prefix):
+            rel = rel[len(strip_prefix) :]
         parts = rel.split("/")
-        parts[-1] = Path(parts[-1]).with_suffix("").name.replace("__", ".")
-        _insert_nav_node(tree, parts, module_path)
+        if parts:
+            last = Path(parts[-1]).with_suffix("").name
+            sep = last.rfind("__")
+            if sep != -1 and sep + 2 < len(last):
+                base = last[:sep]
+                ext = last[sep + 2 :]
+                parts[-1] = f"{base}.{ext}"
+            else:
+                parts[-1] = last
+        _insert_nav_node(tree, parts, rel_path)
 
     return _tree_to_nav(tree)
 

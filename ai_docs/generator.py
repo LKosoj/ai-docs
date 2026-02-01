@@ -119,6 +119,18 @@ def _render_testing_section(test_paths: List[str], commands: List[str]) -> str:
     )
 
 
+def _render_project_configs_index(config_nav_paths: List[str]) -> str:
+    if not config_nav_paths:
+        return "Конфигурационные файлы не обнаружены."
+    toc_lines = "\n".join(
+        [
+            f"- [{Path(p).with_suffix('').as_posix()}]({Path(p).as_posix()[len('configs/'):] if p.startswith('configs/') else p})"
+            for p in sorted(config_nav_paths)
+        ]
+    )
+    return f"## Файлы конфигурации\n\n{toc_lines}\n"
+
+
 def _generate_section(llm: LLMClient, llm_cache: Dict[str, str], title: str, context: str, language: str) -> str:
     prompt = (
         "Ты опытный технический писатель. Сгенерируй раздел документации в Markdown. "
@@ -194,6 +206,7 @@ def _build_docs_index(
     docs_files: Dict[str, str],
     file_map: Dict[str, Dict],
     module_pages: Dict[str, str],
+    config_pages: Dict[str, str],
 ) -> Dict[str, object]:
     existing_files: Set[str] = set()
     if docs_dir.exists():
@@ -207,6 +220,8 @@ def _build_docs_index(
         path = f"{key}.md"
         if path in docs_files or path in existing_files:
             sections.append({"id": key, "title": title, "path": path})
+    if "configs/index.md" in docs_files or "configs/index.md" in existing_files:
+        sections.append({"id": "configs", "title": "Конфигурация проекта", "path": "configs/index.md"})
 
     modules = []
     for path, meta in file_map.items():
@@ -227,16 +242,44 @@ def _build_docs_index(
             }
         )
 
+    configs = []
+    for path, meta in file_map.items():
+        if meta.get("type") != "config":
+            continue
+        summary_path = meta.get("config_summary_path")
+        if not summary_path:
+            continue
+        config_rel = Path("configs/files") / Path(path)
+        config_rel_str = config_rel.as_posix().replace(".", "__") + ".md"
+        summary_text = read_text_file(Path(summary_path))
+        configs.append(
+            {
+                "name": Path(path).as_posix(),
+                "path": config_rel_str,
+                "source_path": path,
+                "summary": _first_paragraph(summary_text),
+            }
+        )
+
     return {
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "docs_dir": ".ai-docs",
         "rules": {
-            "priority": ["modules/index.md", "modules/*", "index.md", "architecture.md", "conventions.md"],
+            "priority": [
+                "modules/index.md",
+                "modules/*",
+                "configs/index.md",
+                "configs/files/*",
+                "index.md",
+                "architecture.md",
+                "conventions.md",
+            ],
             "ranking": "keyword frequency + file priority",
             "usage": "use this index to choose a narrow route before reading full docs",
         },
         "sections": sections,
         "modules": modules,
+        "configs": configs,
         "files": sorted(set(docs_files.keys()) | existing_files | {"_index.json"}),
     }
 
@@ -401,9 +444,70 @@ def generate_docs(
     if module_candidates:
         _save_cache_snapshot()
 
+    # Detailed config summaries for changed files (config only)
+    config_candidates = [
+        (path, meta)
+        for path, meta in to_summarize
+        if meta.get("type") == "config"
+    ]
+    config_summaries_dir = cache_dir / "intermediate" / "configs"
+    if config_candidates:
+        print(f"[ai-docs] summarize configs: {len(config_candidates)} changed config files (threads={threads})")
+    if threads > 1 and config_candidates:
+        with ThreadPoolExecutor(max_workers=threads) as executor:
+            futures = {}
+            print(f"[ai-docs] summarize configs: queued {len(config_candidates)} tasks (workers={threads})")
+            for path, meta in config_candidates:
+                print(f"[ai-docs] summarize config start: {path}")
+                futures[
+                    executor.submit(
+                        summarize_file,
+                        meta["content"],
+                        meta["type"],
+                        meta["domains"],
+                        llm,
+                        llm_cache,
+                        llm.model,
+                        True,
+                    )
+                ] = (path, meta)
+            total = len(futures)
+            done = 0
+            for future in as_completed(futures):
+                path, meta = futures[future]
+                try:
+                    summary = future.result()
+                except Exception as exc:
+                    msg = f"summarize config: {path} -> {exc}"
+                    print(f"[ai-docs] summarize config error: {path} ({exc})")
+                    errors.append(msg)
+                    continue
+                summary_path = write_summary(config_summaries_dir, path, summary)
+                meta["config_summary_path"] = str(summary_path)
+                done += 1
+                print(f"[ai-docs] summarize config done: {path} ({done}/{total})")
+    else:
+        total = len(config_candidates)
+        done = 0
+        for path, meta in config_candidates:
+            print(f"[ai-docs] summarize config start: {path}")
+            try:
+                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
+                summary_path = write_summary(config_summaries_dir, path, summary)
+                meta["config_summary_path"] = str(summary_path)
+                done += 1
+                print(f"[ai-docs] summarize config done: {path} ({done}/{total})")
+            except Exception as exc:
+                msg = f"summarize config: {path} -> {exc}"
+                print(f"[ai-docs] summarize config error: {path} ({exc})")
+                errors.append(msg)
+    if config_candidates:
+        _save_cache_snapshot()
+
     # Carry summaries for unchanged files (recreate if missing)
     missing_summaries: List[Tuple[str, Dict]] = []
     missing_module_summaries: List[Tuple[str, Dict]] = []
+    missing_config_summaries: List[Tuple[str, Dict]] = []
     for path, meta in unchanged.items():
         prev = prev_files.get(path, {})
         summary_path = prev.get("summary_path")
@@ -425,6 +529,16 @@ def generate_docs(
                 else:
                     print(f"[ai-docs] summarize module missing: {path}")
                 missing_module_summaries.append((path, meta))
+        config_summary_path = prev.get("config_summary_path")
+        if meta.get("type") == "config":
+            if config_summary_path and Path(config_summary_path).exists():
+                meta["config_summary_path"] = config_summary_path
+            else:
+                if config_summary_path:
+                    print(f"[ai-docs] summarize config missing: {path} ({config_summary_path})")
+                else:
+                    print(f"[ai-docs] summarize config missing: {path}")
+                missing_config_summaries.append((path, meta))
 
     if missing_summaries:
         print(f"[ai-docs] summarize: {len(missing_summaries)} missing summaries")
@@ -526,6 +640,58 @@ def generate_docs(
                 except Exception as exc:
                     msg = f"summarize module: {path} -> {exc}"
                     print(f"[ai-docs] summarize module error: {path} ({exc})")
+                    errors.append(msg)
+        _save_cache_snapshot()
+
+    if missing_config_summaries:
+        print(f"[ai-docs] summarize configs: {len(missing_config_summaries)} missing config summaries")
+        if threads > 1:
+            with ThreadPoolExecutor(max_workers=threads) as executor:
+                futures = {}
+                print(f"[ai-docs] summarize configs: queued {len(missing_config_summaries)} tasks (workers={threads})")
+                for path, meta in missing_config_summaries:
+                    print(f"[ai-docs] summarize config start: {path}")
+                    futures[
+                        executor.submit(
+                            summarize_file,
+                            meta["content"],
+                            meta["type"],
+                            meta["domains"],
+                            llm,
+                            llm_cache,
+                            llm.model,
+                            True,
+                        )
+                    ] = (path, meta)
+                total = len(futures)
+                done = 0
+                for future in as_completed(futures):
+                    path, meta = futures[future]
+                    try:
+                        summary = future.result()
+                    except Exception as exc:
+                        msg = f"summarize config: {path} -> {exc}"
+                        print(f"[ai-docs] summarize config error: {path} ({exc})")
+                        errors.append(msg)
+                        continue
+                    summary_path = write_summary(config_summaries_dir, path, summary)
+                    meta["config_summary_path"] = str(summary_path)
+                    done += 1
+                    print(f"[ai-docs] summarize config done: {path} ({done}/{total})")
+        else:
+            total = len(missing_config_summaries)
+            done = 0
+            for path, meta in missing_config_summaries:
+                print(f"[ai-docs] summarize config start: {path}")
+                try:
+                    summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
+                    summary_path = write_summary(config_summaries_dir, path, summary)
+                    meta["config_summary_path"] = str(summary_path)
+                    done += 1
+                    print(f"[ai-docs] summarize config done: {path} ({done}/{total})")
+                except Exception as exc:
+                    msg = f"summarize config: {path} -> {exc}"
+                    print(f"[ai-docs] summarize config error: {path} ({exc})")
                     errors.append(msg)
         _save_cache_snapshot()
 
@@ -657,6 +823,27 @@ def generate_docs(
         regenerated_sections.append(modules_title)
         docs_files.update(module_pages)
 
+    # Project configs (detailed summaries -> per-config pages + index)
+    config_pages: Dict[str, str] = {}
+    config_nav_paths: List[str] = []
+    for path, meta in file_map.items():
+        if meta.get("type") != "config":
+            continue
+        summary_path = meta.get("config_summary_path")
+        if not summary_path:
+            continue
+        config_rel = Path("configs/files") / Path(path)
+        config_rel_str = config_rel.as_posix().replace(".", "__") + ".md"
+        config_title = Path(path).as_posix()
+        summary = read_text_file(Path(summary_path))
+        config_pages[config_rel_str] = f"# {config_title}\n\n{summary}\n"
+        config_nav_paths.append(config_rel_str)
+    if config_nav_paths:
+        configs_title = "Конфигурация проекта"
+        docs_files["configs/index.md"] = f"# {configs_title}\n\n{_render_project_configs_index(config_nav_paths)}"
+        regenerated_sections.append(configs_title)
+        docs_files.update(config_pages)
+
     if executor:
         for future in as_completed(section_futures):
             out_path, title = section_futures[future]
@@ -700,7 +887,7 @@ def generate_docs(
     docs_files["changes.md"] = changes_md
 
     # Docs index for navigation
-    docs_index = _build_docs_index(output_root, docs_dir, docs_files, file_map, module_pages)
+    docs_index = _build_docs_index(output_root, docs_dir, docs_files, file_map, module_pages, config_pages)
     docs_files["_index.json"] = json.dumps(docs_index, ensure_ascii=False, indent=2) + "\n"
 
     write_docs_files(docs_dir, docs_files)
@@ -740,6 +927,7 @@ def generate_docs(
             configs=configs_written,
             has_modules=bool(module_summaries),
             module_nav_paths=module_nav_paths if module_summaries else None,
+            project_config_nav_paths=config_nav_paths if config_nav_paths else None,
             local_site=local_site,
         )
         (output_root / "mkdocs.yml").write_text(mkdocs_yaml, encoding="utf-8")

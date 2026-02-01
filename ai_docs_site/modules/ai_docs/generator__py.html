@@ -47,10 +47,26 @@
                                 <a href="../../dependencies.html" class="nav-link">Зависимости</a>
                             </li>
                             <li class="nav-item">
+                                <a href="../../testing.html" class="nav-link">Тестирование</a>
+                            </li>
+                            <li class="nav-item">
                                 <a href="../../conventions.html" class="nav-link">Соглашения</a>
                             </li>
                             <li class="nav-item">
                                 <a href="../../glossary.html" class="nav-link">Глоссарий</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Конфигурация проекта</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../configs/index.html" class="dropdown-item">Обзор</a>
+</li>
+                                    
+<li>
+    <a href="../../configs/files/pyproject__toml.html" class="dropdown-item">pyproject.toml</a>
+</li>
+                                </ul>
                             </li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Модули</a>
@@ -65,11 +81,11 @@
     <ul class="dropdown-menu">
             
 <li>
-    <a href="__init____py.html" class="dropdown-item">.init..py</a>
+    <a href="__init____py.html" class="dropdown-item">__init__.py</a>
 </li>
             
 <li>
-    <a href="__main____py.html" class="dropdown-item">.main..py</a>
+    <a href="__main____py.html" class="dropdown-item">__main__.py</a>
 </li>
             
 <li>
@@ -168,130 +184,138 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="ai_docsgenerator">ai_docs/generator</h1>
-<p>Модуль отвечает за генерацию технической документации проекта на основе анализа файлов в репозитории. Он собирает информацию о зависимостях, тестах, архитектуре и других аспектах, формирует контекст и передаёт его в LLM для создания структурированных разделов документации. Поддерживает многоязычность, кэширование запросов к модели, разбиение больших текстов на чанки и интеграцию с MkDocs. Результат — полноценная документация в формате Markdown, включая README и навигацию.</p>
+<p>Модуль отвечает за генерацию и управление документацией проекта на основе анализа исходных файлов, метаданных и контекста. Он автоматически создаёт структуру документации, включая индекс, модули, конфигурации, зависимости и изменения. Поддерживает интеграцию с LLM для генерации описаний, обновление навигации и очистку устаревших файлов. Также обеспечивает сборку документации через MkDocs при необходимости.</p>
 <p>Ключевые структуры данных<br />
-SECTION_TITLES — Словарь соответствия английских ключей разделов и их локализованных заголовков<br />
-DOMAIN_TITLES — Словарь отображения доменов (например, kubernetes) в читаемые названия для документации</p>
+file_map — карта файлов проекта с метаданными, включая тип, пути к сводкам и другую аналитическую информацию<br />
+docs_files — словарь, содержащий сгенерированные Markdown-файлы документации перед записью на диск<br />
+regenerated_sections — список названий секций, которые были перегенерированы в ходе текущего запуска</p>
 <hr />
-<p>def _is_test_path(path: str) -&gt; bool<br />
-Проверяет, является ли путь тестовым по имени или расположению.<br />
+<p>void _submit_section(path: str, title: str, context: str)<br />
+Отправляет задачу на асинхронную генерацию секции документации<br />
 Аргументы<br />
-path — путь к файлу для проверки<br />
+path — путь к файлу документа (относительно корня docs)<br />
+title — заголовок секции<br />
+context — контекстный текст для обработки моделью<br />
 Возвращает<br />
-True, если путь соответствует шаблонам тестовых файлов или директорий</p>
-<hr />
-<p>def _collect_dependencies(files: Dict[str, Dict]) -&gt; List[str]<br />
-Извлекает список зависимостей из файлов pyproject.toml, requirements.txt и package.json.<br />
-Аргументы<br />
-files — словарь файлов проекта с метаданными, включая содержимое<br />
-Возвращает<br />
-Отсортированный список уникальных строк с зависимостями в формате "имя версия"</p>
-<hr />
-<p>def _collect_test_info(files: Dict[str, Dict]) -&gt; Tuple[List[str], List[str]]<br />
-Собирает информацию о тестовых файлах и командах для их запуска.<br />
-Аргументы<br />
-files — словарь файлов проекта с метаданными<br />
-Возвращает<br />
-Кортеж из двух списков: путей к тестам и команд для запуска тестов</p>
-<hr />
-<p>def _render_testing_section(test_paths: List[str], commands: List[str]) -&gt; str<br />
-Формирует Markdown-секцию с информацией о тестах.<br />
-Аргументы<br />
-test_paths — список путей к тестовым файлам<br />
-commands — список команд для запуска тестов<br />
-Возвращает<br />
-Строка в формате Markdown с разделами "Найденные тесты" и "Как запускать"</p>
-<hr />
-<p>def _generate_section(llm: LLMClient, llm_cache: Dict[str, str], title: str, context: str, language: str) -&gt; str<br />
-Генерирует содержимое одного раздела документации с помощью LLM.<br />
-Аргументы<br />
-llm — клиент для взаимодействия с языковой моделью<br />
-llm_cache — кэш для хранения результатов запросов<br />
-title — заголовок генерируемого раздела<br />
-context — контекст, передаваемый модели<br />
-language — язык, на котором должна быть сгенерирована документация<br />
-Возвращает<br />
-Содержимое раздела в формате Markdown без дублирующего заголовка</p>
-<hr />
-<p>def _strip_duplicate_heading(content: str, title: str) -&gt; str<br />
-Удаляет первый заголовок из текста, если он дублирует указанный заголовок раздела.<br />
-Аргументы<br />
-content — исходный текст с потенциальным заголовком<br />
-title — ожидаемый заголовок раздела<br />
-Возвращает<br />
-Текст без дублирующего заголовка</p>
-<hr />
-<p>def _generate_readme(llm: LLMClient, llm_cache: Dict[str, str], project_name: str, overview_context: str, language: str) -&gt; str<br />
-Генерирует краткий README.md для проекта с обзором и ссылками.<br />
-Аргументы<br />
-llm — клиент языковой модели<br />
-llm_cache — кэш ответов модели<br />
-project_name — название проекта<br />
-overview_context — общий контекст проекта для генерации<br />
-language — язык документации<br />
-Возвращает<br />
-Сгенерированный README в формате Markdown</p>
-<hr />
-<p>def _truncate_context(context: str, model: str, max_tokens: int) -&gt; str<br />
-Обрезает контекст до указанного лимита токенов, если он превышает допустимый размер.<br />
-Аргументы<br />
-context — исходный текст контекста<br />
-model — название модели для подсчёта токенов<br />
-max_tokens — максимальное количество токенов<br />
-Возвращает<br />
-Обрезанный или исходный контекст, укладывающийся в лимит</p>
-<hr />
-<p>def _first_paragraph(text: str) -&gt; str<br />
-Извлекает первый абзац текста, пропуская заголовки и пустые строки.<br />
-Аргументы<br />
-text — входной текст<br />
-Возвращает<br />
-Первый непустой абзац, объединённый в одну строку</p>
-<hr />
-<p>def _build_docs_index(output_root: Path, docs_dir: Path, docs_files: Dict[str, str], file_map: Dict[str, Dict], module_pages: Dict[str, str]) -&gt; Dict[str, object]<br />
-Формирует структуру навигации (index) для документации в формате, совместимом с MkDocs.<br />
-Аргументы<br />
-output_root — корневая директория вывода<br />
-docs_dir — директория с файлами документации<br />
-docs_files — словарь имён и содержимого сгенерированных файлов документации<br />
-file_map — карта файлов проекта с метаданными<br />
-module_pages — соответствие модулей и путей к страницам документации<br />
-Возвращает<br />
-Словарь, описывающий иерархию разделов документации для использования в mkdocs.yml</p>
-<hr />
-<p>def generate_docs(files: List[Dict], output_root: Path, cache_dir: Path, llm: LLMClient, language: str, write_readme: bool, write_mkdocs: bool, use_cache: bool = True, threads: int = 1, local_site: bool = False, force: bool = False) -&gt; None<br />
-Генерирует документацию на основе переданных файлов, используя LLM и кэширование.<br />
-Аргументы<br />
-files — список файлов с метаданными (путь, содержимое, тип и др.)<br />
-output_root — корневая директория для вывода сгенерированных документов<br />
-cache_dir — директория для хранения кэша (промежуточных результатов и индекса)<br />
-llm — клиент языковой модели для генерации сводок<br />
-language — язык документации (например, "en", "ru")<br />
-write_readme — флаг, указывающий, нужно ли генерировать README.md<br />
-write_mkdocs — флаг, указывающий, нужно ли генерировать конфигурацию MkDocs<br />
-use_cache — использовать кэш для ускорения обработки неизменённых файлов (по умолчанию True)<br />
-threads — количество потоков для параллельной обработки (по умолчанию 1)<br />
-local_site — флаг для локальной генерации сайта (без публикации)<br />
-force — принудительная перегенерация всех файлов, игнорируя кэш (по умолчанию False)<br />
+Ничего не возвращает<br />
 Исключения<br />
-Может выбрасывать исключения при ошибках чтения/записи файлов, сбоях LLM или проблемах с кэшем</p>
+Не выбрасывает исключения</p>
 <hr />
-<p>def _save_cache_snapshot() -&gt; None<br />
-Сохраняет снимок текущего состояния файлов и секций в индекс кэша.<br />
+<p>void _generate_section(llm: LLM, llm_cache: LLMLiteCache, title: str, context: str, language: str) -&gt; str<br />
+Генерирует текст секции документации с использованием языковой модели<br />
+Аргументы<br />
+llm — экземпляр языковой модели<br />
+llm_cache — кэш для результатов LLM<br />
+title — заголовок запрашиваемой секции<br />
+context — входной контекст для модели<br />
+language — язык вывода (например, "ru", "en")<br />
+Возвращает<br />
+Сгенерированный текст секции в формате Markdown<br />
 Исключения<br />
-IOError — при ошибках записи в файл кэша</p>
+Может выбросить исключение при ошибках взаимодействия с LLM</p>
 <hr />
-<p>class CacheManager<br />
-Управляет кэшированием промежуточных данных и индекса документации.<br />
-Поля<br />
-cache_dir — путь к директории кэша<br />
-Методы<br />
-<strong>init</strong>(cache_dir: Path) — инициализирует менеджер кэша с указанной директорией<br />
-load_index() — загружает индекс предыдущей генерации из кэша<br />
-save_index(data: Dict) — сохраняет индекс текущей генерации<br />
-load_llm_cache() — загружает кэш ответов LLM<br />
-save_llm_cache(cache: Dict) — сохраняет кэш ответов LLM<br />
-diff_files(current_files: Dict[str, Dict]) — вычисляет разницу между текущими файлами и кэшированными (added, modified, deleted, unchanged)</p></div>
+<p>void _render_project_configs_index(config_nav_paths: List[str]) -&gt; str<br />
+Формирует содержание индекса конфигураций проекта<br />
+Аргументы<br />
+config_nav_paths — список путей к страницам конфигураций<br />
+Возвращает<br />
+Markdown-строка с оглавлением всех конфигураций<br />
+Исключения<br />
+Не выбрасывает исключения</p>
+<hr />
+<p>void _collect_dependencies(file_map: Dict[str, Dict]) -&gt; List[str]<br />
+Собирает список зависимостей проекта из метаданных файлов<br />
+Аргументы<br />
+file_map — карта файлов с метаданными<br />
+Возвращает<br />
+Список строк с описанием зависимостей<br />
+Исключения<br />
+Не выбрасывает исключения</p>
+<hr />
+<p>void _truncate_context(context: str, model: str, budget: int) -&gt; str<br />
+Обрезает контекст до допустимого объёма токенов для модели<br />
+Аргументы<br />
+context — исходный текстовый контекст<br />
+model — название модели для оценки токенов<br />
+budget — максимальное количество токенов<br />
+Возвращает<br />
+Усечённый контекст, укладывающийся в лимит<br />
+Исключения<br />
+Не выбрасывает исключения</p>
+<hr />
+<p>void _build_docs_index(output_root: Path, docs_dir: Path, docs_files: Dict[str, str], file_map: Dict[str, Dict], module_pages: Dict[str, str], config_pages: Dict[str, str]) -&gt; Dict<br />
+Формирует JSON-индекс документации для навигации и поиска<br />
+Аргументы<br />
+output_root — корневой путь вывода<br />
+docs_dir — директория документации<br />
+docs_files — текущие сгенерированные файлы<br />
+file_map — карта исходных файлов<br />
+module_pages — страницы модулей<br />
+config_pages — страницы конфигураций<br />
+Возвращает<br />
+Словарь с древовидной структурой документации<br />
+Исключения<br />
+Не выбрасывает исключения</p>
+<hr />
+<p>void _generate_readme(llm: LLM, llm_cache: LLMLiteCache, project_name: str, overview_context: str, language: str) -&gt; str<br />
+Генерирует содержимое README.md на основе общего обзора проекта<br />
+Аргументы<br />
+llm — экземпляр языковой модели<br />
+llm_cache — кэш LLM-запросов<br />
+project_name — имя проекта<br />
+overview_context — общий контекст проекта<br />
+language — язык генерации<br />
+Возвращает<br />
+Текст README в формате Markdown<br />
+Исключения<br />
+Может выбросить исключение при ошибках взаимодействия с LLM</p>
+<hr />
+<p>void build_mkdocs_yaml(site_name: str, sections: Dict[str, str], configs: List[str], has_modules: bool, module_nav_paths: Optional[List[str]], project_config_nav_paths: Optional[List[str]], local_site: bool) -&gt; str<br />
+Формирует содержимое файла mkdocs.yml для сборки документации<br />
+Аргументы<br />
+site_name — имя сайта документации<br />
+sections — заголовки секций<br />
+configs — список конфигурационных доменов<br />
+has_modules — наличие модульной документации<br />
+module_nav_paths — пути к страницам модулей<br />
+project_config_nav_paths — пути к страницам конфигураций<br />
+local_site — флаг локальной сборки<br />
+Возвращает<br />
+YAML-строка конфигурации MkDocs<br />
+Исключения<br />
+Не выбрасывает исключения</p>
+<hr />
+<p>void format_changes_md(added: Dict, modified: Dict, deleted: Dict, regenerated_sections: List[str], summary: str) -&gt; str<br />
+Форматирует Markdown-отчёт об изменениях в проекте<br />
+Аргументы<br />
+added — словарь добавленных файлов<br />
+modified — словарь изменённых файлов<br />
+deleted — словарь удалённых файлов<br />
+regenerated_sections — список перегенерированных секций<br />
+summary — краткое резюме изменений от LLM<br />
+Возвращает<br />
+Полный отчёт в формате Markdown<br />
+Исключения<br />
+Не выбрасывает исключения</p>
+<hr />
+<p>void write_docs_files(docs_dir: Path, docs_files: Dict[str, str])<br />
+Записывает все сгенерированные файлы документации на диск<br />
+Аргументы<br />
+docs_dir — директория назначения<br />
+docs_files — словарь путей и содержимого файлов<br />
+Возвращает<br />
+Ничего не возвращает<br />
+Исключения<br />
+Может выбросить исключение при ошибках записи файлов</p>
+<hr />
+<p>void _is_test_path(path: str) -&gt; bool<br />
+Проверяет, является ли путь тестовым (по шаблону)<br />
+Аргументы<br />
+path — путь к файлу<br />
+Возвращает<br />
+True, если путь соответствует тестовому файлу<br />
+Исключения<br />
+Не выбрасывает исключения</p></div>
             </div>
         </div>
 

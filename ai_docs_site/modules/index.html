@@ -47,10 +47,26 @@
                                 <a href="../dependencies.html" class="nav-link">Зависимости</a>
                             </li>
                             <li class="nav-item">
+                                <a href="../testing.html" class="nav-link">Тестирование</a>
+                            </li>
+                            <li class="nav-item">
                                 <a href="../conventions.html" class="nav-link">Соглашения</a>
                             </li>
                             <li class="nav-item">
                                 <a href="../glossary.html" class="nav-link">Глоссарий</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Конфигурация проекта</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../configs/index.html" class="dropdown-item">Обзор</a>
+</li>
+                                    
+<li>
+    <a href="../configs/files/pyproject__toml.html" class="dropdown-item">pyproject.toml</a>
+</li>
+                                </ul>
                             </li>
                             <li class="nav-item dropdown">
                                 <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Модули</a>
@@ -65,11 +81,11 @@
     <ul class="dropdown-menu">
             
 <li>
-    <a href="ai_docs/__init____py.html" class="dropdown-item">.init..py</a>
+    <a href="ai_docs/__init____py.html" class="dropdown-item">__init__.py</a>
 </li>
             
 <li>
-    <a href="ai_docs/__main____py.html" class="dropdown-item">.main..py</a>
+    <a href="ai_docs/__main____py.html" class="dropdown-item">__main__.py</a>
 </li>
             
 <li>
@@ -131,7 +147,7 @@
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a rel="prev" href="../glossary.html" class="nav-link">
+                                <a rel="prev" href="../configs/files/pyproject__toml.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
@@ -160,51 +176,47 @@
             
             <li class="nav-item" data-bs-level="1"><a href="#_1" class="nav-link">Модули</a>
               <ul class="nav flex-column">
-            <li class="nav-item" data-bs-level="2"><a href="#scanner" class="nav-link">scanner</a>
+            <li class="nav-item" data-bs-level="2"><a href="#scanner" class="nav-link">scanner — сканирование исходных файлов</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#cli" class="nav-link">cli</a>
+            <li class="nav-item" data-bs-level="2"><a href="#cli" class="nav-link">cli — точка входа и обработка аргументов</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#llm" class="nav-link">llm</a>
+            <li class="nav-item" data-bs-level="2"><a href="#llm" class="nav-link">llm — взаимодействие с языковыми моделями</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#processor" class="nav-link">processor</a>
+            <li class="nav-item" data-bs-level="2"><a href="#summarizer" class="nav-link">summarizer — генерация и нормализация описаний</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#docs" class="nav-link">docs</a>
+            <li class="nav-item" data-bs-level="2"><a href="#docs_builder-mkdocs" class="nav-link">docs_builder — генерация документации MkDocs</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#generator" class="nav-link">generator</a>
+            <li class="nav-item" data-bs-level="2"><a href="#tokenizer" class="nav-link">tokenizer — подсчёт и разбиение токенов</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#utils" class="nav-link">utils</a>
+            <li class="nav-item" data-bs-level="2"><a href="#utils" class="nav-link">utils — вспомогательные функции</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#classifier" class="nav-link">classifier</a>
+            <li class="nav-item" data-bs-level="2"><a href="#classifier" class="nav-link">classifier — классификация файлов</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#cache" class="nav-link">cache</a>
+            <li class="nav-item" data-bs-level="2"><a href="#cache" class="nav-link">cache — управление кэшем</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#token_counter" class="nav-link">token_counter</a>
+            <li class="nav-item" data-bs-level="2"><a href="#changes" class="nav-link">changes — формирование отчётов об изменениях</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#changes" class="nav-link">changes</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#_11" class="nav-link">Список модулей</a>
+            <li class="nav-item" data-bs-level="2"><a href="#_13" class="nav-link">Список модулей</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -216,234 +228,211 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="_1">Модули</h1>
-<p>Проект структурирован в виде набора модулей, каждый из которых отвечает за определённую часть функциональности: от сканирования исходных файлов до генерации итоговой документации. Ниже приведено описание ключевых модулей и их интерфейсов.</p>
-<hr />
-<h2 id="scanner"><code>scanner</code></h2>
-<p>Модуль отвечает за сканирование файлов в локальной директории или удалённом репозитории. Формирует объект <code>ScanResult</code> с метаданными и содержимым файлов, подходящих под фильтры.</p>
-<h3 id="_2">Основные функции</h3>
+<h2 id="scanner"><code>scanner</code> — сканирование исходных файлов</h2>
+<p>Модуль отвечает за рекурсивный анализ файловой структуры проекта (локального или удалённого) с фильтрацией по расширениям, размеру и правилам игнорирования. Результат — объект <code>ScanResult</code>, содержащий метаданные и содержимое подходящих файлов.</p>
+<h3 id="_2">Ключевые структуры</h3>
 <ul>
-<li><strong><code>scan_source(source: str, include: Set[str] = None, exclude: Set[str] = None, max_size: int = 200000) -&gt; ScanResult</code></strong><br />
-  Сканирует указанный путь или URL репозитория.  </li>
-<li><code>source</code>: путь к директории или Git-URL.  </li>
-<li><code>include</code>: шаблоны включения (glob), если <code>None</code> — используются настройки из <code>.ai-docs.yaml</code>.  </li>
-<li><code>exclude</code>: шаблоны исключения, дополняются правилами из <code>.gitignore</code> и <code>.build_ignore</code>.  </li>
-<li><code>max_size</code>: максимальный размер файла в байтах (по умолчанию 200 КБ).  </li>
-<li>Возвращает <code>ScanResult</code> с корневым путём, списком файлов, источником и именем репозитория.  </li>
-<li>
-<p>Исключение: <code>FileNotFoundError</code>, если локальный путь не существует.</p>
-</li>
-<li>
-<p><strong><code>_load_extension_config(root: Path) -&gt; Dict[str, object]</code></strong><br />
-  Загружает <code>.ai-docs.yaml</code> из корня проекта. Возвращает словарь с полями:  </p>
-</li>
-<li><code>code_extensions</code>, <code>doc_extensions</code>, <code>config_extensions</code> — расширения по типам.  </li>
-<li>
-<p><code>exclude</code> — шаблоны исключения.<br />
-  Если файла нет — возвращает значения по умолчанию.</p>
-</li>
-<li>
-<p><strong><code>_should_include(rel_path: str, include: Set[str], exclude: Set[str], ignore_specs: List[PathSpec]) -&gt; bool</code></strong><br />
-  Проверяет, должен ли файл быть включён в результат. Учитывает:  </p>
-</li>
-<li>шаблоны <code>include</code> и <code>exclude</code>,  </li>
-<li>правила из <code>.gitignore</code> и <code>.build_ignore</code>.<br />
-  Возвращает <code>True</code>, если файл проходит фильтрацию.</li>
+<li><strong><code>ScanResult</code></strong> — результат сканирования:</li>
+<li><code>root: Path</code> — абсолютный путь к корню сканирования</li>
+<li><code>files: List[FileEntry]</code> — список обработанных файлов</li>
+<li><code>source: str</code> — исходный путь или URL</li>
+<li><code>repo_name: str</code> — имя репозитория</li>
 </ul>
-<hr />
-<h2 id="cli"><code>cli</code></h2>
-<p>Точка входа приложения. Парсит аргументы командной строки и запускает основной процесс генерации документации.</p>
 <h3 id="_3">Основные функции</h3>
 <ul>
-<li><strong><code>parse_args() -&gt; argparse.Namespace</code></strong><br />
-  Обрабатывает аргументы:  </li>
-<li><code>--source</code> — обязательный путь или URL.  </li>
-<li><code>--output</code> — директория вывода (по умолчанию <code>./output/&lt;repo&gt;</code>).  </li>
-<li><code>--readme</code>, <code>--mkdocs</code> — флаги генерации.  </li>
-<li><code>--language</code> — язык (<code>ru</code> или <code>en</code>).  </li>
 <li>
-<p><code>--max-size</code>, <code>--threads</code>, <code>--cache-dir</code>, <code>--force</code> — дополнительные настройки.<br />
-  Возвращает объект с распарсенными параметрами.</p>
+<p><code>scan_source(source: str, include=None, exclude=None, max_size=200000) -&gt; ScanResult</code><br />
+  Сканирует директорию или клонирует репозиторий по URL. Применяет фильтры из <code>.ai-docs.yaml</code>, <code>.gitignore</code>, <code>.build_ignore</code>.<br />
+  Исключения: <code>FileNotFoundError</code> при отсутствии локального пути.</p>
 </li>
 <li>
-<p><strong><code>resolve_output(source: str, output: str, repo_name: str) -&gt; Path</code></strong><br />
-  Определяет итоговую директорию вывода. Если <code>output</code> не задан — формирует путь на основе имени репозитория.</p>
+<p><code>_load_extension_config(root: Path) -&gt; Dict[str, object]</code><br />
+  Загружает <code>.ai-docs.yaml</code> из корня проекта. Возвращает конфиг с полями:<br />
+<code>code_extensions</code>, <code>doc_extensions</code>, <code>config_extensions</code>, <code>exclude</code>.</p>
 </li>
 <li>
-<p><strong><code>main()</code></strong><br />
-  Основная логика:<br />
-  1. Парсит аргументы.<br />
-  2. Сканирует исходники.<br />
-  3. Инициализирует <code>LLMClient</code>.<br />
-  4. Запускает <code>generate_docs</code>.<br />
-  При ошибках — выводит сообщение и завершается с кодом 1.</p>
+<p><code>_scan_directory(root, include, exclude, max_size) -&gt; List[Dict]</code><br />
+  Рекурсивно обходит директорию. Возвращает список словарей с полями:<br />
+<code>path</code> (относительный), <code>abs_path</code>, <code>size</code>, <code>content</code>, <code>type</code>, <code>domains</code>.<br />
+  Пропускает файлы при ошибках доступа (<code>OSError</code>).</p>
+</li>
+<li>
+<p><code>_should_include(rel_path, include, exclude, ignore_specs) -&gt; bool</code><br />
+  Проверяет, должен ли файл быть включён. Учитывает glob-шаблоны, <code>exclude</code> и <code>PathSpec</code> из <code>.gitignore</code>.</p>
+</li>
+<li>
+<p><code>_clone_repo(repo_url) -&gt; Tuple[Path, str]</code><br />
+  Клонирует репозиторий во временную директорию. Возвращает путь и имя репозитория.<br />
+  Исключение: <code>RuntimeError</code> при ошибке клонирования.</p>
 </li>
 </ul>
 <hr />
-<h2 id="llm"><code>llm</code></h2>
-<p>Работа с языковыми моделями через API, совместимое с OpenAI. Поддерживает кэширование и управление контекстом.</p>
-<h3 id="llmclient">Класс <code>LLMClient</code></h3>
-<ul>
-<li>
-<p><strong>Поля</strong>:<br />
-<code>api_key</code>, <code>base_url</code>, <code>model</code>, <code>temperature</code>, <code>max_tokens</code>, <code>context_limit</code>.</p>
-</li>
-<li>
-<p><strong>Методы</strong>:  </p>
-</li>
-<li><code>__init__()</code> — инициализация клиента.  </li>
-<li><code>chat(messages: list[dict], cache: dict = None) -&gt; str</code> — отправляет запрос к модели. Если <code>cache</code> задан и содержит хеш тела — возвращает закэшированный ответ.  </li>
-<li><code>_cache_key(payload: dict) -&gt; str</code> — генерирует SHA256-хеш от JSON-представления запроса.  </li>
-<li><code>from_env()</code> — создаёт клиент из переменных окружения (<code>OPENAI_API_KEY</code>, <code>LLM_MODEL</code>, <code>LLM_BASE_URL</code>).</li>
-</ul>
-<hr />
-<h2 id="processor"><code>processor</code></h2>
-<p>Обработка файлов и генерация кратких описаний с помощью LLM.</p>
+<h2 id="cli"><code>cli</code> — точка входа и обработка аргументов</h2>
+<p>Модуль парсит командную строку, инициализирует сканирование и запускает генерацию документации.</p>
 <h3 id="_4">Основные функции</h3>
 <ul>
-<li><strong><code>summarize_file(content: str, file_type: str, domains: List[str], llm_client, llm_cache, model: str, detailed: bool = False) -&gt; str</code></strong><br />
-  Генерирует описание содержимого файла.  </li>
-<li><code>detailed=True</code> — формат Doxygen.  </li>
+<li><code>parse_args() -&gt; argparse.Namespace</code><br />
+  Поддерживает аргументы:</li>
+<li><code>--source</code> — путь или URL (обязательный)</li>
+<li><code>--output</code> — директория вывода</li>
+<li><code>--readme</code>, <code>--mkdocs</code> — флаги генерации</li>
+<li><code>--language</code> — язык (<code>ru</code>/<code>en</code>)</li>
+<li><code>--include</code>, <code>--exclude</code> — фильтры</li>
+<li><code>--max-size</code> — лимит размера файла (байт)</li>
+<li><code>--cache-dir</code>, <code>--no-cache</code> — управление кэшем</li>
+<li><code>--threads</code> — параллельная обработка</li>
+<li><code>--local-site</code> — настройка MkDocs для локального запуска</li>
 <li>
-<p><code>domains</code> — используются для контекста (например, "kubernetes").<br />
-  Результат кэшируется по хешу входных данных.</p>
+<p><code>--force</code> — перезапись <code>README.md</code></p>
 </li>
 <li>
-<p><strong><code>_normalize_module_summary(summary: str, llm_client, llm_cache) -&gt; str</code></strong><br />
-  Приводит текст к строгому Doxygen-формату, если <code>_needs_doxygen_fix()</code> возвращает <code>True</code>.</p>
+<p><code>resolve_output(source, output, repo_name) -&gt; Path</code><br />
+  Определяет путь вывода: если не задан — использует <code>./output/&lt;repo_name&gt;</code>.</p>
 </li>
 <li>
-<p><strong><code>write_summary(summary_dir: Path, rel_path: str, summary: str) -&gt; Path</code></strong><br />
-  Сохраняет резюме в подкаталоге <code>summary_dir</code>, сохраняя структуру путей. Создаёт промежуточные директории.</p>
+<p><code>main()</code><br />
+  Основная логика: сканирование → анализ → генерация → запись.<br />
+  Исключения: ошибки доступа к LLM, файловой системе, сканированию.</p>
 </li>
 </ul>
 <hr />
-<h2 id="docs"><code>docs</code></h2>
-<p>Генерация структуры документации и конфигурации MkDocs.</p>
-<h3 id="_5">Основные функции</h3>
+<h2 id="llm"><code>llm</code> — взаимодействие с языковыми моделями</h2>
+<p>Клиент для отправки запросов к LLM с поддержкой кэширования и управления контекстом.</p>
+<h3 id="_5">Классы</h3>
 <ul>
-<li><strong><code>build_mkdocs_yaml(site_name: str, sections: Dict[str, str], configs: Dict[str, str], local_site: bool, has_modules: bool, module_nav_paths: List[str]) -&gt; str</code></strong><br />
-  Формирует содержимое <code>mkdocs.yml</code>.  </li>
-<li><code>sections</code> — основные разделы (архитектура, запуск и т.д.).  </li>
-<li><code>configs</code> — файлы конфигурации.  </li>
-<li>
-<p><code>module_nav_paths</code> — пути к страницам модулей для построения навигации.</p>
-</li>
-<li>
-<p><strong><code>_build_modules_nav(module_paths: List[str]) -&gt; List[Dict]</code></strong><br />
-  Строит иерархическую навигацию по модулям. Использует вспомогательные функции:  </p>
-</li>
-<li><code>_insert_nav_node()</code> — рекурсивно добавляет узел в дерево.  </li>
-<li>
-<p><code>_tree_to_nav()</code> — преобразует дерево в формат MkDocs.</p>
-</li>
-<li>
-<p><strong><code>write_docs_files(docs_dir: Path, files: Dict[str, str])</code></strong><br />
-  Записывает все файлы документации, создавая недостающие директории.</p>
-</li>
+<li><strong><code>LLMClient</code></strong><br />
+  Поля:</li>
+<li><code>api_key</code>, <code>base_url</code>, <code>model</code></li>
+<li><code>temperature</code>, <code>max_tokens</code>, <code>context_limit</code><br />
+  Методы:</li>
+<li><code>chat(messages: list[dict], cache: dict | None) -&gt; str</code> — отправляет запрос, возвращает ответ.<br />
+    Кэширует по хешу тела запроса (<code>_cache_key</code>).</li>
+<li><code>from_env() -&gt; LLMClient</code> — создаёт клиент из переменных окружения.<br />
+    Требует <code>OPENAI_API_KEY</code>.</li>
 </ul>
 <hr />
-<h2 id="generator"><code>generator</code></h2>
-<p>Основной модуль генерации документации. Собирает контекст, вызывает LLM и формирует итоговые файлы.</p>
+<h2 id="summarizer"><code>summarizer</code> — генерация и нормализация описаний</h2>
+<p>Модуль генерирует и форматирует описания файлов с помощью LLM.</p>
 <h3 id="_6">Основные функции</h3>
 <ul>
 <li>
-<p><strong><code>generate_docs(files: List[Dict], output_root: Path, cache_dir: Path, llm: LLMClient, language: str, write_readme: bool, write_mkdocs: bool, use_cache: bool, threads: int, local_site: bool, force: bool)</code></strong><br />
-  Полный цикл генерации:<br />
-  1. Загружает кэш.<br />
-  2. Определяет изменения (через <code>CacheManager.diff_files</code>).<br />
-  3. Параллельно обрабатывает файлы (если <code>threads &gt; 1</code>).<br />
-  4. Генерирует разделы: зависимости, тесты, архитектура.<br />
-  5. Сохраняет <code>README.md</code> и <code>mkdocs.yml</code>.<br />
-  6. Обновляет кэш.</p>
+<p><code>summarize_file(content, file_type, domains, llm_client, llm_cache, model, detailed=False) -&gt; str</code><br />
+  Разбивает содержимое на фрагменты (<code>chunk_text</code>), обрабатывает через <code>LLMClient</code>, объединяет результат.</p>
 </li>
 <li>
-<p><strong><code>_generate_section(llm, llm_cache, title, context, language) -&gt; str</code></strong><br />
-  Запрашивает у LLM содержимое одного раздела. Удаляет дублирующий заголовок через <code>_strip_duplicate_heading()</code>.</p>
+<p><code>_summarize_chunk(chunk, file_type, domains, llm_client, llm_cache, model) -&gt; str</code><br />
+  Формирует промпт и запрашивает описание фрагмента.</p>
 </li>
 <li>
-<p><strong><code>_truncate_context(context: str, model: str, max_tokens: int) -&gt; str</code></strong><br />
-  Обрезает текст, чтобы уложиться в лимит токенов (с помощью <code>token_counter.chunk_text</code>).</p>
+<p><code>_normalize_module_summary(summary, llm_client, llm_cache) -&gt; str</code><br />
+  Приводит текст к Doxygen-стилю (удаляет Markdown, списки, заголовки).</p>
+</li>
+<li>
+<p><code>_normalize_config_summary(summary, llm_client, llm_cache) -&gt; str</code><br />
+  Нормализует описание конфигурационного файла в единый формат.</p>
+</li>
+<li>
+<p><code>_strip_fenced_markdown(text) -&gt; str</code><br />
+  Удаляет обрамляющие ``` из ответа LLM.</p>
+</li>
+<li>
+<p><code>summarize_chunks(chunks, llm_client, llm_cache, detailed=False, file_type="module") -&gt; str</code><br />
+  Объединяет несколько фрагментов в одно резюме.</p>
+</li>
+<li>
+<p><code>write_summary(summary_dir, rel_path, summary) -&gt; Path</code><br />
+  Сохраняет резюме в Markdown-файл с безопасным именем (через <code>safe_slug</code>).</p>
 </li>
 </ul>
 <hr />
-<h2 id="utils"><code>utils</code></h2>
-<p>Вспомогательные функции для работы с файлами, путями и данными.</p>
+<h2 id="docs_builder-mkdocs"><code>docs_builder</code> — генерация документации MkDocs</h2>
+<p>Формирует структуру сайта MkDocs и сохраняет файлы.</p>
 <h3 id="_7">Основные функции</h3>
 <ul>
-<li><strong><code>sha256_text(text: str) -&gt; str</code></strong>, <strong><code>sha256_bytes(data: bytes) -&gt; str</code></strong> — вычисление хешей.</li>
-<li><strong><code>read_text_file(path: Path) -&gt; str</code></strong> — безопасное чтение UTF-8 файла.</li>
-<li><strong><code>ensure_dir(path: Path)</code></strong> — создание директории с родителями.</li>
-<li><strong><code>is_binary_file(path: Path, sample_size: int = 2048) -&gt; bool</code></strong> — проверка на бинарный файл по наличию <code>\x00</code>.</li>
-<li><strong><code>to_posix(path: Path) -&gt; str</code></strong> — преобразование пути в POSIX-формат (<code>/</code> вместо <code>\</code>).</li>
-<li><strong><code>is_url(value: str) -&gt; bool</code></strong> — проверка, является ли строка URL (<code>http://</code>, <code>https://</code>, <code>git@</code>).</li>
-</ul>
-<hr />
-<h2 id="classifier"><code>classifier</code></h2>
-<p>Классификация файлов по типу и доменам инфраструктуры.</p>
-<h3 id="_8">Основные функции</h3>
-<ul>
 <li>
-<p><strong><code>classify_type(path: Path) -&gt; str</code></strong><br />
-  Возвращает тип: <code>code</code>, <code>docs</code>, <code>config</code>, <code>infra</code>, <code>ci</code>, <code>data</code>, <code>other</code>.<br />
-  Определяется по расширению или имени файла (например, <code>Dockerfile</code> → <code>infra</code>).</p>
+<p><code>build_mkdocs_yaml(site_name, sections, configs, local_site=False, has_modules=False, module_nav_paths=None, project_config_nav_paths=None) -&gt; str</code><br />
+  Генерирует <code>mkdocs.yml</code>. При <code>local_site=True</code> отключает <code>site_url</code> и <code>use_directory_urls</code>.</p>
 </li>
 <li>
-<p><strong><code>detect_domains(path: Path, content_snippet: str) -&gt; Set[str]</code></strong><br />
-  Определяет домены: <code>kubernetes</code>, <code>docker</code>, <code>terraform</code>, <code>ci</code>, <code>aws</code> и др.<br />
-  Анализирует путь и первые 512 символов содержимого.</p>
+<p><code>_build_tree_nav(paths, strip_prefix) -&gt; List[Dict]</code><br />
+  Строит древовидную навигацию из списка путей. Использует <code>_insert_nav_node</code> и <code>_tree_to_nav</code>.</p>
 </li>
 <li>
-<p><strong><code>is_infra(domains: Set[str]) -&gt; bool</code></strong><br />
-  Проверяет, содержит ли множество доменов инфраструктурные компоненты.</p>
+<p><code>write_docs_files(docs_dir, files) -&gt; None</code><br />
+  Записывает словарь <code>{относительный_путь: содержимое}</code> на диск, создавая директории при необходимости.</p>
 </li>
 </ul>
 <hr />
-<h2 id="cache"><code>cache</code></h2>
-<p>Управление кэшем промежуточных данных и ответов LLM.</p>
-<h3 id="cachemanager">Класс <code>CacheManager</code></h3>
+<h2 id="tokenizer"><code>tokenizer</code> — подсчёт и разбиение токенов</h2>
+<p>Работает с <code>tiktoken</code> для управления длиной контекста.</p>
+<h3 id="_8">Функции</h3>
 <ul>
 <li>
-<p><strong>Поля</strong>:<br />
-<code>cache_dir</code>, <code>index_path</code>, <code>llm_cache_path</code>.</p>
+<p><code>get_encoding(model: str)</code><br />
+  Возвращает кодировку модели. Резервная — <code>cl100k_base</code>.</p>
 </li>
 <li>
-<p><strong>Методы</strong>:  </p>
-</li>
-<li><code>load_index()</code>, <code>save_index(data)</code> — работа с <code>index.json</code>.  </li>
-<li><code>load_llm_cache()</code>, <code>save_llm_cache(data)</code> — работа с <code>llm_cache.json</code>.  </li>
-<li><code>diff_files(current_files) -&gt; (added, modified, deleted, unchanged)</code> — сравнение по хешам содержимого.</li>
-</ul>
-<hr />
-<h2 id="token_counter"><code>token_counter</code></h2>
-<p>Подсчёт и разбиение текста на токены.</p>
-<h3 id="_9">Основные функции</h3>
-<ul>
-<li>
-<p><strong><code>get_encoding(model: str)</code></strong><br />
-  Возвращает кодировку <code>tiktoken</code> для модели. Резервная — <code>cl100k_base</code>.</p>
+<p><code>count_tokens(text: str, model: str) -&gt; int</code><br />
+  Подсчитывает токены в тексте.</p>
 </li>
 <li>
-<p><strong><code>count_tokens(text: str, model: str) -&gt; int</code></strong><br />
-  Возвращает количество токенов в тексте.</p>
-</li>
-<li>
-<p><strong><code>chunk_text(text: str, model: str, max_tokens: int) -&gt; List[str]</code></strong><br />
-  Разбивает текст на фрагменты, каждый ≤ <code>max_tokens</code>. Используется при обработке больших файлов.</p>
+<p><code>chunk_text(text: str, model: str, max_tokens: int) -&gt; List[str]</code><br />
+  Разбивает текст на фрагменты, укладываясь в лимит токенов.</p>
 </li>
 </ul>
 <hr />
-<h2 id="changes"><code>changes</code></h2>
-<p>Формирование отчёта об изменениях в Markdown.</p>
-<h3 id="_10">Основная функция</h3>
+<h2 id="utils"><code>utils</code> — вспомогательные функции</h2>
+<p>Набор утилит для работы с файлами, путями и данными.</p>
+<h3 id="_9">Функции</h3>
 <ul>
-<li><strong><code>format_changes_md(added, modified, deleted, regenerated_sections, summary) -&gt; str</code></strong><br />
-  Возвращает строку в формате Markdown с:  </li>
-<li>списками изменённых файлов,  </li>
-<li>перечнем перегенерированных разделов,  </li>
-<li>кратким резюме.<br />
-  Используется для логирования изменений при генерации.</li>
+<li><code>sha256_text(text: str) -&gt; str</code>, <code>sha256_bytes(data: bytes) -&gt; str</code> — хеширование.</li>
+<li><code>read_text_file(path: Path) -&gt; str</code> — чтение UTF-8 файла.</li>
+<li><code>safe_slug(path: str) -&gt; str</code> — преобразование строки в безопасное имя файла.</li>
+<li><code>ensure_dir(path: Path)</code> — создание директории с родителями.</li>
+<li><code>is_binary_file(path: Path, sample_size=2048) -&gt; bool</code> — проверка на двоичный файл.</li>
+<li><code>is_url(value: str) -&gt; bool</code> — проверка строки на URL.</li>
+<li><code>to_posix(path: Path) -&gt; str</code> — преобразование пути в POSIX-формат.</li>
 </ul>
-<h2 id="_11">Список модулей</h2>
+<hr />
+<h2 id="classifier"><code>classifier</code> — классификация файлов</h2>
+<p>Определяет тип и домены файлов.</p>
+<h3 id="_10">Функции</h3>
+<ul>
+<li>
+<p><code>classify_type(path: Path) -&gt; str</code><br />
+  Возвращает: <code>code</code>, <code>docs</code>, <code>config</code>, <code>data</code>, <code>ci</code>, <code>infra</code>, <code>other</code>.</p>
+</li>
+<li>
+<p><code>detect_domains(path: Path, content_snippet: str) -&gt; Set[str]</code><br />
+  Определяет домены: <code>kubernetes</code>, <code>docker</code>, <code>terraform</code>, <code>ci</code>, <code>helm</code> и др.</p>
+</li>
+<li>
+<p><code>is_infra(domains: Set[str]) -&gt; bool</code><br />
+  Проверяет, относится ли файл к инфраструктуре.</p>
+</li>
+</ul>
+<hr />
+<h2 id="cache"><code>cache</code> — управление кэшем</h2>
+<p>Хранит индекс файлов и кэш LLM на диске.</p>
+<h3 id="_11">Классы</h3>
+<ul>
+<li><strong><code>CacheManager</code></strong><br />
+  Поля:</li>
+<li><code>cache_dir</code>, <code>index_path</code>, <code>llm_cache_path</code><br />
+  Методы:</li>
+<li><code>load_index() -&gt; Dict</code>, <code>save_index(data)</code></li>
+<li><code>load_llm_cache() -&gt; Dict</code>, <code>save_llm_cache(data)</code></li>
+<li><code>diff_files(current_files) -&gt; (added, modified, deleted, unchanged)</code> — сравнение состояний.</li>
+</ul>
+<hr />
+<h2 id="changes"><code>changes</code> — формирование отчётов об изменениях</h2>
+<p>Генерирует Markdown-отчёт о модификациях.</p>
+<h3 id="_12">Функция</h3>
+<ul>
+<li><code>format_changes_md(added, modified, deleted, regenerated_sections, summary) -&gt; str</code><br />
+  Возвращает отчёт с заголовками и маркированными списками.</li>
+</ul>
+<h2 id="_13">Список модулей</h2>
 <ul>
 <li><a href="ai_docs/__init____py.html">modules/ai_docs/__init____py</a></li>
 <li><a href="ai_docs/__main____py.html">modules/ai_docs/__main____py</a></li>
