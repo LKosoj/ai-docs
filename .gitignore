@@ -5,5 +5,4 @@ __pycache__
 *.pyc
 .ai_docs_cache
 .venv
-ai_docs_site
 AGENTS.md

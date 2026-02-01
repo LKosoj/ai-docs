@@ -21,6 +21,13 @@ python3 -m venv .venv
 pip install -r requirements.txt
 ```
 
+Альтернатива (установка как пакет):
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -e .
+```
+
 2) Настройка `.env` (пример — `.env.example`):
 ```env
 OPENAI_API_KEY=your_api_key_here
@@ -41,6 +48,11 @@ python -m ai_docs --source .
 Альтернативно:
 ```bash
 python ai_docs --source .
+```
+
+Если установлен как пакет:
+```bash
+ai-docs --source .
 ```
 
 ## Примеры использования
@@ -118,6 +130,17 @@ exclude:
 ## CLI‑параметры
 - `--source <path|url>` — источник
 - `--output <path>` — выходная директория (по умолчанию: source для локальных путей, `./output/<repo>` для URL)
+
+## Тестирование
+Тесты находятся в каталоге `tests/`:
+- `test_cache.py`
+- `test_changes.py`
+- `test_scanner.py`
+
+Запуск (из корня проекта):
+```bash
+python -m pytest
+```
 - `--readme` — генерировать только README
 - `--mkdocs` — генерировать только MkDocs
 - `--language ru|en` — язык документации

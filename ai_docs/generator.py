@@ -25,6 +25,7 @@ SECTION_TITLES = {
     "architecture": "Архитектура",
     "runtime": "Запуск и окружение",
     "dependencies": "Зависимости",
+    "testing": "Тестирование",
     "conventions": "Соглашения",
     "glossary": "Глоссарий",
 }
@@ -71,6 +72,51 @@ def _collect_dependencies(files: Dict[str, Dict]) -> List[str]:
             except Exception:
                 continue
     return sorted(set(deps))
+
+
+def _collect_test_info(files: Dict[str, Dict]) -> Tuple[List[str], List[str]]:
+    test_paths = sorted([path for path in files if _is_test_path(path)])
+    commands: List[str] = []
+
+    has_pytest_config = any(
+        path.endswith("pytest.ini") or path.endswith("pyproject.toml")
+        for path in files.keys()
+    )
+    has_pytest_dep = False
+    for path, meta in files.items():
+        if path.endswith(("requirements.txt", "pyproject.toml")):
+            content = meta.get("content", "")
+            if "pytest" in content:
+                has_pytest_dep = True
+                break
+
+    if test_paths and (has_pytest_config or has_pytest_dep or any(p.endswith(".py") for p in test_paths)):
+        commands.append("python -m pytest")
+
+    for path, meta in files.items():
+        if path.endswith("package.json"):
+            try:
+                data = json.loads(meta.get("content", ""))
+                scripts = data.get("scripts", {})
+                if "test" in scripts:
+                    commands.append("npm test")
+            except Exception:
+                continue
+
+    return test_paths, sorted(set(commands))
+
+
+def _render_testing_section(test_paths: List[str], commands: List[str]) -> str:
+    if not test_paths:
+        return "Тесты не обнаружены."
+    tests_md = "\n".join(f"- `{p}`" for p in test_paths)
+    commands_md = "\n".join(f"- `{c}`" for c in commands) if commands else "- (команда запуска не определена)"
+    return (
+        "## Найденные тесты\n\n"
+        f"{tests_md}\n\n"
+        "## Как запускать\n\n"
+        f"{commands_md}\n"
+    )
 
 
 def _generate_section(llm: LLMClient, llm_cache: Dict[str, str], title: str, context: str, language: str) -> str:
@@ -523,6 +569,8 @@ def generate_docs(
         if summaries:
             domain_contexts[domain] = _truncate_context("\n\n".join(summaries), llm.model, input_budget)
 
+    test_paths, test_commands = _collect_test_info(file_map)
+
     # Base context for overview sections
     overview_context = "\n\n".join(
         [read_text_file(Path(m["summary_path"])) for m in file_map.values() if m.get("summary_path")]
@@ -556,6 +604,10 @@ def generate_docs(
     for key, title in SECTION_TITLES.items():
         if added or modified or deleted or not (docs_dir / f"{key}.md").exists():
             print(f"[ai-docs] generate section: {title}")
+            if key == "testing":
+                docs_files["testing.md"] = f"# {title}\n\n{_render_testing_section(test_paths, test_commands)}\n"
+                regenerated_sections.append(title)
+                continue
             _submit_section(f"{key}.md", title, overview_context)
 
     # Domain sections
