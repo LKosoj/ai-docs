@@ -25,6 +25,13 @@ pip install -r requirements.txt
 ```bash
 python3 -m venv .venv
 . .venv/bin/activate
+pip install ai-docs-gen
+```
+
+Локальная установка в editable‑режиме:
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
 pip install -e .
 ```
 
