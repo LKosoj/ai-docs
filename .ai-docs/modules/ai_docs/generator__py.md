@@ -146,153 +146,56 @@ is_module — флаг, указывающий, что требуется дет
 Exception — при ошибках взаимодействия с LLM или кэшем
 
 ---
-def write_summary(output_dir: Path, source_path: str, summary: str) -> Path  
-Сохраняет сгенерированную аннотацию в файловой системе  
-Аргументы  
-output_dir — директория, куда сохраняется аннотация  
-source_path — исходный путь к файлу, на основе которого генерируется имя  
-summary — текст аннотации для сохранения  
-Возвращает  
-Путь к созданному файлу аннотации
-
----
 def read_text_file(path: Path) -> str  
-Считывает содержимое текстового файла  
+Считывает содержимое текстового файла с обработкой кодировки  
 Аргументы  
 path — путь к файлу  
 Возвращает  
 Содержимое файла в виде строки
 
 ---
-def _truncate_context(text: str, model: str, max_tokens: int) -> str  
-Обрезает текст до указанного лимита токенов, сохраняя целостность  
-Аргументы  
-text — входной текст для усечения  
-model — модель, используемая для оценки длины токенов  
-max_tokens — максимальное количество токенов  
-Возвращает  
-Усечённый текст, укладывающийся в лимит
+class Path  
+Представляет файловую систему и операции с путями  
+Методы  
+as_posix() — возвращает путь в формате с прямым слешем, независимо от ОС  
+with_suffix(suffix: str) — возвращает новый путь с заменённым расширением  
+parent — возвращает родительскую директорию как объект Path
 
 ---
-def _generate_section(llm: Any, llm_cache: Any, title: str, context: str, language: str) -> str  
-Генерирует содержимое секции документации на основе контекста  
-Аргументы  
-llm — экземпляр языковой модели  
-llm_cache — кэш для результатов LLM  
-title — заголовок секции  
-context — контекстный текст (например, объединённые аннотации)  
-language — язык генерации (например, "ru", "en")  
-Возвращает  
-Сгенерированный текст секции без заголовка
-
----
-def _is_test_path(path: str) -> bool  
-Проверяет, является ли путь тестовым (по имени файла или директории)  
-Аргументы  
-path — путь к файлу  
-Возвращает  
-True, если путь соответствует тестовому файлу
-
----
-def _save_cache_snapshot() -> None  
-Сохраняет текущее состояние кэша LLM на диск  
-Исключения  
-Может выбрасывать исключения при ошибках записи, не обрабатываются напрямую
-
----
-def generate_docs(llm: Any, llm_cache: Any, file_map: Dict, docs_dir: Path, output_root: Path, language: str, input_budget: int, executor: Optional[Any] = None, force: bool = False, write_readme: bool = False, write_mkdocs: bool = False, local_site: bool = False, use_cache: bool = True) -> None  
-Основная процедура генерации документации по проекту  
-Аргументы  
-llm — экземпляр языковой модели для генерации текстов  
-llm_cache — кэш для хранения и повторного использования ответов LLM  
-file_map — карта файлов проекта с их содержимым и метаданными  
-docs_dir — директория вывода для сгенерированной документации  
-output_root — корневая директория проекта  
-language — язык документации (например, "ru" или "en")  
-input_budget — лимит токенов для контекста LLM  
-executor — пул потоков для асинхронной генерации секций (опционально)  
-force — флаг перезаписи существующих файлов  
-write_readme — флаг генерации README.md  
-write_mkdocs — флаг сборки документации через MkDocs  
-local_site — флаг локальной публикации сайта  
-use_cache — флаг использования кэширования  
-Возвращает  
-None  
-Исключения  
-RuntimeError — если mkdocs не установлен при включённой опции write_mkdocs
-
----
-def _collect_dependencies(file_map: Dict) -> List[str]  
-Собирает список внешних зависимостей проекта на основе анализа импортов  
-Аргументы  
-file_map — карта файлов проекта с содержимым и метаданными  
-Возвращает  
-Список строк с названиями зависимостей
-
----
-def _truncate_context(text: str, model: str, budget: int) -> str  
-Обрезает контекст до указанного лимита токенов модели  
-Аргументы  
-text — входной текст  
-model — название модели для оценки длины токенов  
-budget — максимальное количество токенов  
-Возвращает  
-Обрезанный текст, укладывающийся в лимит
-
----
-def _build_docs_index(output_root: Path, docs_dir: Path, docs_files: Dict[str, str], file_map: Dict[str, Dict], module_pages: Dict[str, str]) -> Dict[str, object]  
-Формирует JSON-индекс документации для навигации и поиска  
-Аргументы  
-output_root — корневая директория вывода  
-docs_dir — директория с документацией  
-docs_files — словарь сгенерированных файлов  
-file_map — карта исходных файлов  
-module_pages — страницы модулей в формате путь → содержимое  
-Возвращает  
-Словарь с древовидной структурой документации
-
----
-def write_docs_files(docs_dir: Path, docs_files: Dict[str, str]) -> None  
-Записывает все сгенерированные файлы в файловую систему  
-Аргументы  
-docs_dir — директория назначения  
-docs_files — словарь путей и содержимого файлов  
-Возвращает  
-None
-
----
-def _generate_readme(llm: Any, llm_cache: Any, project_name: str, overview_context: str, language: str) -> str  
-Генерирует содержимое README.md на основе общего контекста проекта  
-Аргументы  
-llm — экземпляр языковой модели  
-llm_cache — кэш LLM  
-project_name — имя проекта  
-overview_context — обобщённый контекст проекта  
-language — язык документации  
-Возвращает  
-Текст README.md
-
----
-def build_mkdocs_yaml(site_name: str, sections: Dict[str, str], configs: List[str], has_modules: bool, module_nav_paths: List[str], local_site: bool) -> str  
-Генерирует содержимое файла mkdocs.yml для сборки сайта документации  
-Аргументы  
-site_name — имя сайта документации  
-sections — заголовки секций  
-configs — список написанных конфигурационных файлов  
-has_modules — флаг наличия модулей  
-module_nav_paths — пути навигации по модулям  
-local_site — флаг локальной публикации  
-Возвращает  
-Строку в формате YAML
-
----
-def format_changes_md(added: Dict, modified: Dict, deleted: Dict, regenerated_sections: List[str], summary: str) -> str  
+def format_changes_md(added, modified, deleted, regenerated_sections: list[str], summary: str) -> str  
 Форматирует Markdown-представление изменений в проекте  
 Аргументы  
 added — словарь добавленных файлов  
 modified — словарь изменённых файлов  
 deleted — словарь удалённых файлов  
 regenerated_sections — список перегенерированных секций  
-summary — краткое резюме изменений от LLM  
+summary — краткое резюме изменений  
 Возвращает  
-Строку в формате Markdown
+Строка в формате Markdown с описанием изменений
+
+---
+def write_docs_files(docs_dir: Path, docs_files: dict) -> None  
+Записывает все сгенерированные файлы документации на диск  
+Аргументы  
+docs_dir — директория назначения  
+docs_files — словарь путей и содержимого файлов
+
+---
+class cache  
+Управляет кэшированием индекса файлов и ответов LLM  
+Методы  
+save_index(index: dict) — сохраняет индекс файлов в постоянное хранилище  
+save_llm_cache(llm_cache) — сохраняет кэш языковой модели на диск
+
+---
+def build_mkdocs_yaml(site_name: str, sections: dict, configs: list, has_modules: bool, module_nav_paths: list = None, local_site: bool = False) -> str  
+Генерирует содержимое файла mkdocs.yml для сборки документации  
+Аргументы  
+site_name — название сайта документации  
+sections — отображение заголовков секций  
+configs — список сгенерированных конфигурационных файлов  
+has_modules — флаг наличия модулей  
+module_nav_paths — пути навигации по модулям (опционально)  
+local_site — флаг локальной сборки (без публикации)  
+Возвращает  
+Строка в формате YAML, пригодная для записи в mkdocs.yml

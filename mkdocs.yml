@@ -23,19 +23,19 @@ nav:
 - Модули:
   - Обзор: modules/index.md
   - ai_docs:
-    - __init__: modules/ai_docs/__init__.md
-    - __main__: modules/ai_docs/__main__.md
-    - cache: modules/ai_docs/cache.md
-    - changes: modules/ai_docs/changes.md
-    - cli: modules/ai_docs/cli.md
-    - domain: modules/ai_docs/domain.md
-    - generator: modules/ai_docs/generator.md
-    - llm: modules/ai_docs/llm.md
-    - mkdocs: modules/ai_docs/mkdocs.md
-    - scanner: modules/ai_docs/scanner.md
-    - summary: modules/ai_docs/summary.md
-    - tokenizer: modules/ai_docs/tokenizer.md
-    - utils: modules/ai_docs/utils.md
+    - __init____py: modules/ai_docs/__init____py.md
+    - __main____py: modules/ai_docs/__main____py.md
+    - cache__py: modules/ai_docs/cache__py.md
+    - changes__py: modules/ai_docs/changes__py.md
+    - cli__py: modules/ai_docs/cli__py.md
+    - domain__py: modules/ai_docs/domain__py.md
+    - generator__py: modules/ai_docs/generator__py.md
+    - llm__py: modules/ai_docs/llm__py.md
+    - mkdocs__py: modules/ai_docs/mkdocs__py.md
+    - scanner__py: modules/ai_docs/scanner__py.md
+    - summary__py: modules/ai_docs/summary__py.md
+    - tokenizer__py: modules/ai_docs/tokenizer__py.md
+    - utils__py: modules/ai_docs/utils__py.md
 - Изменения: changes.md
 site_url: ''
 use_directory_urls: false

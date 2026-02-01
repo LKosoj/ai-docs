@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-02-01T12:23:47.234486Z",
+  "generated_at": "2026-02-01T14:09:11.959781Z",
   "docs_dir": ".ai-docs",
   "rules": {
     "priority": [
@@ -44,7 +44,7 @@
       "name": "ai_docs/scanner",
       "path": "modules/ai_docs/scanner.md",
       "source_path": "ai_docs/scanner.py",
-      "summary": "Модуль отвечает за сканирование файловой системы или удалённого репозитория по URL для анализа структуры проекта. Поддерживает фильтрацию файлов по шаблонам включения и исключения, задаваемым явно или через конфигурацию расширения."
+      "summary": "/** * Результат сканирования исходного кода: содержит метаданные и список обработанных файлов."
     },
     {
       "name": "ai_docs/cli",
@@ -128,18 +128,31 @@
     "glossary.md",
     "index.md",
     "modules/ai_docs/__init__.md",
+    "modules/ai_docs/__init____py.md",
     "modules/ai_docs/__main__.md",
+    "modules/ai_docs/__main____py.md",
     "modules/ai_docs/cache.md",
+    "modules/ai_docs/cache__py.md",
     "modules/ai_docs/changes.md",
+    "modules/ai_docs/changes__py.md",
     "modules/ai_docs/cli.md",
+    "modules/ai_docs/cli__py.md",
     "modules/ai_docs/domain.md",
+    "modules/ai_docs/domain__py.md",
     "modules/ai_docs/generator.md",
+    "modules/ai_docs/generator__py.md",
     "modules/ai_docs/llm.md",
+    "modules/ai_docs/llm__py.md",
     "modules/ai_docs/mkdocs.md",
+    "modules/ai_docs/mkdocs__py.md",
     "modules/ai_docs/scanner.md",
+    "modules/ai_docs/scanner__py.md",
     "modules/ai_docs/summary.md",
+    "modules/ai_docs/summary__py.md",
     "modules/ai_docs/tokenizer.md",
+    "modules/ai_docs/tokenizer__py.md",
     "modules/ai_docs/utils.md",
+    "modules/ai_docs/utils__py.md",
     "modules/index.md",
     "runtime.md"
   ]
