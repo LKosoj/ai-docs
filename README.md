@@ -95,6 +95,23 @@ python -m ai_docs --source . --mkdocs --local-site
 - правила маршрутизации: приоритет `modules/index.md → modules/* → index.md/architecture.md/conventions.md`;
 - принцип ранжирования: частота ключевых совпадений + приоритет файла.
 
+## .ai-docs.yaml (расширения)
+Если в проекте есть файл `.ai-docs.yaml`, он задаёт приоритетный список расширений для сканирования.
+Если файла нет, он создаётся автоматически на основе текущих `*_EXTENSIONS`.
+
+Формат:
+```yaml
+code_extensions:
+  .py: Python
+  .ts: TypeScript
+doc_extensions:
+  .md: Markdown
+  .rst: reStructuredText
+config_extensions:
+  .yml: YAML
+  .json: JSON
+```
+
 ## CLI‑параметры
 - `--source <path|url>` — источник
 - `--output <path>` — выходная директория (по умолчанию: source для локальных путей, `./output/<repo>` для URL)

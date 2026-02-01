@@ -2,21 +2,78 @@ from pathlib import Path
 from typing import Set
 
 
-CODE_EXTENSIONS = {
-    ".py", ".pyi", ".pyx", ".js", ".jsx", ".ts", ".tsx", ".go", ".java",
-    ".c", ".cc", ".cpp", ".h", ".hpp", ".rs", ".rb", ".php", ".cs",
-    ".kt", ".kts", ".swift", ".m", ".mm",
-    ".vb", ".bas", ".sql", ".pas", ".dpr", ".pp", ".r", ".pl", ".pm",
-    ".f", ".for", ".f90", ".f95", ".f03", ".f08", ".sb3", ".adb", ".ads",
-    ".asm", ".s", ".ino", ".htm", ".html", ".css",
+CODE_EXTENSION_DESCRIPTIONS = {
+    ".py": "Python",
+    ".pyi": "Python (типизация)",
+    ".pyx": "Cython",
+    ".js": "JavaScript",
+    ".jsx": "JavaScript (JSX)",
+    ".ts": "TypeScript",
+    ".tsx": "TypeScript (TSX)",
+    ".go": "Go",
+    ".java": "Java",
+    ".c": "C",
+    ".cc": "C++",
+    ".cpp": "C++",
+    ".h": "C/C++ Header",
+    ".hpp": "C++ Header",
+    ".rs": "Rust",
+    ".rb": "Ruby",
+    ".php": "PHP",
+    ".cs": "C#",
+    ".kt": "Kotlin",
+    ".kts": "Kotlin (Script)",
+    ".swift": "Swift",
+    ".m": "Objective-C",
+    ".mm": "Objective-C++",
+    ".vb": "Visual Basic",
+    ".bas": "BASIC",
+    ".sql": "SQL",
+    ".pas": "Pascal",
+    ".dpr": "Delphi/Pascal",
+    ".pp": "Pascal",
+    ".r": "R",
+    ".pl": "Perl",
+    ".pm": "Perl Module",
+    ".f": "Fortran",
+    ".for": "Fortran",
+    ".f90": "Fortran",
+    ".f95": "Fortran",
+    ".f03": "Fortran",
+    ".f08": "Fortran",
+    ".sb3": "Scratch",
+    ".adb": "Ada",
+    ".ads": "Ada (Spec)",
+    ".asm": "Assembly",
+    ".s": "Assembly",
+    ".ino": "Arduino",
+    ".htm": "HTML",
+    ".html": "HTML",
+    ".css": "CSS",
 }
 
-DOC_EXTENSIONS = {".md", ".rst", ".adoc", ".txt"}
-
-CONFIG_EXTENSIONS = {
-    ".yml", ".yaml", ".json", ".toml", ".ini", ".cfg", ".conf", ".env",
-    ".properties",
+DOC_EXTENSION_DESCRIPTIONS = {
+    ".md": "Markdown",
+    ".rst": "reStructuredText",
+    ".adoc": "AsciiDoc",
+    ".txt": "Text",
 }
+
+CONFIG_EXTENSION_DESCRIPTIONS = {
+    ".yml": "YAML",
+    ".yaml": "YAML",
+    ".json": "JSON",
+    ".toml": "TOML",
+    ".ini": "INI",
+    ".cfg": "Config",
+    ".conf": "Config",
+    ".env": "Environment",
+    ".properties": "Properties",
+}
+
+CODE_EXTENSIONS = set(CODE_EXTENSION_DESCRIPTIONS)
+DOC_EXTENSIONS = set(DOC_EXTENSION_DESCRIPTIONS)
+CONFIG_EXTENSIONS = set(CONFIG_EXTENSION_DESCRIPTIONS)
 
 DATA_EXTENSIONS = {".csv", ".tsv", ".parquet", ".avro", ".jsonl"}
 

@@ -6,17 +6,20 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 import pathspec
+import yaml
 
-from .domain import classify_type, detect_domains, is_infra
+from .domain import (
+    CODE_EXTENSION_DESCRIPTIONS,
+    CONFIG_EXTENSION_DESCRIPTIONS,
+    DOC_EXTENSION_DESCRIPTIONS,
+    classify_type,
+    detect_domains,
+    is_infra,
+)
 from .utils import is_binary_file, is_url, read_text_file, to_posix
 
 
-DEFAULT_INCLUDE_PATTERNS = {
-    "*.py", "*.pyi", "*.pyx", "*.js", "*.jsx", "*.ts", "*.tsx", "*.go", "*.java",
-    "*.c", "*.cc", "*.cpp", "*.h", "*.hpp", "*.rs", "*.rb", "*.php", "*.cs",
-    "*.kt", "*.kts", "*.swift", "*.m", "*.mm",
-    "*.md", "*.rst", "*.adoc", "*.txt",
-    "*.yml", "*.yaml", "*.json", "*.toml", "*.ini", "*.cfg", "*.conf", "*.env",
+FIXED_INCLUDE_PATTERNS = {
     "*.tf", "*.tfvars",
     "Dockerfile*", "docker-compose*.yml", "docker-compose*.yaml", "compose.yml", "compose.yaml",
     "Jenkinsfile", ".gitlab-ci.yml", "azure-pipelines.yml",
@@ -44,6 +47,72 @@ class ScanResult:
         self.files = files
         self.source = source
         self.repo_name = repo_name
+
+
+def _normalize_extensions(raw: Dict, defaults: Dict[str, str]) -> Dict[str, str]:
+    normalized: Dict[str, str] = {}
+    for key, value in raw.items():
+        ext = str(key).strip()
+        if not ext:
+            continue
+        if not ext.startswith("."):
+            ext = f".{ext}"
+        desc = value if isinstance(value, str) and value.strip() else defaults.get(ext, "")
+        normalized[ext] = desc
+    return normalized or defaults.copy()
+
+
+def _load_extension_config(root: Path) -> Dict[str, Dict[str, str]]:
+    config_path = root / ".ai-docs.yaml"
+    defaults = {
+        "code_extensions": CODE_EXTENSION_DESCRIPTIONS,
+        "doc_extensions": DOC_EXTENSION_DESCRIPTIONS,
+        "config_extensions": CONFIG_EXTENSION_DESCRIPTIONS,
+    }
+
+    if not config_path.exists():
+        payload = {
+            "code_extensions": defaults["code_extensions"],
+            "doc_extensions": defaults["doc_extensions"],
+            "config_extensions": defaults["config_extensions"],
+        }
+        config_path.write_text(
+            yaml.safe_dump(payload, allow_unicode=True, sort_keys=False),
+            encoding="utf-8",
+        )
+        return {key: value.copy() for key, value in defaults.items()}
+
+    try:
+        raw = yaml.safe_load(config_path.read_text(encoding="utf-8", errors="ignore")) or {}
+    except yaml.YAMLError:
+        return {key: value.copy() for key, value in defaults.items()}
+
+    if not isinstance(raw, dict):
+        return {key: value.copy() for key, value in defaults.items()}
+
+    code_raw = raw.get("code_extensions") or {}
+    doc_raw = raw.get("doc_extensions") or {}
+    config_raw = raw.get("config_extensions") or {}
+
+    if not isinstance(code_raw, dict):
+        code_raw = {}
+    if not isinstance(doc_raw, dict):
+        doc_raw = {}
+    if not isinstance(config_raw, dict):
+        config_raw = {}
+
+    return {
+        "code_extensions": _normalize_extensions(code_raw, defaults["code_extensions"]),
+        "doc_extensions": _normalize_extensions(doc_raw, defaults["doc_extensions"]),
+        "config_extensions": _normalize_extensions(config_raw, defaults["config_extensions"]),
+    }
+
+
+def _build_default_include_patterns(extension_config: Dict[str, Dict[str, str]]) -> Set[str]:
+    extensions: Set[str] = set()
+    for key in ("code_extensions", "doc_extensions", "config_extensions"):
+        extensions.update(extension_config.get(key, {}).keys())
+    return {f"*{ext}" for ext in extensions} | FIXED_INCLUDE_PATTERNS
 
 
 def _load_ignore_specs(root: Path) -> List[pathspec.PathSpec]:
@@ -135,16 +204,17 @@ def _clone_repo(repo_url: str) -> Tuple[Path, str]:
 
 
 def scan_source(source: str, include: Optional[Set[str]] = None, exclude: Optional[Set[str]] = None, max_size: int = 200_000) -> ScanResult:
-    include = include or DEFAULT_INCLUDE_PATTERNS
     exclude = exclude or DEFAULT_EXCLUDE_PATTERNS
 
     if is_url(source):
         root, repo_name = _clone_repo(source)
+        include = include or _build_default_include_patterns(_load_extension_config(root))
         files = _scan_directory(root, include, exclude, max_size)
         return ScanResult(root=root, files=files, source=source, repo_name=repo_name)
 
     root = Path(source).expanduser().resolve()
     if not root.exists():
         raise FileNotFoundError(f"Source path not found: {root}")
+    include = include or _build_default_include_patterns(_load_extension_config(root))
     files = _scan_directory(root, include, exclude, max_size)
     return ScanResult(root=root, files=files, source=str(root), repo_name=root.name)
