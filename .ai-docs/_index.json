@@ -1,0 +1,146 @@
+{
+  "generated_at": "2026-02-01T12:23:47.234486Z",
+  "docs_dir": ".ai-docs",
+  "rules": {
+    "priority": [
+      "modules/index.md",
+      "modules/*",
+      "index.md",
+      "architecture.md",
+      "conventions.md"
+    ],
+    "ranking": "keyword frequency + file priority",
+    "usage": "use this index to choose a narrow route before reading full docs"
+  },
+  "sections": [
+    {
+      "id": "architecture",
+      "title": "Архитектура",
+      "path": "architecture.md"
+    },
+    {
+      "id": "runtime",
+      "title": "Запуск и окружение",
+      "path": "runtime.md"
+    },
+    {
+      "id": "dependencies",
+      "title": "Зависимости",
+      "path": "dependencies.md"
+    },
+    {
+      "id": "conventions",
+      "title": "Соглашения",
+      "path": "conventions.md"
+    },
+    {
+      "id": "glossary",
+      "title": "Глоссарий",
+      "path": "glossary.md"
+    }
+  ],
+  "modules": [
+    {
+      "name": "ai_docs/scanner",
+      "path": "modules/ai_docs/scanner.md",
+      "source_path": "ai_docs/scanner.py",
+      "summary": "Модуль отвечает за сканирование файловой системы или удалённого репозитория по URL для анализа структуры проекта. Поддерживает фильтрацию файлов по шаблонам включения и исключения, задаваемым явно или через конфигурацию расширения."
+    },
+    {
+      "name": "ai_docs/cli",
+      "path": "modules/ai_docs/cli.md",
+      "source_path": "ai_docs/cli.py",
+      "summary": "Модуль `main` — точка входа в инструмент генерации документации для репозиториев кода или конфигураций. Обрабатывает аргументы командной строки, сканирует исходные файлы, настраивает LLM и запускает генерацию README и/или MkDocs-сайта."
+    },
+    {
+      "name": "ai_docs/llm",
+      "path": "modules/ai_docs/llm.md",
+      "source_path": "ai_docs/llm.py",
+      "summary": "Клиент для взаимодействия с моделью LLM через API, поддерживающий кэширование запросов и настройку параметров генерации. Работает с любым совместимым с OpenAI API сервером, позволяет отправлять чат-запросы и управлять контекстом. Кэширование осуществляется по хешу тела запроса, потокобезопасно. Конфигурация может быть загружена из переменных окружения через функцию `from_env`."
+    },
+    {
+      "name": "ai_docs/summary",
+      "path": "modules/ai_docs/summary.md",
+      "source_path": "ai_docs/summary.py",
+      "summary": "Модуль предоставляет инструменты для генерации и обработки документации по исходным файлам с использованием LLM. Основная функциональность включает разбиение текста на части, формирование кратких описаний файлов и нормализацию результата в единый стиль Doxygen."
+    },
+    {
+      "name": "ai_docs/mkdocs",
+      "path": "modules/ai_docs/mkdocs.md",
+      "source_path": "ai_docs/mkdocs.py",
+      "summary": "Модуль предоставляет инструменты для генерации конфигурации MkDocs (`mkdocs.yml`) и записи файлов документации на диск. Основная функция `build_mkdocs_yaml` формирует YAML-конфигурацию на основе структуры проекта, включая навигацию по разделам, конфигурационным файлам и модулям. Вспомогательные функции строят иерархическую навигацию для модулей на основе путей файлов. Функция `write_docs_files` сохраняет сгенерированные документы в указанную директорию."
+    },
+    {
+      "name": "ai_docs/generator",
+      "path": "modules/ai_docs/generator.md",
+      "source_path": "ai_docs/generator.py",
+      "summary": "Модуль отвечает за генерацию технической документации проекта на основе анализа исходных файлов с использованием LLM. Собирает контекст, разбивает его на разделы, генерирует Markdown-документы, включая архитектуру, зависимости и модули. Поддерживает кэширование, многопоточную обработку и интеграцию с MkDocs. Результат — структурированная документация в формате, пригодном для публикации."
+    },
+    {
+      "name": "ai_docs/__init__",
+      "path": "modules/ai_docs/__init__.md",
+      "source_path": "ai_docs/__init__.py",
+      "summary": "Модуль предоставляет функциональность для работы с базовыми операциями обработки данных и управления состоянием."
+    },
+    {
+      "name": "ai_docs/tokenizer",
+      "path": "modules/ai_docs/tokenizer.md",
+      "source_path": "ai_docs/tokenizer.py",
+      "summary": "Модуль предоставляет инструменты для подсчёта токенов и разбиения текста на части с учётом ограничений по количеству токенов, используя кодировку, соответствующую указанной модели OpenAI. Основная функциональность опирается на библиотеку `tiktoken`. В случае отсутствия модели в списке поддерживаемых, используется базовая кодировка `cl100k_base`."
+    },
+    {
+      "name": "ai_docs/changes",
+      "path": "modules/ai_docs/changes.md",
+      "source_path": "ai_docs/changes.py",
+      "summary": "Модуль предоставляет функцию для формирования отчёта об изменениях в виде строки в формате Markdown. Отчёт включает списки добавленных, изменённых и удалённых файлов, перечень перегенерированных разделов и краткое резюме."
+    },
+    {
+      "name": "ai_docs/utils",
+      "path": "modules/ai_docs/utils.md",
+      "source_path": "ai_docs/utils.py",
+      "summary": "Модуль предоставляет набор утилит для работы с файлами, путями, хешированием и проверкой типов данных. Основные функции включают вычисление SHA-256 хешей, безопасное создание слагов, определение двоичных файлов и проверку URL."
+    },
+    {
+      "name": "ai_docs/domain",
+      "path": "modules/ai_docs/domain.md",
+      "source_path": "ai_docs/domain.py",
+      "summary": "Модуль предоставляет средства классификации файлов по типу содержимого и доменам инфраструктуры. Определяет категорию файла (код, конфигурация, документация и др.) и выявляет домены, связанные с инфраструктурой (Kubernetes, Terraform, CI/CD и т.д.). Используется для анализа структуры проекта и автоматической категоризации файлов."
+    },
+    {
+      "name": "ai_docs/__main__",
+      "path": "modules/ai_docs/__main__.md",
+      "source_path": "ai_docs/__main__.py",
+      "summary": "Модуль обеспечивает запуск основного приложения из командной строки, корректно обрабатывая импорты как при обычном использовании пакета, так и при запуске в качестве скрипта. Он динамически подгружает функцию `main` из модуля `cli`, при необходимости модифицируя `sys.path` для разрешения зависимостей. Это позволяет запускать приложение из корня проекта или как установленный пакет."
+    },
+    {
+      "name": "ai_docs/cache",
+      "path": "modules/ai_docs/cache.md",
+      "source_path": "ai_docs/cache.py",
+      "summary": "Модуль предоставляет класс `CacheManager` для управления кэшем файлов и данных, связанных с обработкой текстов и LLM-кэшированием. Он хранит индекс файлов и кэш ответов LLM в виде JSON-файлов на диске."
+    }
+  ],
+  "files": [
+    "_index.json",
+    "architecture.md",
+    "changes.md",
+    "conventions.md",
+    "dependencies.md",
+    "glossary.md",
+    "index.md",
+    "modules/ai_docs/__init__.md",
+    "modules/ai_docs/__main__.md",
+    "modules/ai_docs/cache.md",
+    "modules/ai_docs/changes.md",
+    "modules/ai_docs/cli.md",
+    "modules/ai_docs/domain.md",
+    "modules/ai_docs/generator.md",
+    "modules/ai_docs/llm.md",
+    "modules/ai_docs/mkdocs.md",
+    "modules/ai_docs/scanner.md",
+    "modules/ai_docs/summary.md",
+    "modules/ai_docs/tokenizer.md",
+    "modules/ai_docs/utils.md",
+    "modules/index.md",
+    "runtime.md"
+  ]
+}
