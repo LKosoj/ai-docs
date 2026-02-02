@@ -966,7 +966,7 @@ def _postprocess_mermaid_html(site_dir: Path) -> None:
         return
 
     mermaid_div_re = re.compile(r'(<div class="mermaid">)(.*?)(</div>)', re.DOTALL)
-    node_paren_re = re.compile(r"(\\b[\\w.-]+)\\(([^)\\n]+)\\)")
+    bracket_re = re.compile(r"\\[([^\\]]*)\\]")
 
     for path in site_dir.rglob("*.html"):
         text = path.read_text(encoding="utf-8")
@@ -976,8 +976,13 @@ def _postprocess_mermaid_html(site_dir: Path) -> None:
         def _fix_mermaid(match: re.Match) -> str:
             head, body, tail = match.groups()
             body = body.replace("&gt;", ">")
-            body = node_paren_re.sub(r"\\1[\\2]", body)
-            body = body.replace("(", " ").replace(")", "")
+
+            def _fix_brackets(bmatch: re.Match) -> str:
+                inner = bmatch.group(1).replace("(", " ").replace(")", "")
+                inner = re.sub(r"[ \\t]+", " ", inner)
+                return f"[{inner}]"
+
+            body = bracket_re.sub(_fix_brackets, body)
             body = re.sub(r"[ \\t]+", " ", body)
             return f"{head}{body}{tail}"
 
