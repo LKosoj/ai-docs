@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -942,6 +943,7 @@ def generate_docs(
         if not mkdocs_bin:
             raise RuntimeError("mkdocs is not installed or not on PATH")
         subprocess.check_call([mkdocs_bin, "build", "-f", "mkdocs.yml"], cwd=output_root)
+        _postprocess_mermaid_html(output_root / "ai_docs_site")
         print("[ai-docs] mkdocs: done")
 
     # Save cache
@@ -957,3 +959,28 @@ def generate_docs(
         print("[ai-docs] errors summary:")
         for item in errors:
             print(f"[ai-docs] error: {item}")
+
+
+def _postprocess_mermaid_html(site_dir: Path) -> None:
+    if not site_dir.exists():
+        return
+
+    mermaid_div_re = re.compile(r'(<div class="mermaid">)(.*?)(</div>)', re.DOTALL)
+    node_paren_re = re.compile(r"(\\b[\\w.-]+)\\(([^)\\n]+)\\)")
+
+    for path in site_dir.rglob("*.html"):
+        text = path.read_text(encoding="utf-8")
+        if 'class="mermaid"' not in text:
+            continue
+
+        def _fix_mermaid(match: re.Match) -> str:
+            head, body, tail = match.groups()
+            body = body.replace("&gt;", ">")
+            body = node_paren_re.sub(r"\\1[\\2]", body)
+            body = body.replace("(", " ").replace(")", "")
+            body = re.sub(r"[ \\t]+", " ", body)
+            return f"{head}{body}{tail}"
+
+        updated = mermaid_div_re.sub(_fix_mermaid, text)
+        if updated != text:
+            path.write_text(updated, encoding="utf-8")
