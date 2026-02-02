@@ -762,6 +762,24 @@ def generate_docs(
                     errors.append(msg)
         _save_cache_snapshot()
 
+    # Cleanup orphan summaries not referenced in current index
+    referenced_summary_paths: Set[str] = set()
+    for meta in file_map.values():
+        for key in ("summary_path", "module_summary_path", "config_summary_path"):
+            path = meta.get(key)
+            if path:
+                referenced_summary_paths.add(str(Path(path).resolve()))
+
+    for summary_dir in (summaries_dir, module_summaries_dir, config_summaries_dir):
+        if not summary_dir.exists():
+            continue
+        for summary_path in summary_dir.glob("*.md"):
+            if str(summary_path.resolve()) not in referenced_summary_paths:
+                try:
+                    summary_path.unlink()
+                except FileNotFoundError:
+                    pass
+
     # Remove summaries for deleted files
     if deleted:
         print(f"[ai-docs] cleanup: removing {len(deleted)} deleted summaries")
