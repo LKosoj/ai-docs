@@ -200,8 +200,11 @@ python -m pytest
 - `--no-cache` — disable LLM cache
 - `--local-site` — add `site_url` and `use_directory_urls` to `mkdocs.yml`
 - `--force` — overwrite `README.md` if it already exists
+- `--regen` — comma-separated list of sections to force regeneration (e.g. `architecture,configs,changes`, or `all`)
 
 Default behavior: if neither `--readme` nor `--mkdocs` is specified, both are generated.
+Docs sections in `.ai-docs/*.md` are not regenerated if the file already exists, unless listed in `--regen`.
+When running without parameters for sections, a hint is printed with a `--regen` example.
 
 ## MkDocs
 Build runs automatically at the end of generation:

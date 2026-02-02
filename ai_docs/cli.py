@@ -27,6 +27,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--threads", type=int, default=None, help="Number of parallel LLM workers")
     parser.add_argument("--local-site", action="store_true", help="Generate MkDocs config for local run")
     parser.add_argument("--force", action="store_true", help="Overwrite README.md if it already exists")
+    parser.add_argument(
+        "--regen",
+        help="Comma-separated list of sections to regenerate (e.g. architecture,configs,modules,index,changes)",
+    )
     return parser.parse_args()
 
 
@@ -42,6 +46,11 @@ def resolve_output(source: str, output: Optional[str], repo_name: str) -> Path:
 def main() -> None:
     load_dotenv()
     args = parse_args()
+    if not args.readme and not args.mkdocs and not args.regen:
+        print(
+            "[ai-docs] подсказка: разделы не перегенерируются, если файл уже есть. "
+            "Используйте --regen architecture,configs,changes или --regen all."
+        )
     include: Optional[Set[str]] = set(args.include) if args.include else None
     exclude: Optional[Set[str]] = set(args.exclude) if args.exclude else None
 
@@ -62,6 +71,8 @@ def main() -> None:
     local_site = args.local_site or env_local_site
 
     print(f"[ai-docs] generate: readme={args.readme or not args.mkdocs} mkdocs={args.mkdocs or not args.readme}")
+    if args.regen:
+        os.environ["AI_DOCS_REGEN"] = args.regen
     generate_docs(
         files=scan_result.files,
         output_root=output_root,
