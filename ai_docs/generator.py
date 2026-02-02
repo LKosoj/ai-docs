@@ -185,6 +185,60 @@ def _truncate_context(context: str, model: str, max_tokens: int) -> str:
     return chunks[0]
 
 
+def _summarize_chunk(llm: LLMClient, llm_cache: Dict[str, str], chunk: str, language: str) -> str:
+    prompt = (
+        "Сожми следующий контекст до краткого, но информативного конспекта. "
+        "Сохрани ключевые сущности, связи, архитектурные решения и важные названия. "
+        "Не добавляй фактов от себя. Язык: " + language
+    )
+    messages = [
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": chunk},
+    ]
+    return llm.chat(messages, cache=llm_cache).strip()
+
+
+def _build_hierarchical_context(
+    llm: LLMClient,
+    llm_cache: Dict[str, str],
+    texts: List[str],
+    max_tokens: int,
+    language: str,
+    label: str,
+) -> str:
+    items = [t.strip() for t in texts if t and t.strip()]
+    if not items:
+        return ""
+    joined = "\n\n".join(items)
+    if count_tokens(joined, llm.model) <= max_tokens:
+        return joined
+
+    current = items
+    max_rounds = 6
+    for round_idx in range(1, max_rounds + 1):
+        joined = "\n\n".join(current)
+        if count_tokens(joined, llm.model) <= max_tokens:
+            return joined
+
+        chunks = chunk_text(joined, model=llm.model, max_tokens=max_tokens)
+        summaries: List[str] = []
+        for idx, chunk in enumerate(chunks, 1):
+            print(f"[ai-docs] summarize chunk {label}: {round_idx}.{idx}/{len(chunks)}")
+            summary = _summarize_chunk(llm, llm_cache, chunk, language)
+            if summary:
+                summaries.append(summary)
+
+        if not summaries:
+            return _truncate_context(joined, llm.model, max_tokens)
+
+        new_joined = "\n\n".join(summaries)
+        if count_tokens(new_joined, llm.model) >= count_tokens(joined, llm.model) and len(summaries) == 1:
+            return _truncate_context(new_joined, llm.model, max_tokens)
+        current = summaries
+
+    return _truncate_context("\n\n".join(current), llm.model, max_tokens)
+
+
 def _first_paragraph(text: str) -> str:
     lines: List[str] = []
     for raw in text.splitlines():
@@ -746,15 +800,26 @@ def generate_docs(
             if summary_path:
                 summaries.append(read_text_file(Path(summary_path)))
         if summaries:
-            domain_contexts[domain] = _truncate_context("\n\n".join(summaries), llm.model, input_budget)
+            domain_contexts[domain] = _build_hierarchical_context(
+                llm,
+                llm_cache,
+                summaries,
+                input_budget,
+                language,
+                f"domain:{domain}",
+            )
 
     test_paths, test_commands = _collect_test_info(file_map)
 
     # Base context for overview sections
-    overview_context = "\n\n".join(
-        [read_text_file(Path(m["summary_path"])) for m in file_map.values() if m.get("summary_path")]
+    overview_context = _build_hierarchical_context(
+        llm,
+        llm_cache,
+        [read_text_file(Path(m["summary_path"])) for m in file_map.values() if m.get("summary_path")],
+        input_budget,
+        language,
+        "overview",
     )
-    overview_context = _truncate_context(overview_context, llm.model, input_budget)
 
     # Sections to regenerate
     regenerated_sections: List[str] = []
@@ -823,7 +888,14 @@ def generate_docs(
         module_summaries.append(summary)
     if module_summaries:
         modules_title = "Модули"
-        modules_context = _truncate_context("\n\n".join(module_summaries), llm.model, input_budget)
+        modules_context = _build_hierarchical_context(
+            llm,
+            llm_cache,
+            module_summaries,
+            input_budget,
+            language,
+            "modules",
+        )
         print("[ai-docs] generate modules")
         intro = _generate_section(llm, llm_cache, modules_title, modules_context, language)
         toc_lines = "\n".join(
@@ -888,10 +960,18 @@ def generate_docs(
     # Changes summary
     if added or modified or deleted:
         print("[ai-docs] generate changes")
-        changes_context = "\n\n".join(
-            [read_text_file(Path(meta["summary_path"])) for meta in {**added, **modified}.values() if meta.get("summary_path")]
+        changes_context = _build_hierarchical_context(
+            llm,
+            llm_cache,
+            [
+                read_text_file(Path(meta["summary_path"]))
+                for meta in {**added, **modified}.values()
+                if meta.get("summary_path")
+            ],
+            input_budget,
+            language,
+            "changes",
         )
-        changes_context = _truncate_context(changes_context, llm.model, input_budget)
         summary = _generate_section(llm, llm_cache, "Краткое резюме изменений", changes_context, language)
     else:
         summary = "Изменений нет."
