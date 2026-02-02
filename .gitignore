@@ -1,4 +1,7 @@
 .env
+.logs
+logs/
+run.pid
 *.txt
 *.zip
 __pycache__

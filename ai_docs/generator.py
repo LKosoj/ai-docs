@@ -366,6 +366,7 @@ def generate_docs(
                     continue
                 summary_path = write_summary(summaries_dir, path, summary)
                 meta["summary_path"] = str(summary_path)
+                _save_cache_snapshot()
                 done += 1
                 print(f"[ai-docs] summarize done: {path} ({done}/{total})")
     else:
@@ -377,6 +378,7 @@ def generate_docs(
                 summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
                 summary_path = write_summary(summaries_dir, path, summary)
                 meta["summary_path"] = str(summary_path)
+                _save_cache_snapshot()
                 done += 1
                 print(f"[ai-docs] summarize done: {path} ({done}/{total})")
             except Exception as exc:
@@ -425,6 +427,7 @@ def generate_docs(
                     continue
                 summary_path = write_summary(module_summaries_dir, path, summary)
                 meta["module_summary_path"] = str(summary_path)
+                _save_cache_snapshot()
                 done += 1
                 print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
     else:
@@ -436,6 +439,7 @@ def generate_docs(
                 summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
                 summary_path = write_summary(module_summaries_dir, path, summary)
                 meta["module_summary_path"] = str(summary_path)
+                _save_cache_snapshot()
                 done += 1
                 print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
             except Exception as exc:
@@ -485,6 +489,7 @@ def generate_docs(
                     continue
                 summary_path = write_summary(config_summaries_dir, path, summary)
                 meta["config_summary_path"] = str(summary_path)
+                _save_cache_snapshot()
                 done += 1
                 print(f"[ai-docs] summarize config done: {path} ({done}/{total})")
     else:
@@ -496,6 +501,7 @@ def generate_docs(
                 summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
                 summary_path = write_summary(config_summaries_dir, path, summary)
                 meta["config_summary_path"] = str(summary_path)
+                _save_cache_snapshot()
                 done += 1
                 print(f"[ai-docs] summarize config done: {path} ({done}/{total})")
             except Exception as exc:
@@ -573,6 +579,7 @@ def generate_docs(
                         continue
                     summary_path = write_summary(summaries_dir, path, summary)
                     meta["summary_path"] = str(summary_path)
+                    _save_cache_snapshot()
                     done += 1
                     print(f"[ai-docs] summarize done: {path} ({done}/{total})")
         else:
@@ -584,6 +591,7 @@ def generate_docs(
                     summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
                     summary_path = write_summary(summaries_dir, path, summary)
                     meta["summary_path"] = str(summary_path)
+                    _save_cache_snapshot()
                     done += 1
                     print(f"[ai-docs] summarize done: {path} ({done}/{total})")
                 except Exception as exc:
@@ -625,6 +633,7 @@ def generate_docs(
                         continue
                     summary_path = write_summary(module_summaries_dir, path, summary)
                     meta["module_summary_path"] = str(summary_path)
+                    _save_cache_snapshot()
                     done += 1
                     print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
         else:
@@ -636,6 +645,7 @@ def generate_docs(
                     summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
                     summary_path = write_summary(module_summaries_dir, path, summary)
                     meta["module_summary_path"] = str(summary_path)
+                    _save_cache_snapshot()
                     done += 1
                     print(f"[ai-docs] summarize module done: {path} ({done}/{total})")
                 except Exception as exc:
@@ -677,6 +687,7 @@ def generate_docs(
                         continue
                     summary_path = write_summary(config_summaries_dir, path, summary)
                     meta["config_summary_path"] = str(summary_path)
+                    _save_cache_snapshot()
                     done += 1
                     print(f"[ai-docs] summarize config done: {path} ({done}/{total})")
         else:
@@ -688,6 +699,7 @@ def generate_docs(
                     summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
                     summary_path = write_summary(config_summaries_dir, path, summary)
                     meta["config_summary_path"] = str(summary_path)
+                    _save_cache_snapshot()
                     done += 1
                     print(f"[ai-docs] summarize config done: {path} ({done}/{total})")
                 except Exception as exc:
