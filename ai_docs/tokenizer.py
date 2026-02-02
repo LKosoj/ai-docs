@@ -16,7 +16,7 @@ def get_encoding(model: str):
         return tiktoken.encoding_for_model(model)
     except KeyError:
         try:
-            return tiktoken.get_encoding("o200k_base")
+            return tiktoken.get_encoding("cl100k_base")
         except Exception:
             return _ByteEncoding()
 
