@@ -3,11 +3,22 @@ from typing import List
 import tiktoken
 
 
+class _ByteEncoding:
+    def encode(self, text: str):
+        return list(text.encode("utf-8", errors="ignore"))
+
+    def decode(self, tokens):
+        return bytes(tokens).decode("utf-8", errors="ignore")
+
+
 def get_encoding(model: str):
     try:
         return tiktoken.encoding_for_model(model)
     except KeyError:
-        return tiktoken.get_encoding("cl100k_base")
+        try:
+            return tiktoken.get_encoding("o200k_base")
+        except Exception:
+            return _ByteEncoding()
 
 
 def count_tokens(text: str, model: str) -> int:
@@ -23,4 +34,3 @@ def chunk_text(text: str, model: str, max_tokens: int) -> List[str]:
         chunk = tokens[i:i + max_tokens]
         chunks.append(enc.decode(chunk))
     return chunks
-
