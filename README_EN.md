@@ -124,6 +124,17 @@ Local mode for MkDocs:
 python -m ai_docs --source . --mkdocs --local-site
 ```
 
+## CI/CD integration
+Example for GitHub Actions:
+```yaml
+- name: Generate Docs
+  run: |
+    pip install ai-docs-gen
+    ai-docs --source . --mkdocs --readme --language en --force
+  env:
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+```
+
 ## What gets generated
 - `README.md` — short project description
 - `.ai-docs/` — documentation pages

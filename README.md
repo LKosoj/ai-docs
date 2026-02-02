@@ -124,6 +124,17 @@ python -m ai_docs --source . --mkdocs
 python -m ai_docs --source . --mkdocs --local-site
 ```
 
+## Интеграция в CI/CD
+Пример для GitHub Actions:
+```yaml
+- name: Generate Docs
+  run: |
+    pip install ai-docs-gen
+    ai-docs --source . --mkdocs --readme --language en --force
+  env:
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+```
+
 ## Что генерируется
 - `README.md` — краткое описание проекта
 - `.ai-docs/` — страницы документации
