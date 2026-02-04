@@ -3,9 +3,11 @@ import json
 import os
 from typing import Dict, List, Optional
 
+import httpx
 from openai import AsyncOpenAI
 
 from .utils import sha256_text
+from .tokenizer import count_tokens
 
 
 class LLMClient:
@@ -30,6 +32,26 @@ class LLMClient:
             client_kwargs["base_url"] = self.base_url
         self._client = AsyncOpenAI(**client_kwargs)
 
+    def _estimate_input_tokens(self, messages: List[Dict[str, str]]) -> int:
+        total = 0
+        for msg in messages:
+            content = msg.get("content", "")
+            total += count_tokens(content, self.model)
+            total += 4
+        return total
+
+    def _compute_read_timeout(self, input_tokens: int) -> float:
+        t_min = 1000
+        t_max = 250000
+        timeout_min = 60.0
+        timeout_max = 1200.0
+        if input_tokens <= t_min:
+            return timeout_min
+        if input_tokens >= t_max:
+            return timeout_max
+        ratio = (input_tokens - t_min) / (t_max - t_min)
+        return timeout_min + ratio * (timeout_max - timeout_min)
+
     def _cache_key(self, payload: Dict) -> str:
         return sha256_text(json.dumps(payload, sort_keys=True))
 
@@ -47,7 +69,10 @@ class LLMClient:
                     return cache[key]
 
         try:
-            response = await self._client.chat.completions.create(**payload)
+            input_tokens = self._estimate_input_tokens(messages)
+            read_timeout = self._compute_read_timeout(input_tokens)
+            timeout = httpx.Timeout(read=read_timeout, connect=7.0, write=30.0, pool=read_timeout)
+            response = await self._client.chat.completions.create(**payload, timeout=timeout)
             content = response.choices[0].message.content
         except Exception as exc:
             raise RuntimeError(f"LLM request failed: {exc}") from exc
