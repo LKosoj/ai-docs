@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -17,7 +17,7 @@ from .tokenizer import count_tokens, chunk_text
 from .utils import read_text_file
 
 
-def generate_section(llm, llm_cache: Dict[str, str], title: str, context: str, language: str) -> str:
+async def generate_section(llm, llm_cache: Dict[str, str], title: str, context: str, language: str) -> str:
     prompt = (
         "Ты опытный технический писатель. Сгенерируй раздел документации в Markdown. "
         f"Язык: {language}. Раздел: {title}. "
@@ -36,11 +36,11 @@ def generate_section(llm, llm_cache: Dict[str, str], title: str, context: str, l
         {"role": "system", "content": prompt},
         {"role": "user", "content": context},
     ]
-    content = llm.chat(messages, cache=llm_cache).strip()
+    content = (await llm.chat(messages, cache=llm_cache)).strip()
     return strip_duplicate_heading(content, title)
 
 
-def generate_readme(llm, llm_cache: Dict[str, str], project_name: str, overview_context: str, language: str) -> str:
+async def generate_readme(llm, llm_cache: Dict[str, str], project_name: str, overview_context: str, language: str) -> str:
     prompt = (
         "Сформируй README.md для проекта. "
         "Структура: Обзор, Быстрый старт, Архитектура (кратко), Ссылки на docs. "
@@ -50,7 +50,7 @@ def generate_readme(llm, llm_cache: Dict[str, str], project_name: str, overview_
         {"role": "system", "content": prompt},
         {"role": "user", "content": overview_context},
     ]
-    return llm.chat(messages, cache=llm_cache).strip()
+    return (await llm.chat(messages, cache=llm_cache)).strip()
 
 
 def truncate_context(context: str, model: str, max_tokens: int) -> str:
@@ -60,7 +60,7 @@ def truncate_context(context: str, model: str, max_tokens: int) -> str:
     return chunks[0]
 
 
-def summarize_chunk(
+async def summarize_chunk(
     llm,
     llm_cache: Dict[str, str],
     chunk: str,
@@ -79,10 +79,10 @@ def summarize_chunk(
         {"role": "system", "content": prompt},
         {"role": "user", "content": chunk},
     ]
-    return llm.chat(messages, cache=llm_cache).strip()
+    return (await llm.chat(messages, cache=llm_cache)).strip()
 
 
-def build_hierarchical_context(
+async def build_hierarchical_context(
     llm,
     llm_cache: Dict[str, str],
     texts: List[str],
@@ -109,7 +109,7 @@ def build_hierarchical_context(
         summaries: List[str] = []
         for idx, chunk in enumerate(chunks, 1):
             print(f"[ai-docs] summarize chunk {label}: {round_idx}.{idx}/{len(chunks)}")
-            summary = summarize_chunk(llm, llm_cache, chunk, language, focus)
+            summary = await summarize_chunk(llm, llm_cache, chunk, language, focus)
             if summary:
                 summaries.append(summary)
 
@@ -124,7 +124,7 @@ def build_hierarchical_context(
     return truncate_context("\n\n".join(current), llm.model, max_tokens)
 
 
-def build_sections(
+async def build_sections(
     file_map: Dict[str, Dict],
     added: Dict[str, Dict],
     modified: Dict[str, Dict],
@@ -164,7 +164,7 @@ def build_sections(
             if summary_path:
                 summaries.append(read_text_file(Path(summary_path)))
         if summaries:
-            domain_contexts[domain] = build_hierarchical_context(
+            domain_contexts[domain] = await build_hierarchical_context(
                 llm,
                 llm_cache,
                 summaries,
@@ -182,7 +182,7 @@ def build_sections(
         if m.get("summary_path")
     ]
 
-    overview_context = build_hierarchical_context(
+    overview_context = await build_hierarchical_context(
         llm,
         llm_cache,
         all_summaries,
@@ -194,9 +194,9 @@ def build_sections(
 
     section_contexts: Dict[str, str] = {}
 
-    def get_section_context(section_key: str, section_title: str) -> str:
+    async def get_section_context(section_key: str, section_title: str) -> str:
         if section_key not in section_contexts:
-            section_contexts[section_key] = build_hierarchical_context(
+            section_contexts[section_key] = await build_hierarchical_context(
                 llm,
                 llm_cache,
                 all_summaries,
@@ -210,22 +210,18 @@ def build_sections(
     regenerated_sections: List[str] = []
     docs_files: Dict[str, str] = {}
     module_pages: Dict[str, str] = {}
-    section_workers = min(threads, 4) if threads > 1 else 1
-
     configs_written: Dict[str, str] = {}
-    section_futures = {}
-    if section_workers > 1:
-        executor = ThreadPoolExecutor(max_workers=section_workers)
-    else:
-        executor = None
+    section_tasks: List[asyncio.Task] = []
+    section_sem = asyncio.Semaphore(min(threads, 4) if threads > 1 else 1)
 
     def submit_section(out_path: str, title: str, context: str) -> None:
-        if executor:
-            section_futures[executor.submit(generate_section, llm, llm_cache, title, context, language)] = (out_path, title)
-        else:
-            content = generate_section(llm, llm_cache, title, context, language)
+        async def run_section() -> None:
+            async with section_sem:
+                content = await generate_section(llm, llm_cache, title, context, language)
             docs_files[out_path] = f"# {title}\n\n{content}\n"
             regenerated_sections.append(title)
+
+        section_tasks.append(asyncio.create_task(run_section()))
 
     for key, title in SECTION_TITLES.items():
         section_path = docs_dir / f"{key}.md"
@@ -235,7 +231,7 @@ def build_sections(
                 docs_files["testing.md"] = f"# {title}\n\n{render_testing_section(test_paths, test_commands)}\n"
                 regenerated_sections.append(title)
                 continue
-            submit_section(f"{key}.md", title, get_section_context(key, title))
+            submit_section(f"{key}.md", title, await get_section_context(key, title))
 
     for domain, title in DOMAIN_TITLES.items():
         if domain not in domain_contexts:
@@ -250,7 +246,7 @@ def build_sections(
     index_title = "Документация проекта"
     index_path = docs_dir / "index.md"
     if is_forced("index", "docs", "documentation") or not index_path.exists():
-        submit_section("index.md", index_title, get_section_context("index", index_title))
+        submit_section("index.md", index_title, await get_section_context("index", index_title))
 
     module_summaries = []
     module_nav_paths: List[str] = []
@@ -269,7 +265,7 @@ def build_sections(
         module_summaries.append(summary)
     if module_summaries:
         modules_title = "Модули"
-        modules_context = build_hierarchical_context(
+        modules_context = await build_hierarchical_context(
             llm,
             llm_cache,
             module_summaries,
@@ -278,7 +274,7 @@ def build_sections(
             "modules",
             focus=modules_title,
         )
-        intro = generate_section(llm, llm_cache, modules_title, modules_context, language)
+        intro = await generate_section(llm, llm_cache, modules_title, modules_context, language)
         sorted_modules = sorted(module_nav_paths)
         per_page = 100
         total = len(sorted_modules)
@@ -333,17 +329,36 @@ def build_sections(
         configs_title = "Конфигурация проекта"
         configs_index_path = docs_dir / "configs" / "index.md"
         if is_forced("configs") or not configs_index_path.exists():
-            docs_files["configs/index.md"] = f"# {configs_title}\n\n{render_project_configs_index(config_nav_paths)}"
+            page_size = 100
+            if len(config_nav_paths) > page_size:
+                pages = [config_nav_paths[i:i + page_size] for i in range(0, len(config_nav_paths), page_size)]
+                total_pages = len(pages)
+                for page_idx, page_items in enumerate(pages, start=1):
+                    nav_links = []
+                    if page_idx > 1:
+                        nav_links.append(f"[← Предыдущая](page-{page_idx - 1}.md)")
+                    if page_idx < total_pages:
+                        nav_links.append(f"[Следующая →](page-{page_idx + 1}.md)")
+                    nav_md = " · ".join(nav_links)
+                    header = f"# {configs_title}\n"
+                    if page_idx > 1:
+                        header = f"# {configs_title} (страница {page_idx})\n"
+                    body_parts = [
+                        "## Список конфигов",
+                        render_project_configs_index(page_items),
+                    ]
+                    if nav_md:
+                        body_parts.append(f"\n{nav_md}\n")
+                    content = "\n\n".join(body_parts) + "\n"
+                    out_name = "configs/index.md" if page_idx == 1 else f"configs/page-{page_idx}.md"
+                    docs_files[out_name] = f"{header}\n{content}"
+            else:
+                docs_files["configs/index.md"] = f"# {configs_title}\n\n{render_project_configs_index(config_nav_paths)}"
             regenerated_sections.append(configs_title)
         docs_files.update(config_pages)
 
-    if executor:
-        for future in as_completed(section_futures):
-            out_path, title = section_futures[future]
-            content = future.result()
-            docs_files[out_path] = f"# {title}\n\n{content}\n"
-            regenerated_sections.append(title)
-        executor.shutdown(wait=True)
+    if section_tasks:
+        await asyncio.gather(*section_tasks)
 
     configs_dir = docs_dir / "configs"
     if configs_dir.exists():
@@ -362,24 +377,22 @@ def build_sections(
         docs_files["glossary.md"] = "# Глоссарий\n\n- TBD\n"
         regenerated_sections.append("Глоссарий")
 
-    changes_path = docs_dir / "changes.md"
-    if is_forced("changes") or not changes_path.exists():
-        if added or modified or deleted:
-            changes_context = build_hierarchical_context(
-                llm,
-                llm_cache,
-                [read_text_file(Path(meta["summary_path"])) for meta in {**added, **modified}.values() if meta.get("summary_path")],
-                input_budget,
-                language,
-                "changes",
-                focus="Краткое резюме изменений",
-            )
-            summary = generate_section(llm, llm_cache, "Краткое резюме изменений", changes_context, language)
-        else:
-            summary = "Изменений нет."
+    if added or modified or deleted:
+        changes_context = await build_hierarchical_context(
+            llm,
+            llm_cache,
+            [read_text_file(Path(meta["summary_path"])) for meta in {**added, **modified}.values() if meta.get("summary_path")],
+            input_budget,
+            language,
+            "changes",
+            focus="Краткое резюме изменений",
+        )
+        summary = await generate_section(llm, llm_cache, "Краткое резюме изменений", changes_context, language)
+    else:
+        summary = "Изменений нет."
 
-        changes_md = format_changes_md(added, modified, deleted, regenerated_sections, summary)
-        docs_files["changes.md"] = changes_md
+    changes_md = format_changes_md(added, modified, deleted, regenerated_sections, summary)
+    docs_files["changes.md"] = changes_md
 
     return (
         docs_files,

@@ -1,12 +1,13 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
 from pathlib import Path
 from typing import Dict, List, Tuple
+import time
 
 from .summary import summarize_file, write_summary
 from .generator_shared import is_test_path
 
 
-def summarize_changed_files(
+async def summarize_changed_files(
     to_summarize: List[Tuple[str, Dict]],
     summaries_dir: Path,
     llm,
@@ -15,44 +16,24 @@ def summarize_changed_files(
     save_cb,
     errors: List[str],
 ) -> None:
-    if threads > 1 and to_summarize:
-        with ThreadPoolExecutor(max_workers=threads) as executor:
-            futures = {}
-            for path, meta in to_summarize:
-                futures[
-                    executor.submit(
-                        summarize_file,
-                        meta["content"],
-                        meta["type"],
-                        meta["domains"],
-                        llm,
-                        llm_cache,
-                        llm.model,
-                        False,
-                    )
-                ] = (path, meta)
-            for future in as_completed(futures):
-                path, meta = futures[future]
-                try:
-                    summary = future.result()
-                except Exception as exc:
-                    errors.append(f"summarize: {path} -> {exc}")
-                    continue
-                summary_path = write_summary(summaries_dir, path, summary)
-                meta["summary_path"] = str(summary_path)
-                save_cb()
-    else:
-        for path, meta in to_summarize:
+    if not to_summarize:
+        return
+    sem = asyncio.Semaphore(max(1, threads))
+
+    async def run_one(path: str, meta: Dict) -> None:
+        async with sem:
             try:
-                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
+                summary = await summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
                 summary_path = write_summary(summaries_dir, path, summary)
                 meta["summary_path"] = str(summary_path)
                 save_cb()
             except Exception as exc:
                 errors.append(f"summarize: {path} -> {exc}")
 
+    await asyncio.gather(*(run_one(path, meta) for path, meta in to_summarize))
 
-def summarize_changed_modules(
+
+async def summarize_changed_modules(
     to_summarize: List[Tuple[str, Dict]],
     module_summaries_dir: Path,
     llm,
@@ -66,44 +47,24 @@ def summarize_changed_modules(
         for path, meta in to_summarize
         if meta.get("type") == "code" and not is_test_path(path)
     ]
-    if threads > 1 and module_candidates:
-        with ThreadPoolExecutor(max_workers=threads) as executor:
-            futures = {}
-            for path, meta in module_candidates:
-                futures[
-                    executor.submit(
-                        summarize_file,
-                        meta["content"],
-                        meta["type"],
-                        meta["domains"],
-                        llm,
-                        llm_cache,
-                        llm.model,
-                        True,
-                    )
-                ] = (path, meta)
-            for future in as_completed(futures):
-                path, meta = futures[future]
-                try:
-                    summary = future.result()
-                except Exception as exc:
-                    errors.append(f"summarize module: {path} -> {exc}")
-                    continue
-                summary_path = write_summary(module_summaries_dir, path, summary)
-                meta["module_summary_path"] = str(summary_path)
-                save_cb()
-    else:
-        for path, meta in module_candidates:
+    if not module_candidates:
+        return
+    sem = asyncio.Semaphore(max(1, threads))
+
+    async def run_one(path: str, meta: Dict) -> None:
+        async with sem:
             try:
-                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
+                summary = await summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
                 summary_path = write_summary(module_summaries_dir, path, summary)
                 meta["module_summary_path"] = str(summary_path)
                 save_cb()
             except Exception as exc:
                 errors.append(f"summarize module: {path} -> {exc}")
 
+    await asyncio.gather(*(run_one(path, meta) for path, meta in module_candidates))
 
-def summarize_changed_configs(
+
+async def summarize_changed_configs(
     to_summarize: List[Tuple[str, Dict]],
     config_summaries_dir: Path,
     llm,
@@ -117,44 +78,24 @@ def summarize_changed_configs(
         for path, meta in to_summarize
         if meta.get("type") == "config"
     ]
-    if threads > 1 and config_candidates:
-        with ThreadPoolExecutor(max_workers=threads) as executor:
-            futures = {}
-            for path, meta in config_candidates:
-                futures[
-                    executor.submit(
-                        summarize_file,
-                        meta["content"],
-                        meta["type"],
-                        meta["domains"],
-                        llm,
-                        llm_cache,
-                        llm.model,
-                        True,
-                    )
-                ] = (path, meta)
-            for future in as_completed(futures):
-                path, meta = futures[future]
-                try:
-                    summary = future.result()
-                except Exception as exc:
-                    errors.append(f"summarize config: {path} -> {exc}")
-                    continue
-                summary_path = write_summary(config_summaries_dir, path, summary)
-                meta["config_summary_path"] = str(summary_path)
-                save_cb()
-    else:
-        for path, meta in config_candidates:
+    if not config_candidates:
+        return
+    sem = asyncio.Semaphore(max(1, threads))
+
+    async def run_one(path: str, meta: Dict) -> None:
+        async with sem:
             try:
-                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
+                summary = await summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
                 summary_path = write_summary(config_summaries_dir, path, summary)
                 meta["config_summary_path"] = str(summary_path)
                 save_cb()
             except Exception as exc:
                 errors.append(f"summarize config: {path} -> {exc}")
 
+    await asyncio.gather(*(run_one(path, meta) for path, meta in config_candidates))
 
-def summarize_missing(
+
+async def summarize_missing(
     missing_summaries: List[Tuple[str, Dict]],
     summaries_dir: Path,
     llm,
@@ -163,43 +104,35 @@ def summarize_missing(
     save_cb,
     errors: List[str],
 ) -> None:
-    if threads > 1 and missing_summaries:
-        with ThreadPoolExecutor(max_workers=threads) as executor:
-            futures = {}
-            for path, meta in missing_summaries:
-                futures[
-                    executor.submit(
-                        summarize_file,
-                        meta["content"],
-                        meta["type"],
-                        meta["domains"],
-                        llm,
-                        llm_cache,
-                        llm.model,
-                    )
-                ] = (path, meta)
-            for future in as_completed(futures):
-                path, meta = futures[future]
-                try:
-                    summary = future.result()
-                except Exception as exc:
-                    errors.append(f"summarize: {path} -> {exc}")
-                    continue
-                summary_path = write_summary(summaries_dir, path, summary)
-                meta["summary_path"] = str(summary_path)
-                save_cb()
-    else:
-        for path, meta in missing_summaries:
+    total = len(missing_summaries)
+    done = 0
+    start = time.time()
+    log_every = 5
+    if not missing_summaries:
+        return
+    sem = asyncio.Semaphore(max(1, threads))
+    lock = asyncio.Lock()
+
+    async def run_one(path: str, meta: Dict) -> None:
+        nonlocal done
+        async with sem:
             try:
-                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
+                summary = await summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
                 summary_path = write_summary(summaries_dir, path, summary)
                 meta["summary_path"] = str(summary_path)
                 save_cb()
+                async with lock:
+                    done += 1
+                    if done % log_every == 0 or done == total:
+                        elapsed = int(time.time() - start)
+                        print(f"[ai-docs] summarize progress: {done}/{total} ({elapsed}s)")
             except Exception as exc:
                 errors.append(f"summarize: {path} -> {exc}")
 
+    await asyncio.gather(*(run_one(path, meta) for path, meta in missing_summaries))
 
-def summarize_missing_modules(
+
+async def summarize_missing_modules(
     missing_module_summaries: List[Tuple[str, Dict]],
     module_summaries_dir: Path,
     llm,
@@ -208,44 +141,35 @@ def summarize_missing_modules(
     save_cb,
     errors: List[str],
 ) -> None:
-    if threads > 1 and missing_module_summaries:
-        with ThreadPoolExecutor(max_workers=threads) as executor:
-            futures = {}
-            for path, meta in missing_module_summaries:
-                futures[
-                    executor.submit(
-                        summarize_file,
-                        meta["content"],
-                        meta["type"],
-                        meta["domains"],
-                        llm,
-                        llm_cache,
-                        llm.model,
-                        True,
-                    )
-                ] = (path, meta)
-            for future in as_completed(futures):
-                path, meta = futures[future]
-                try:
-                    summary = future.result()
-                except Exception as exc:
-                    errors.append(f"summarize module: {path} -> {exc}")
-                    continue
-                summary_path = write_summary(module_summaries_dir, path, summary)
-                meta["module_summary_path"] = str(summary_path)
-                save_cb()
-    else:
-        for path, meta in missing_module_summaries:
+    total = len(missing_module_summaries)
+    done = 0
+    start = time.time()
+    log_every = 5
+    if not missing_module_summaries:
+        return
+    sem = asyncio.Semaphore(max(1, threads))
+    lock = asyncio.Lock()
+
+    async def run_one(path: str, meta: Dict) -> None:
+        nonlocal done
+        async with sem:
             try:
-                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
+                summary = await summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
                 summary_path = write_summary(module_summaries_dir, path, summary)
                 meta["module_summary_path"] = str(summary_path)
                 save_cb()
+                async with lock:
+                    done += 1
+                    if done % log_every == 0 or done == total:
+                        elapsed = int(time.time() - start)
+                        print(f"[ai-docs] summarize modules progress: {done}/{total} ({elapsed}s)")
             except Exception as exc:
                 errors.append(f"summarize module: {path} -> {exc}")
 
+    await asyncio.gather(*(run_one(path, meta) for path, meta in missing_module_summaries))
 
-def summarize_missing_configs(
+
+async def summarize_missing_configs(
     missing_config_summaries: List[Tuple[str, Dict]],
     config_summaries_dir: Path,
     llm,
@@ -254,38 +178,29 @@ def summarize_missing_configs(
     save_cb,
     errors: List[str],
 ) -> None:
-    if threads > 1 and missing_config_summaries:
-        with ThreadPoolExecutor(max_workers=threads) as executor:
-            futures = {}
-            for path, meta in missing_config_summaries:
-                futures[
-                    executor.submit(
-                        summarize_file,
-                        meta["content"],
-                        meta["type"],
-                        meta["domains"],
-                        llm,
-                        llm_cache,
-                        llm.model,
-                        True,
-                    )
-                ] = (path, meta)
-            for future in as_completed(futures):
-                path, meta = futures[future]
-                try:
-                    summary = future.result()
-                except Exception as exc:
-                    errors.append(f"summarize config: {path} -> {exc}")
-                    continue
-                summary_path = write_summary(config_summaries_dir, path, summary)
-                meta["config_summary_path"] = str(summary_path)
-                save_cb()
-    else:
-        for path, meta in missing_config_summaries:
+    total = len(missing_config_summaries)
+    done = 0
+    start = time.time()
+    log_every = 5
+    if not missing_config_summaries:
+        return
+    sem = asyncio.Semaphore(max(1, threads))
+    lock = asyncio.Lock()
+
+    async def run_one(path: str, meta: Dict) -> None:
+        nonlocal done
+        async with sem:
             try:
-                summary = summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
+                summary = await summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
                 summary_path = write_summary(config_summaries_dir, path, summary)
                 meta["config_summary_path"] = str(summary_path)
                 save_cb()
+                async with lock:
+                    done += 1
+                    if done % log_every == 0 or done == total:
+                        elapsed = int(time.time() - start)
+                        print(f"[ai-docs] summarize configs progress: {done}/{total} ({elapsed}s)")
             except Exception as exc:
                 errors.append(f"summarize config: {path} -> {exc}")
+
+    await asyncio.gather(*(run_one(path, meta) for path, meta in missing_config_summaries))

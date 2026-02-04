@@ -1,3 +1,4 @@
+import asyncio
 import os
 from pathlib import Path
 from typing import Dict, List
@@ -25,7 +26,7 @@ from .generator_summarize import (
 )
 
 
-def generate_docs(
+async def _generate_docs_async(
     files: List[Dict],
     output_root: Path,
     cache_dir: Path,
@@ -58,9 +59,9 @@ def generate_docs(
     to_summarize = list({**added, **modified}.items())
     if to_summarize:
         print(f"[ai-docs] summarize: {len(to_summarize)} changed files (threads={threads})")
-    summarize_changed_files(to_summarize, summaries_dir, llm, llm_cache, threads, save_cb, errors)
-    summarize_changed_modules(to_summarize, module_summaries_dir, llm, llm_cache, threads, save_cb, errors)
-    summarize_changed_configs(to_summarize, config_summaries_dir, llm, llm_cache, threads, save_cb, errors)
+    await summarize_changed_files(to_summarize, summaries_dir, llm, llm_cache, threads, save_cb, errors)
+    await summarize_changed_modules(to_summarize, module_summaries_dir, llm, llm_cache, threads, save_cb, errors)
+    await summarize_changed_configs(to_summarize, config_summaries_dir, llm, llm_cache, threads, save_cb, errors)
     if to_summarize:
         save_cb()
 
@@ -69,13 +70,13 @@ def generate_docs(
     )
     if missing_summaries:
         print(f"[ai-docs] summarize: {len(missing_summaries)} missing summaries")
-    summarize_missing(missing_summaries, summaries_dir, llm, llm_cache, threads, save_cb, errors)
+    await summarize_missing(missing_summaries, summaries_dir, llm, llm_cache, threads, save_cb, errors)
     if missing_module_summaries:
         print(f"[ai-docs] summarize modules: {len(missing_module_summaries)} missing module summaries")
-    summarize_missing_modules(missing_module_summaries, module_summaries_dir, llm, llm_cache, threads, save_cb, errors)
+    await summarize_missing_modules(missing_module_summaries, module_summaries_dir, llm, llm_cache, threads, save_cb, errors)
     if missing_config_summaries:
         print(f"[ai-docs] summarize configs: {len(missing_config_summaries)} missing config summaries")
-    summarize_missing_configs(missing_config_summaries, config_summaries_dir, llm, llm_cache, threads, save_cb, errors)
+    await summarize_missing_configs(missing_config_summaries, config_summaries_dir, llm, llm_cache, threads, save_cb, errors)
     if missing_summaries or missing_module_summaries or missing_config_summaries:
         save_cb()
 
@@ -96,7 +97,7 @@ def generate_docs(
         configs_written,
         regenerated_sections,
         overview_context,
-    ) = build_sections(
+    ) = await build_sections(
         file_map,
         added,
         modified,
@@ -115,7 +116,7 @@ def generate_docs(
 
     if write_readme:
         print("[ai-docs] write README")
-        readme = generate_readme(llm, llm_cache, output_root.name, overview_context, language)
+        readme = await generate_readme(llm, llm_cache, output_root.name, overview_context, language)
         write_readme(output_root, readme, force)
 
     build_mkdocs(
@@ -134,6 +135,36 @@ def generate_docs(
         print("[ai-docs] errors summary:")
         for item in errors:
             print(f"[ai-docs] error: {item}")
+
+
+def generate_docs(
+    files: List[Dict],
+    output_root: Path,
+    cache_dir: Path,
+    llm,
+    language: str,
+    write_readme: bool,
+    write_mkdocs: bool,
+    use_cache: bool = True,
+    threads: int = 1,
+    local_site: bool = False,
+    force: bool = False,
+) -> None:
+    return asyncio.run(
+        _generate_docs_async(
+            files=files,
+            output_root=output_root,
+            cache_dir=cache_dir,
+            llm=llm,
+            language=language,
+            write_readme=write_readme,
+            write_mkdocs=write_mkdocs,
+            use_cache=use_cache,
+            threads=threads,
+            local_site=local_site,
+            force=force,
+        )
+    )
 
 
 __all__ = [

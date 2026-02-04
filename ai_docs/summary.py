@@ -119,7 +119,7 @@ def _needs_doxygen_fix(text: str) -> bool:
     return any(marker in lowered for marker in noisy_markers)
 
 
-def _normalize_module_summary(
+async def _normalize_module_summary(
     summary: str, llm_client, llm_cache: Dict[str, str]
 ) -> str:
     if not _needs_doxygen_fix(summary):
@@ -128,17 +128,17 @@ def _normalize_module_summary(
         {"role": "system", "content": MODULE_SUMMARY_REFORMAT_PROMPT},
         {"role": "user", "content": summary},
     ]
-    return llm_client.chat(messages, cache=llm_cache).strip()
+    return (await llm_client.chat(messages, cache=llm_cache)).strip()
 
 
-def _normalize_config_summary(summary: str, llm_client, llm_cache: Dict[str, str]) -> str:
+async def _normalize_config_summary(summary: str, llm_client, llm_cache: Dict[str, str]) -> str:
     if not _needs_doxygen_fix(summary):
         return _format_config_blocks(summary)
     messages = [
         {"role": "system", "content": CONFIG_SUMMARY_REFORMAT_PROMPT},
         {"role": "user", "content": summary},
     ]
-    return _format_config_blocks(llm_client.chat(messages, cache=llm_cache).strip())
+    return _format_config_blocks((await llm_client.chat(messages, cache=llm_cache)).strip())
 
 
 def _format_config_blocks(text: str) -> str:
@@ -174,7 +174,7 @@ def _strip_fenced_markdown(text: str) -> str:
     return text
 
 
-def summarize_file(
+async def summarize_file(
     content: str,
     file_type: str,
     domains: List[str],
@@ -196,14 +196,14 @@ def summarize_file(
             {"role": "system", "content": prompt},
             {"role": "user", "content": chunk},
         ]
-        summaries.append(_strip_fenced_markdown(llm_client.chat(messages, cache=llm_cache).strip()))
+        summaries.append(_strip_fenced_markdown((await llm_client.chat(messages, cache=llm_cache)).strip()))
 
     if len(summaries) == 1:
         result = summaries[0]
         if detailed and file_type == "config":
-            return _normalize_config_summary(result, llm_client, llm_cache)
+            return await _normalize_config_summary(result, llm_client, llm_cache)
         if detailed:
-            return _normalize_module_summary(result, llm_client, llm_cache)
+            return await _normalize_module_summary(result, llm_client, llm_cache)
         return result
 
     combined = "\n\n".join(summaries)
@@ -222,11 +222,11 @@ def summarize_file(
             {"role": "system", "content": "Собери единое краткое резюме для документации на основе частей ниже. Ответ в Markdown."},
             {"role": "user", "content": combined},
         ]
-    result = _strip_fenced_markdown(llm_client.chat(messages, cache=llm_cache).strip())
+    result = _strip_fenced_markdown((await llm_client.chat(messages, cache=llm_cache)).strip())
     if detailed and file_type == "config":
-        return _normalize_config_summary(result, llm_client, llm_cache)
+        return await _normalize_config_summary(result, llm_client, llm_cache)
     if detailed:
-        return _normalize_module_summary(result, llm_client, llm_cache)
+        return await _normalize_module_summary(result, llm_client, llm_cache)
     return result
 
 

@@ -1,9 +1,9 @@
+import asyncio
 import json
 import os
-import threading
 from typing import Dict, List, Optional
 
-import requests
+from openai import AsyncOpenAI
 
 from .utils import sha256_text
 
@@ -24,12 +24,16 @@ class LLMClient:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.context_limit = context_limit
-        self._cache_lock = threading.Lock()
+        self._cache_lock = asyncio.Lock()
+        client_kwargs = {"api_key": self.api_key, "timeout": 1200.0}
+        if self.base_url:
+            client_kwargs["base_url"] = self.base_url
+        self._client = AsyncOpenAI(**client_kwargs)
 
     def _cache_key(self, payload: Dict) -> str:
         return sha256_text(json.dumps(payload, sort_keys=True))
 
-    def chat(self, messages: List[Dict[str, str]], cache: Optional[Dict[str, str]] = None) -> str:
+    async def chat(self, messages: List[Dict[str, str]], cache: Optional[Dict[str, str]] = None) -> str:
         payload = {
             "model": self.model,
             "messages": messages,
@@ -38,27 +42,17 @@ class LLMClient:
         }
         key = self._cache_key(payload)
         if cache is not None:
-            with self._cache_lock:
+            async with self._cache_lock:
                 if key in cache:
                     return cache[key]
 
-        if self.base_url.endswith("/v1"):
-            url = f"{self.base_url}/chat/completions"
-        else:
-            url = f"{self.base_url}/v1/chat/completions"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}",
-        }
-        response = requests.post(url, headers=headers, json=payload, timeout=(120, 480))
-        response.raise_for_status()
-        data = response.json()
         try:
-            content = data["choices"][0]["message"]["content"]
+            response = await self._client.chat.completions.create(**payload)
+            content = response.choices[0].message.content
         except Exception as exc:
-            raise RuntimeError(f"LLM response missing content: {data}") from exc
+            raise RuntimeError(f"LLM request failed: {exc}") from exc
         if cache is not None:
-            with self._cache_lock:
+            async with self._cache_lock:
                 cache[key] = content
         return content
 
@@ -67,7 +61,7 @@ def from_env() -> LLMClient:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY is not set")
-    base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    base_url = os.getenv("OPENAI_BASE_URL", "").strip()
     model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     temperature = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
     max_tokens = int(os.getenv("OPENAI_MAX_TOKENS", "1200"))

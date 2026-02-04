@@ -40,7 +40,7 @@ pip install -e .
 2) Настройка переменных окружения (пример — `.env.example`):
 ```env
 OPENAI_API_KEY=your_api_key_here
-OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_BASE_URL=
 OPENAI_MODEL=gpt-4o-mini
 OPENAI_MAX_TOKENS=1200
 OPENAI_CONTEXT_TOKENS=8192
@@ -52,7 +52,7 @@ AI_DOCS_LOCAL_SITE=false
 Если инструмент установлен как пакет, можно задать переменные окружения так:
 ```bash
 export OPENAI_API_KEY="your_api_key_here"
-export OPENAI_BASE_URL="https://api.openai.com/v1"
+export OPENAI_BASE_URL=""
 export OPENAI_MODEL="gpt-4o-mini"
 export OPENAI_MAX_TOKENS="1200"
 export OPENAI_CONTEXT_TOKENS="8192"
@@ -83,7 +83,7 @@ ai-docs --source .
 python -m venv .venv
 .\\.venv\\Scripts\\Activate.ps1
 $env:OPENAI_API_KEY="your_api_key_here"
-$env:OPENAI_BASE_URL="https://api.openai.com/v1"
+$env:OPENAI_BASE_URL=""
 $env:OPENAI_MODEL="gpt-4o-mini"
 $env:OPENAI_MAX_TOKENS="1200"
 $env:OPENAI_CONTEXT_TOKENS="8192"
@@ -205,6 +205,8 @@ python -m pytest
 Поведение по умолчанию: если не указаны `--readme` и `--mkdocs`, генерируются оба артефакта.
 Разделы в `.ai-docs/*.md` не перегенерируются, если файл уже существует, кроме указанных в `--regen`.
 При запуске без параметров для разделов выводится подсказка с примером `--regen`.
+Если модулей больше 100, `modules/index.md` автоматически разбивается на страницы по 100 элементов с навигацией «←/→».
+Если конфигов больше 100, `configs/index.md` также разбивается на страницы по 100 элементов с навигацией «←/→».
 
 ## MkDocs
 Сборка выполняется автоматически в конце генерации:

@@ -38,6 +38,10 @@ def write_docs(
             keep_files.add(docs_dir / f"{key}.md")
         for domain in DOMAIN_TITLES.keys():
             keep_files.add(docs_dir / "configs" / f"{domain}.md")
+        for path in (docs_dir / "modules").glob("page-*.md"):
+            keep_files.add(path)
+        for path in (docs_dir / "configs").glob("page-*.md"):
+            keep_files.add(path)
         keep_dirs = {docs_dir / "plans"}
         for path in docs_dir.rglob("*"):
             if path.is_dir():

@@ -49,7 +49,13 @@ fi
 
 LOG_FILE="$LOG_DIR/ai-docs-$(date +%Y%m%d-%H%M%S).log"
 
-nohup "$PYTHON_BIN" -m ai_docs --source "$PROJECT_PATH" "$@" >"$LOG_FILE" 2>&1 &
+if command -v setsid >/dev/null 2>&1; then
+  PYTHONUNBUFFERED=1 setsid "$PYTHON_BIN" -m ai_docs --source "$PROJECT_PATH" "$@" >"$LOG_FILE" 2>&1 &
+else
+  PYTHONUNBUFFERED=1 nohup "$PYTHON_BIN" -m ai_docs --source "$PROJECT_PATH" "$@" >"$LOG_FILE" 2>&1 &
+fi
+
+disown || true
 echo "$! $LOG_FILE" >"$PID_FILE"
 
 echo "Started ai-docs in background: PID=$(cat "$PID_FILE")"

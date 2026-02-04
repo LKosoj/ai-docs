@@ -23,10 +23,22 @@ class CacheManager:
     def load_llm_cache(self) -> Dict[str, str]:
         if not self.llm_cache_path.exists():
             return {}
-        return json.loads(self.llm_cache_path.read_text(encoding="utf-8", errors="ignore"))
+        raw = self.llm_cache_path.read_text(encoding="utf-8", errors="ignore")
+        if not raw.strip():
+            return {}
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            bad_path = self.llm_cache_path.with_suffix(".json.bad")
+            try:
+                bad_path.write_text(raw, encoding="utf-8")
+            except OSError:
+                pass
+            return {}
 
     def save_llm_cache(self, data: Dict[str, str]) -> None:
-        self.llm_cache_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        snapshot = dict(data)
+        self.llm_cache_path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
 
     def diff_files(self, current_files: Dict[str, Dict]) -> Tuple[Dict, Dict, Dict, Dict]:
         prev = self.load_index().get("files", {})
@@ -49,4 +61,3 @@ class CacheManager:
                 deleted[path] = meta
 
         return added, modified, deleted, unchanged
-

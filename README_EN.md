@@ -40,7 +40,7 @@ pip install -e .
 2) Configure environment variables (example — `.env.example`):
 ```env
 OPENAI_API_KEY=your_api_key_here
-OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_BASE_URL=
 OPENAI_MODEL=gpt-4o-mini
 OPENAI_MAX_TOKENS=1200
 OPENAI_CONTEXT_TOKENS=8192
@@ -52,7 +52,7 @@ AI_DOCS_LOCAL_SITE=false
 If the tool is installed as a package, you can set environment variables like this:
 ```bash
 export OPENAI_API_KEY="your_api_key_here"
-export OPENAI_BASE_URL="https://api.openai.com/v1"
+export OPENAI_BASE_URL=""
 export OPENAI_MODEL="gpt-4o-mini"
 export OPENAI_MAX_TOKENS="1200"
 export OPENAI_CONTEXT_TOKENS="8192"
@@ -83,7 +83,7 @@ Windows note:
 python -m venv .venv
 .\\.venv\\Scripts\\Activate.ps1
 $env:OPENAI_API_KEY="your_api_key_here"
-$env:OPENAI_BASE_URL="https://api.openai.com/v1"
+$env:OPENAI_BASE_URL=""
 $env:OPENAI_MODEL="gpt-4o-mini"
 $env:OPENAI_MAX_TOKENS="1200"
 $env:OPENAI_CONTEXT_TOKENS="8192"
@@ -205,6 +205,8 @@ python -m pytest
 Default behavior: if neither `--readme` nor `--mkdocs` is specified, both are generated.
 Docs sections in `.ai-docs/*.md` are not regenerated if the file already exists, unless listed in `--regen`.
 When running without parameters for sections, a hint is printed with a `--regen` example.
+If there are more than 100 modules, `modules/index.md` is paginated into pages of 100 items with ←/→ navigation.
+If there are more than 100 configs, `configs/index.md` is paginated into pages of 100 items with ←/→ navigation.
 
 ## MkDocs
 Build runs automatically at the end of generation:
