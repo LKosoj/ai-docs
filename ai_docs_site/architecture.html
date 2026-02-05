@@ -185,39 +185,39 @@
 <div class="col-md-9" role="main">
 <h1 id="_1">Архитектура</h1>
 <div class="mermaid">graph TD
-    A[Источник кода] -->|Путь или URL| B[Модуль сканирования]
-    B --> C{Тип источника?}
-    C -->|Локальный| D[Сканирование директории]
-    C -->|Git-репозиторий| E[Клонирование в tmp]
-    D --> F[Фильтрация по .gitignore, .build_ignore, .ai-docs.yaml]
-    E --> F
-    F --> G[Сбор метаданных: тип, домен, содержимое]
-    G --> H[ScanResult]
-    H --> I[CacheManager]
-    I --> J{Кэш существует?}
-    J -->|Да| K[diff_files: added/modified/deleted]
-    J -->|Нет| L[Все файлы — новые]
-    K --> M[Определение изменений]
-    L --> M
-    M --> N[Асинхронная обработка через summarize_*]
-    N --> O[LLMClient с кэшированием]
-    O --> P[Генерация сводок: файлы, модули, конфиги]
-    P --> Q[Запись в .ai-docs/summaries]
-    Q --> R[Генерация документации]
-    R --> S[Создание overview.md, index.md, changes.md]
-    R --> T[Построение навигации: build_docs_index]
-    R --> U[Генерация README.md]
-    R --> V[Формирование mkdocs.yml]
-    S --> W[Запись docs_files]
-    T --> W
-    U --> W
-    V --> W
-    W --> X[build_mkdocs]
-    X --> Y[MkDocs + mermaid2]
-    Y --> Z[ai_docs_site/]
-    Q --> AA[Сохранение кэша: save_cache_snapshot]
-    M --> AB[format_changes_md]
-    AB --> AC[Запись docs/changes.md]
+    A[Источник кода] --&gt;|Путь или URL| B[Модуль сканирования]
+    B --&gt; C{Тип источника?}
+    C --&gt;|Локальный| D[Сканирование директории]
+    C --&gt;|Git-репозиторий| E[Клонирование в tmp]
+    D --&gt; F[Фильтрация по .gitignore, .build_ignore, .ai-docs.yaml]
+    E --&gt; F
+    F --&gt; G[Сбор метаданных: тип, домен, содержимое]
+    G --&gt; H[ScanResult]
+    H --&gt; I[CacheManager]
+    I --&gt; J{Кэш существует?}
+    J --&gt;|Да| K[diff_files: added/modified/deleted]
+    J --&gt;|Нет| L[Все файлы — новые]
+    K --&gt; M[Определение изменений]
+    L --&gt; M
+    M --&gt; N[Асинхронная обработка через summarize_*]
+    N --&gt; O[LLMClient с кэшированием]
+    O --&gt; P[Генерация сводок: файлы, модули, конфиги]
+    P --&gt; Q[Запись в .ai-docs/summaries]
+    Q --&gt; R[Генерация документации]
+    R --&gt; S[Создание overview.md, index.md, changes.md]
+    R --&gt; T[Построение навигации: build_docs_index]
+    R --&gt; U[Генерация README.md]
+    R --&gt; V[Формирование mkdocs.yml]
+    S --&gt; W[Запись docs_files]
+    T --&gt; W
+    U --&gt; W
+    V --&gt; W
+    W --&gt; X[build_mkdocs]
+    X --&gt; Y[MkDocs + mermaid2]
+    Y --&gt; Z[ai_docs_site/]
+    Q --&gt; AA[Сохранение кэша: save_cache_snapshot]
+    M --&gt; AB[format_changes_md]
+    AB --&gt; AC[Запись docs/changes.md]
 
     style A fill:#4C8BF5,stroke:#333
     style Z fill:#28a745,stroke:#333,color:#fff
@@ -332,7 +332,7 @@
 <ul>
 <li><strong>Инкрементальность</strong>: перегенерируются только изменённые/новые файлы.</li>
 <li><strong>Параллелизм</strong>: <code>AI_DOCS_THREADS</code> управляет числом одновременных LLM-запросов.</li>
-<li><strong>Безопасность</strong>: бинарные файлы не читаются, большие файлы (>200 КБ) пропускаются.</li>
+<li><strong>Безопасность</strong>: бинарные файлы не читаются, большие файлы (&gt;200 КБ) пропускаются.</li>
 <li><strong>Поддержка диаграмм</strong>: Mermaid.js внедряется в HTML через <code>_postprocess_mermaid_html</code>.</li>
 <li><strong>Очистка</strong>: удаление устаревших <code>.md</code> в <code>modules/</code>, <code>configs/</code> при реорганизации.</li>
 </ul>

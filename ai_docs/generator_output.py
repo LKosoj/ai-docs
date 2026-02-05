@@ -100,7 +100,9 @@ def build_mkdocs(
     (output_root / "mkdocs.yml").write_text(mkdocs_yaml, encoding="utf-8")
     import shutil
     import subprocess
+    import sys
 
+    cmd = [sys.executable, "-m", "mkdocs", "build", "-f", "mkdocs.yml"]
     venv_mkdocs = output_root / ".venv" / "bin" / "mkdocs"
     venv_python = output_root / ".venv" / "bin" / "python"
     if venv_mkdocs.exists():
@@ -109,9 +111,8 @@ def build_mkdocs(
         cmd = [str(venv_python), "-m", "mkdocs", "build", "-f", "mkdocs.yml"]
     else:
         mkdocs_bin = shutil.which("mkdocs")
-        if not mkdocs_bin:
-            raise RuntimeError("mkdocs is not installed or not on PATH")
-        cmd = [mkdocs_bin, "build", "-f", "mkdocs.yml"]
+        if mkdocs_bin:
+            cmd = [mkdocs_bin, "build", "-f", "mkdocs.yml"]
     subprocess.check_call(cmd, cwd=output_root)
     _postprocess_mermaid_html(output_root / "ai_docs_site")
 

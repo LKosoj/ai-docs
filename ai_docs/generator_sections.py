@@ -368,7 +368,8 @@ async def build_sections(
                 for page_idx, page_items in enumerate(pages, start=1):
                     nav_links = []
                     if page_idx > 1:
-                        nav_links.append(f"[← Предыдущая](page-{page_idx - 1}.md)")
+                        prev_name = "index.md" if page_idx == 2 else f"page-{page_idx - 1}.md"
+                        nav_links.append(f"[← Предыдущая]({prev_name})")
                     if page_idx < total_pages:
                         nav_links.append(f"[Следующая →](page-{page_idx + 1}.md)")
                     nav_md = " · ".join(nav_links)
