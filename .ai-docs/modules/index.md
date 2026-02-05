@@ -1,286 +1,134 @@
 # Модули
 
-Модули системы отвечают за автоматизированную генерацию, обновление и управление технической документацией на основе анализа исходного кода, конфигураций и взаимодействия с LLM. Архитектура модульная, обеспечивает асинхронную обработку, кэширование, контроль параллелизма и устойчивость к ошибкам.
+Модули системы отвечают за сканирование кодовой базы, генерацию аннотаций, управление кэшем, построение документации и её финальную сборку. Все операции выполняются асинхронно с поддержкой параллелизма и кэширования для повышения производительности.
+
+## Сканирование файлов
+
+Модуль `scan` отвечает за рекурсивный анализ файловой системы или удалённого Git-репозитория. Поддерживает фильтрацию по шаблонам включения/исключения, игнорирование бинарных и крупных файлов, а также загрузку конфигурации из `.ai-docs.yaml`.
+
+### Ключевые функции
+
+- `scan_source(source: str, include: Set[str], exclude: Set[str], max_size: int) -> ScanResult` — основная точка входа для сканирования. Принимает путь или URL, возвращает `ScanResult`.
+- `_load_extension_config(root: Path) -> Dict` — загружает пользовательские настройки расширений и правил исключения.
+- `_should_include(rel_path: str, include, exclude, ignore_specs) -> bool` — проверяет, должен ли файл быть включён в результат.
+
+### Структуры данных
+
+```python
+class ScanResult:
+    root: Path
+    files: List[Dict]  # Каждый словарь содержит: path, content, type, domains, size
+    source: str
+    repo_name: str
+```
 
 ## Генерация аннотаций
 
-Модуль предоставляет асинхронные функции для генерации аннотаций к файлам, модулям и конфигурациям. Поддерживает семафоры для ограничения одновременных запросов к LLM, кэширование, прогресс-логирование и накопление ошибок без прерывания выполнения.
-
-### Ключевые структуры данных
-- `Tuple[str, Dict]` — Пара: путь к файлу и его метаданные.
-- `List[str]` — Список для накопления сообщений об ошибках.
-
-### Функции
-
-#### `summarize_changed_files`
-```python
-async def summarize_changed_files(
-    to_summarize: List[Tuple[str, Dict]],
-    summaries_dir: Path,
-    llm,
-    llm_cache: Dict[str, str],
-    threads: int,
-    save_cb,
-    errors: List[str]
-) -> None
-```
-Генерирует аннотации для изменённых файлов и сохраняет в указанный каталог.  
-**Аргументы:**
-- `to_summarize` — Список пар (путь, метаданные) для аннотирования.
-- `summaries_dir` — Каталог сохранения аннотаций.
-- `llm` — Языковая модель.
-- `llm_cache` — Кэш ответов LLM.
-- `threads` — Макс. число одновременных запросов.
-- `save_cb` — Коллбэк после успешной обработки.
-- `errors` — Список для ошибок.  
-**Исключения:** Ошибки добавляются в `errors`, выполнение продолжается.
-
-#### `summarize_changed_modules`
-Аналогично `summarize_changed_files`, но для модулей (код без тестов). Сохраняет в `module_summaries_dir`.
-
-#### `summarize_changed_configs`
-Аналогично, но для конфигурационных файлов. Сохраняет в `config_summaries_dir`.
-
-#### `summarize_missing`, `summarize_missing_modules`, `summarize_missing_configs`
-Асинхронно восстанавливают отсутствующие аннотации для файлов, модулей и конфигов соответственно. Отличаются только входными списками и каталогами сохранения. Все отображают прогресс обработки.
-
----
-
-## Сканирование файловой системы
-
-Модуль отвечает за сканирование локальных директорий или Git-репозиториев с фильтрацией по расширениям, размеру и правилам игнорирования (`.gitignore`, `.build_ignore`).
-
-### Ключевая структура
-#### `ScanResult`
-Результат сканирования.
-- `root`: `Path` — Корневой путь.
-- `files`: `List[Dict]` — Список файлов с метаданными (путь, тип, содержимое, домены).
-- `source`: `str` — Источник (путь или URL).
-- `repo_name`: `str` — Имя репозитория.
+Модуль предоставляет асинхронные функции для параллельной генерации сводок по файлам. Поддерживается обработка разных типов: код, конфигурации, модули.
 
 ### Основные функции
 
-#### `scan_source`
-```python
-def scan_source(
-    source: str,
-    include: Optional[Set[str]] = None,
-    exclude: Optional[Set[str]] = None,
-    max_size: int = 200_000
-) -> ScanResult
-```
-Сканирует локальную директорию или Git-репозиторий.  
-**Аргументы:**
-- `source` — Путь или URL.
-- `include` — Паттерны включения (glob).
-- `exclude` — Паттерны исключения.
-- `max_size` — Макс. размер файла в байтах.  
-**Возвращает:** `ScanResult`.  
-**Исключения:** `FileNotFoundError`, если путь не существует.
+- `summarize_changed_files(...)`, `summarize_changed_modules(...)`, `summarize_changed_configs(...)` — генерируют аннотации для изменённых файлов.
+- `summarize_missing(...)`, `summarize_missing_modules(...)`, `summarize_missing_configs(...)` — восстанавливают отсутствующие сводки.
+- `run_one(path: str, meta: dict)` — обрабатывает один конфигурационный файл.
 
-#### Вспомогательные функции
-- `_load_extension_config` — Загружает `.ai-docs.yaml` с настройками расширений.
-- `_build_default_include_patterns` — Формирует glob-паттерны по расширениям.
-- `_load_ignore_specs` — Загружает правила из `.gitignore` и `.build_ignore`.
-- `_should_include` — Проверяет, должен ли файл быть включён.
-- `_scan_directory` — Рекурсивно сканирует директорию.
-- `_clone_repo` — Клонирует Git-репозиторий во временную папку.
+### Аргументы
 
----
-
-## Управление документацией
-
-Модуль координирует запись файлов документации, генерацию `mkdocs.yml`, интеграцию с Mermaid.js и постобработку HTML.
-
-### Ключевые структуры
-- `docs_files`: `Dict[str, str]` — Путь → содержимое.
-- `file_map`: `Dict[str, Dict]` — Карта исходных файлов.
-- `module_pages`, `config_pages`: `Dict[str, str]` — Пути к страницам документации.
-- `configs_written`: `Dict[str, str]` — Записанные конфиги для `mkdocs.yml`.
-
-### Функции
-
-#### `write_docs`
-```python
-def write_docs(
-    output_root: Path,
-    docs_dir: Path,
-    docs_files: Dict[str, str],
-    file_map: Dict[str, Dict],
-    module_pages: Dict[str, str],
-    config_pages: Dict[str, str],
-    has_changes: bool
-) -> None
-```
-Записывает документацию, обновляет индекс, добавляет ассеты, очищает устаревшие файлы.
-
-#### `write_readme`
-```python
-def write_readme(output_root: Path, readme: str, force: bool) -> None
-```
-Записывает `README.md` в корень. Перезаписывает, если `force=True`.
-
-#### `build_mkdocs`
-```python
-def build_mkdocs(
-    output_root: Path,
-    module_nav_paths: List[str],
-    config_nav_paths: List[str],
-    configs_written: Dict[str, str],
-    write_mkdocs: bool,
-    local_site: bool
-) -> None
-```
-Генерирует `mkdocs.yml` и собирает сайт.  
-**Исключения:** `RuntimeError`, если `mkdocs` не установлен.
-
-#### `_postprocess_mermaid_html`
-Исправляет `&gt;` на `>` в Mermaid-блоках HTML для корректного отображения.
-
-#### `__serialize_index`
-Сериализует индекс документации в JSON с временной меткой и метаинформацией.
-
----
-
-## Генерация документации
-
-Модуль строит контекст, генерирует разделы (архитектура, тестирование, README) и управляет кэшированием.
-
-### Ключевые структуры
-- `file_map`: `Dict[str, Dict]` — Метаданные файлов.
-- `llm_cache`: `Dict[str, str]` — Кэш LLM.
-- `DOMAIN_TITLES`: `Dict[str, str]` — Сопоставление доменов и заголовков.
-
-### Функции
-
-#### `generate_section`
-```python
-async def generate_section(
-    llm,
-    llm_cache: Dict[str, str],
-    title: str,
-    context: str,
-    language: str
-) -> str
-```
-Генерирует текст раздела по контексту.
-
-#### `generate_readme`
-```python
-async def generate_readme(
-    llm,
-    llm_cache: Dict[str, str],
-    project_name: str,
-    overview_context: str,
-    language: str
-) -> str
-```
-Формирует `README.md` с обзором, архитектурой, быстрым стартом.
-
-#### `build_hierarchical_context`
-Строит иерархический контекст из резюме файлов с учётом лимита токенов.
-
-#### `build_sections`
-Основная функция генерации всех разделов. Возвращает контексты, тесты, зависимости, обобщённый контекст.
-
-#### Вспомогательные
-- `truncate_context` — Обрезает текст по лимиту токенов.
-- `summarize_chunk` — Сжимает фрагмент текста.
-- `render_testing_section` — Формирует раздел тестирования.
-- `format_changes_md` — Форматирует сводку изменений в Markdown.
-- `collect_dependencies` — Собирает зависимости из `requirements.txt`, `pyproject.toml`, `package.json`.
-- `render_project_configs_index` — Генерирует оглавление конфигов.
-
----
-
-## CLI и точка входа
-
-Модуль обрабатывает аргументы командной строки и запускает процесс генерации.
-
-### Функции
-
-#### `parse_args`
-Парсит аргументы:
-- `--source`, `--output`, `--language`, `--include`, `--exclude`, `--max-size`
-- `--readme`, `--mkdocs`, `--local-site`, `--force`
-- `--threads`, `--cache-dir`, `--no-cache`, `--regen`
-
-#### `resolve_output`
-Определяет путь вывода на основе `source`, `output` и `repo_name`.
-
-#### `main`
-Основная точка входа. Загружает конфиг, сканирует, инициализирует LLM, запускает генерацию.
-
----
-
-## LLM-клиент
-
-Асинхронный клиент для работы с OpenAI-совместимыми API.
-
-### Класс `LLMClient`
-**Поля:**
-- `api_key`, `base_url`, `model`, `temperature`, `max_tokens`, `context_limit`
-- `_cache_lock`, `_client` — Экземпляр `AsyncOpenAI`
-
-**Методы:**
-- `__init__` — Инициализация с параметрами модели.
-- `_estimate_input_tokens` — Оценка токенов во входных сообщениях.
-- `_compute_read_timeout` — Адаптивный таймаут по количеству токенов.
-- `_cache_key` — Генерация хеша запроса.
-- `chat` — Отправка запроса к LLM с кэшированием.
-- `from_env` — Создание клиента из переменных окружения.  
-**Исключения:** `RuntimeError`, если `OPENAI_API_KEY` не задан.
-
----
-
-## Нормализация и обработка текста
-
-Модуль нормализует сгенерированные описания под нужный формат (Doxygen, универсальный).
-
-### Функции
-
-#### `_normalize_module_summary`
-Приводит описание модуля к Doxygen-формату.
-
-#### `_normalize_config_summary`
-Нормализует описание конфига к универсальному стилю.
-
-#### `_format_config_blocks`
-Форматирует конфигурационные блоки, разделяя `<br>`.
-
-#### `_strip_fenced_markdown`
-Удаляет ```markdown из текста.
-
-#### `summarize_file`
-Генерирует резюме файла с учётом типа и доменов.
-
-#### `write_summary`
-Сохраняет резюме в файл Markdown в `summary_dir`.
-
----
+- `to_summarize`: `List[Tuple[str, Dict]]` — список файлов и их метаданных.
+- `summaries_dir`: `Path` — директория для сохранения аннотаций.
+- `llm`: модель для генерации текста.
+- `llm_cache`: `Dict[str, str]` — кэш ответов LLM.
+- `threads`: `int` — максимальное число параллельных задач.
+- `save_cb`: коллбэк после успешной обработки файла.
+- `errors`: `List[str]` — накопление ошибок.
 
 ## Управление кэшем
 
-Модуль обеспечивает загрузку, сохранение и синхронизацию кэша между запусками.
+Модуль `cache` обеспечивает сохранение и восстановление состояния между запусками. Использует `CacheManager` для работы с `index.json` и `llm_cache.json`.
 
 ### Класс `CacheManager`
-**Поля:**
-- `cache_dir`, `index_path`, `llm_cache_path`
 
-**Методы:**
-- `__init__` — Создаёт директории и файлы кэша.
-- `load_index`, `save_index` — Работа с `index.json`.
-- `load_llm_cache`, `save_llm_cache` — Работа с `llm_cache.json` (с резервным копированием при повреждении).
-- `diff_files` — Сравнивает текущие файлы с кэшем, возвращает `added`, `changed`, `deleted`, `unchanged`.
+```python
+class CacheManager:
+    def __init__(self, cache_dir: Path)
+    def load_index(self) -> Dict
+    def save_index(self, data: Dict) -> None
+    def load_llm_cache(self) -> Dict[str, str]
+    def save_llm_cache(self, data: Dict[str, str]) -> None
+    def diff_files(self, current_files: Dict[str, Dict]) -> Tuple[added, modified, deleted, unchanged]
+```
 
 ### Вспомогательные функции
-- `init_cache` — Инициализирует кэш и загружает данные.
-- `build_file_map` — Строит карту файлов с хешами.
-- `diff_files` — Вычисляет различия с кэшем.
-- `ensure_summary_dirs` — Создаёт директории для сводок.
-- `save_cache_snapshot` — Сохраняет снимок состояния.
-- `carry_unchanged_summaries` — Переносит сводки для неизменённых файлов.
-- `cleanup_orphan_summaries`, `cleanup_deleted_summaries` — Удаляют устаревшие сводки.
+
+- `init_cache(cache_dir, use_cache)`: инициализирует кэш, возвращает `(cache, llm_cache, index_data, prev_files)`.
+- `build_file_map(files)`: строит карту файлов с хэшами.
+- `diff_files(cache, file_map)`: сравнивает текущее и предыдущее состояние.
+- `cleanup_orphan_summaries(...)`: удаляет "затерянные" аннотации.
+
+## Генерация документации
+
+Модуль `generate` строит иерархический контекст, генерирует разделы и формирует финальный README. Поддерживает принудительную перегенерацию отдельных секций.
+
+### Ключевые функции
+
+- `build_sections(...) -> Tuple`: основная логика построения документации.
+- `generate_section(...) -> str`: генерирует один раздел.
+- `generate_readme(...) -> str`: формирует README.md.
+- `build_hierarchical_context(...) -> str`: рекурсивно сжимает контекст до лимита токенов.
+
+### Параметры
+
+- `file_map`: карта всех файлов проекта.
+- `llm`, `llm_cache`: модель и кэш.
+- `language`: язык документации.
+- `force_sections`: `Set[str]` — секции, требующие перегенерации.
+
+## Сборка документации
+
+Модуль `build` отвечает за запись файлов, генерацию `mkdocs.yml`, интеграцию с Mermaid.js и постобработку HTML.
+
+### Основные функции
+
+- `write_docs(...)`: записывает документацию, удаляет устаревшие файлы.
+- `build_mkdocs(...)`: генерирует конфигурацию MkDocs и собирает сайт.
+- `_postprocess_mermaid_html(...)`: исправляет escape-последовательности в диаграммах.
+- `write_readme(...)`: обновляет `README.md`.
+
+### Вспомогательные
+
+- `build_mkdocs_yaml(...) -> str`: генерирует YAML-конфиг.
+- `_build_tree_nav(...) -> List[Dict]`: строит иерархию навигации.
+- `__serialize_index(...) -> str`: сериализует индекс с метаданными.
+
+## LLM-клиент
+
+Модуль `llm_client` предоставляет асинхронный интерфейс для работы с OpenAI-совместимыми API.
+
+### Класс `LLMClient`
+
+```python
+class LLMClient:
+    def __init__(api_key, base_url, model, temperature, max_tokens, context_limit)
+    def chat(messages: List[Dict], cache: Dict) -> str
+    def _compute_read_timeout(input_tokens) -> float
+    def _cache_key(payload) -> str
+```
+
+- Поддерживает кэширование, адаптивный таймаут, повторные попытки.
+- `from_env() -> LLMClient`: создаёт клиент из переменных окружения.
+
+## Утилиты
+
+Модуль `utils` включает вспомогательные функции для работы с файлами, путями и данными.
+
+### Основные функции
+
+- `sha256_text(text) -> str`, `sha256_bytes(data) -> str`: хеширование.
+- `read_text_file(path) -> str`: безопасное чтение файла.
+- `ensure_dir(path)`: создание директории с родителями.
+- `is_binary_file(path) -> bool`: проверка на бинарный файл.
+- `to_posix(path) -> str`: преобразование пути в POSIX-формат.
+- `is_url(value) -> bool`: проверка строки на URL.
 
 ## Список модулей
 

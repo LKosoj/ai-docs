@@ -173,23 +173,23 @@
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="1"><a class="nav-link" href="#_1">Модули</a>
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Генерация аннотаций</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Сканирование файлов</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_5">Сканирование файловой системы</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_5">Генерация аннотаций</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_9">Управление документацией</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_8">Управление кэшем</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_12">Генерация документации</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_10">Генерация документации</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#cli">CLI и точка входа</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_13">Сборка документации</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -197,15 +197,11 @@
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_17">Нормализация и обработка текста</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_16">Утилиты</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_19">Управление кэшем</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_21">Список модулей</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_18">Список модулей</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -216,230 +212,114 @@
 </div></div>
 <div class="col-md-9" role="main">
 <h1 id="_1">Модули</h1>
-<p>Модули системы отвечают за автоматизированную генерацию, обновление и управление технической документацией на основе анализа исходного кода, конфигураций и взаимодействия с LLM. Архитектура модульная, обеспечивает асинхронную обработку, кэширование, контроль параллелизма и устойчивость к ошибкам.</p>
-<h2 id="_2">Генерация аннотаций</h2>
-<p>Модуль предоставляет асинхронные функции для генерации аннотаций к файлам, модулям и конфигурациям. Поддерживает семафоры для ограничения одновременных запросов к LLM, кэширование, прогресс-логирование и накопление ошибок без прерывания выполнения.</p>
-<h3 id="_3">Ключевые структуры данных</h3>
+<p>Модули системы отвечают за сканирование кодовой базы, генерацию аннотаций, управление кэшем, построение документации и её финальную сборку. Все операции выполняются асинхронно с поддержкой параллелизма и кэширования для повышения производительности.</p>
+<h2 id="_2">Сканирование файлов</h2>
+<p>Модуль <code>scan</code> отвечает за рекурсивный анализ файловой системы или удалённого Git-репозитория. Поддерживает фильтрацию по шаблонам включения/исключения, игнорирование бинарных и крупных файлов, а также загрузку конфигурации из <code>.ai-docs.yaml</code>.</p>
+<h3 id="_3">Ключевые функции</h3>
 <ul>
-<li><code>Tuple[str, Dict]</code> — Пара: путь к файлу и его метаданные.</li>
-<li><code>List[str]</code> — Список для накопления сообщений об ошибках.</li>
+<li><code>scan_source(source: str, include: Set[str], exclude: Set[str], max_size: int) -&gt; ScanResult</code> — основная точка входа для сканирования. Принимает путь или URL, возвращает <code>ScanResult</code>.</li>
+<li><code>_load_extension_config(root: Path) -&gt; Dict</code> — загружает пользовательские настройки расширений и правил исключения.</li>
+<li><code>_should_include(rel_path: str, include, exclude, ignore_specs) -&gt; bool</code> — проверяет, должен ли файл быть включён в результат.</li>
 </ul>
-<h3 id="_4">Функции</h3>
-<h4 id="summarize_changed_files"><code>summarize_changed_files</code></h4>
-<p><div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">summarize_changed_files</span><span class="p">(</span>
-    <span class="n">to_summarize</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]],</span>
-    <span class="n">summaries_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">llm</span><span class="p">,</span>
-    <span class="n">llm_cache</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-    <span class="n">threads</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">save_cb</span><span class="p">,</span>
-    <span class="n">errors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<h3 id="_4">Структуры данных</h3>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ScanResult</span><span class="p">:</span>
+    <span class="n">root</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span>  <span class="c1"># Каждый словарь содержит: path, content, type, domains, size</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">repo_name</span><span class="p">:</span> <span class="nb">str</span>
 </code></pre></div>
-Генерирует аннотации для изменённых файлов и сохраняет в указанный каталог.<br/>
-<strong>Аргументы:</strong>
-- <code>to_summarize</code> — Список пар (путь, метаданные) для аннотирования.
-- <code>summaries_dir</code> — Каталог сохранения аннотаций.
-- <code>llm</code> — Языковая модель.
-- <code>llm_cache</code> — Кэш ответов LLM.
-- <code>threads</code> — Макс. число одновременных запросов.
-- <code>save_cb</code> — Коллбэк после успешной обработки.
-- <code>errors</code> — Список для ошибок.<br/>
-<strong>Исключения:</strong> Ошибки добавляются в <code>errors</code>, выполнение продолжается.</p>
-<h4 id="summarize_changed_modules"><code>summarize_changed_modules</code></h4>
-<p>Аналогично <code>summarize_changed_files</code>, но для модулей (код без тестов). Сохраняет в <code>module_summaries_dir</code>.</p>
-<h4 id="summarize_changed_configs"><code>summarize_changed_configs</code></h4>
-<p>Аналогично, но для конфигурационных файлов. Сохраняет в <code>config_summaries_dir</code>.</p>
-<h4 id="summarize_missing-summarize_missing_modules-summarize_missing_configs"><code>summarize_missing</code>, <code>summarize_missing_modules</code>, <code>summarize_missing_configs</code></h4>
-<p>Асинхронно восстанавливают отсутствующие аннотации для файлов, модулей и конфигов соответственно. Отличаются только входными списками и каталогами сохранения. Все отображают прогресс обработки.</p>
-<hr/>
-<h2 id="_5">Сканирование файловой системы</h2>
-<p>Модуль отвечает за сканирование локальных директорий или Git-репозиториев с фильтрацией по расширениям, размеру и правилам игнорирования (<code>.gitignore</code>, <code>.build_ignore</code>).</p>
-<h3 id="_6">Ключевая структура</h3>
-<h4 id="scanresult"><code>ScanResult</code></h4>
-<p>Результат сканирования.
-- <code>root</code>: <code>Path</code> — Корневой путь.
-- <code>files</code>: <code>List[Dict]</code> — Список файлов с метаданными (путь, тип, содержимое, домены).
-- <code>source</code>: <code>str</code> — Источник (путь или URL).
-- <code>repo_name</code>: <code>str</code> — Имя репозитория.</p>
-<h3 id="_7">Основные функции</h3>
-<h4 id="scan_source"><code>scan_source</code></h4>
-<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">scan_source</span><span class="p">(</span>
-    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">include</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">max_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200_000</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScanResult</span>
-</code></pre></div>
-Сканирует локальную директорию или Git-репозиторий.<br/>
-<strong>Аргументы:</strong>
-- <code>source</code> — Путь или URL.
-- <code>include</code> — Паттерны включения (glob).
-- <code>exclude</code> — Паттерны исключения.
-- <code>max_size</code> — Макс. размер файла в байтах.<br/>
-<strong>Возвращает:</strong> <code>ScanResult</code>.<br/>
-<strong>Исключения:</strong> <code>FileNotFoundError</code>, если путь не существует.</p>
-<h4 id="_8">Вспомогательные функции</h4>
+<h2 id="_5">Генерация аннотаций</h2>
+<p>Модуль предоставляет асинхронные функции для параллельной генерации сводок по файлам. Поддерживается обработка разных типов: код, конфигурации, модули.</p>
+<h3 id="_6">Основные функции</h3>
 <ul>
-<li><code>_load_extension_config</code> — Загружает <code>.ai-docs.yaml</code> с настройками расширений.</li>
-<li><code>_build_default_include_patterns</code> — Формирует glob-паттерны по расширениям.</li>
-<li><code>_load_ignore_specs</code> — Загружает правила из <code>.gitignore</code> и <code>.build_ignore</code>.</li>
-<li><code>_should_include</code> — Проверяет, должен ли файл быть включён.</li>
-<li><code>_scan_directory</code> — Рекурсивно сканирует директорию.</li>
-<li><code>_clone_repo</code> — Клонирует Git-репозиторий во временную папку.</li>
+<li><code>summarize_changed_files(...)</code>, <code>summarize_changed_modules(...)</code>, <code>summarize_changed_configs(...)</code> — генерируют аннотации для изменённых файлов.</li>
+<li><code>summarize_missing(...)</code>, <code>summarize_missing_modules(...)</code>, <code>summarize_missing_configs(...)</code> — восстанавливают отсутствующие сводки.</li>
+<li><code>run_one(path: str, meta: dict)</code> — обрабатывает один конфигурационный файл.</li>
 </ul>
-<hr/>
-<h2 id="_9">Управление документацией</h2>
-<p>Модуль координирует запись файлов документации, генерацию <code>mkdocs.yml</code>, интеграцию с Mermaid.js и постобработку HTML.</p>
-<h3 id="_10">Ключевые структуры</h3>
+<h3 id="_7">Аргументы</h3>
 <ul>
-<li><code>docs_files</code>: <code>Dict[str, str]</code> — Путь → содержимое.</li>
-<li><code>file_map</code>: <code>Dict[str, Dict]</code> — Карта исходных файлов.</li>
-<li><code>module_pages</code>, <code>config_pages</code>: <code>Dict[str, str]</code> — Пути к страницам документации.</li>
-<li><code>configs_written</code>: <code>Dict[str, str]</code> — Записанные конфиги для <code>mkdocs.yml</code>.</li>
+<li><code>to_summarize</code>: <code>List[Tuple[str, Dict]]</code> — список файлов и их метаданных.</li>
+<li><code>summaries_dir</code>: <code>Path</code> — директория для сохранения аннотаций.</li>
+<li><code>llm</code>: модель для генерации текста.</li>
+<li><code>llm_cache</code>: <code>Dict[str, str]</code> — кэш ответов LLM.</li>
+<li><code>threads</code>: <code>int</code> — максимальное число параллельных задач.</li>
+<li><code>save_cb</code>: коллбэк после успешной обработки файла.</li>
+<li><code>errors</code>: <code>List[str]</code> — накопление ошибок.</li>
 </ul>
-<h3 id="_11">Функции</h3>
-<h4 id="write_docs"><code>write_docs</code></h4>
-<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">write_docs</span><span class="p">(</span>
-    <span class="n">output_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">docs_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">docs_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-    <span class="n">file_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">],</span>
-    <span class="n">module_pages</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-    <span class="n">config_pages</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-    <span class="n">has_changes</span><span class="p">:</span> <span class="nb">bool</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div>
-Записывает документацию, обновляет индекс, добавляет ассеты, очищает устаревшие файлы.</p>
-<h4 id="write_readme"><code>write_readme</code></h4>
-<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">write_readme</span><span class="p">(</span><span class="n">output_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">readme</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div>
-Записывает <code>README.md</code> в корень. Перезаписывает, если <code>force=True</code>.</p>
-<h4 id="build_mkdocs"><code>build_mkdocs</code></h4>
-<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">build_mkdocs</span><span class="p">(</span>
-    <span class="n">output_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
-    <span class="n">module_nav_paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">config_nav_paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">configs_written</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-    <span class="n">write_mkdocs</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-    <span class="n">local_site</span><span class="p">:</span> <span class="nb">bool</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-</code></pre></div>
-Генерирует <code>mkdocs.yml</code> и собирает сайт.<br/>
-<strong>Исключения:</strong> <code>RuntimeError</code>, если <code>mkdocs</code> не установлен.</p>
-<h4 id="_postprocess_mermaid_html"><code>_postprocess_mermaid_html</code></h4>
-<p>Исправляет <code>&amp;gt;</code> на <code>&gt;</code> в Mermaid-блоках HTML для корректного отображения.</p>
-<h4 id="__serialize_index"><code>__serialize_index</code></h4>
-<p>Сериализует индекс документации в JSON с временной меткой и метаинформацией.</p>
-<hr/>
-<h2 id="_12">Генерация документации</h2>
-<p>Модуль строит контекст, генерирует разделы (архитектура, тестирование, README) и управляет кэшированием.</p>
-<h3 id="_13">Ключевые структуры</h3>
-<ul>
-<li><code>file_map</code>: <code>Dict[str, Dict]</code> — Метаданные файлов.</li>
-<li><code>llm_cache</code>: <code>Dict[str, str]</code> — Кэш LLM.</li>
-<li><code>DOMAIN_TITLES</code>: <code>Dict[str, str]</code> — Сопоставление доменов и заголовков.</li>
-</ul>
-<h3 id="_14">Функции</h3>
-<h4 id="generate_section"><code>generate_section</code></h4>
-<p><div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">generate_section</span><span class="p">(</span>
-    <span class="n">llm</span><span class="p">,</span>
-    <span class="n">llm_cache</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">context</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">language</span><span class="p">:</span> <span class="nb">str</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
-</code></pre></div>
-Генерирует текст раздела по контексту.</p>
-<h4 id="generate_readme"><code>generate_readme</code></h4>
-<p><div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">generate_readme</span><span class="p">(</span>
-    <span class="n">llm</span><span class="p">,</span>
-    <span class="n">llm_cache</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-    <span class="n">project_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">overview_context</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">language</span><span class="p">:</span> <span class="nb">str</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
-</code></pre></div>
-Формирует <code>README.md</code> с обзором, архитектурой, быстрым стартом.</p>
-<h4 id="build_hierarchical_context"><code>build_hierarchical_context</code></h4>
-<p>Строит иерархический контекст из резюме файлов с учётом лимита токенов.</p>
-<h4 id="build_sections"><code>build_sections</code></h4>
-<p>Основная функция генерации всех разделов. Возвращает контексты, тесты, зависимости, обобщённый контекст.</p>
-<h4 id="_15">Вспомогательные</h4>
-<ul>
-<li><code>truncate_context</code> — Обрезает текст по лимиту токенов.</li>
-<li><code>summarize_chunk</code> — Сжимает фрагмент текста.</li>
-<li><code>render_testing_section</code> — Формирует раздел тестирования.</li>
-<li><code>format_changes_md</code> — Форматирует сводку изменений в Markdown.</li>
-<li><code>collect_dependencies</code> — Собирает зависимости из <code>requirements.txt</code>, <code>pyproject.toml</code>, <code>package.json</code>.</li>
-<li><code>render_project_configs_index</code> — Генерирует оглавление конфигов.</li>
-</ul>
-<hr/>
-<h2 id="cli">CLI и точка входа</h2>
-<p>Модуль обрабатывает аргументы командной строки и запускает процесс генерации.</p>
-<h3 id="_16">Функции</h3>
-<h4 id="parse_args"><code>parse_args</code></h4>
-<p>Парсит аргументы:
-- <code>--source</code>, <code>--output</code>, <code>--language</code>, <code>--include</code>, <code>--exclude</code>, <code>--max-size</code>
-- <code>--readme</code>, <code>--mkdocs</code>, <code>--local-site</code>, <code>--force</code>
-- <code>--threads</code>, <code>--cache-dir</code>, <code>--no-cache</code>, <code>--regen</code></p>
-<h4 id="resolve_output"><code>resolve_output</code></h4>
-<p>Определяет путь вывода на основе <code>source</code>, <code>output</code> и <code>repo_name</code>.</p>
-<h4 id="main"><code>main</code></h4>
-<p>Основная точка входа. Загружает конфиг, сканирует, инициализирует LLM, запускает генерацию.</p>
-<hr/>
-<h2 id="llm-">LLM-клиент</h2>
-<p>Асинхронный клиент для работы с OpenAI-совместимыми API.</p>
-<h3 id="llmclient">Класс <code>LLMClient</code></h3>
-<p><strong>Поля:</strong>
-- <code>api_key</code>, <code>base_url</code>, <code>model</code>, <code>temperature</code>, <code>max_tokens</code>, <code>context_limit</code>
-- <code>_cache_lock</code>, <code>_client</code> — Экземпляр <code>AsyncOpenAI</code></p>
-<p><strong>Методы:</strong>
-- <code>__init__</code> — Инициализация с параметрами модели.
-- <code>_estimate_input_tokens</code> — Оценка токенов во входных сообщениях.
-- <code>_compute_read_timeout</code> — Адаптивный таймаут по количеству токенов.
-- <code>_cache_key</code> — Генерация хеша запроса.
-- <code>chat</code> — Отправка запроса к LLM с кэшированием.
-- <code>from_env</code> — Создание клиента из переменных окружения.<br/>
-<strong>Исключения:</strong> <code>RuntimeError</code>, если <code>OPENAI_API_KEY</code> не задан.</p>
-<hr/>
-<h2 id="_17">Нормализация и обработка текста</h2>
-<p>Модуль нормализует сгенерированные описания под нужный формат (Doxygen, универсальный).</p>
-<h3 id="_18">Функции</h3>
-<h4 id="_normalize_module_summary"><code>_normalize_module_summary</code></h4>
-<p>Приводит описание модуля к Doxygen-формату.</p>
-<h4 id="_normalize_config_summary"><code>_normalize_config_summary</code></h4>
-<p>Нормализует описание конфига к универсальному стилю.</p>
-<h4 id="_format_config_blocks"><code>_format_config_blocks</code></h4>
-<p>Форматирует конфигурационные блоки, разделяя <code>&lt;br&gt;</code>.</p>
-<h4 id="_strip_fenced_markdown"><code>_strip_fenced_markdown</code></h4>
-<p>Удаляет ```markdown из текста.</p>
-<h4 id="summarize_file"><code>summarize_file</code></h4>
-<p>Генерирует резюме файла с учётом типа и доменов.</p>
-<h4 id="write_summary"><code>write_summary</code></h4>
-<p>Сохраняет резюме в файл Markdown в <code>summary_dir</code>.</p>
-<hr/>
-<h2 id="_19">Управление кэшем</h2>
-<p>Модуль обеспечивает загрузку, сохранение и синхронизацию кэша между запусками.</p>
+<h2 id="_8">Управление кэшем</h2>
+<p>Модуль <code>cache</code> обеспечивает сохранение и восстановление состояния между запусками. Использует <code>CacheManager</code> для работы с <code>index.json</code> и <code>llm_cache.json</code>.</p>
 <h3 id="cachemanager">Класс <code>CacheManager</code></h3>
-<p><strong>Поля:</strong>
-- <code>cache_dir</code>, <code>index_path</code>, <code>llm_cache_path</code></p>
-<p><strong>Методы:</strong>
-- <code>__init__</code> — Создаёт директории и файлы кэша.
-- <code>load_index</code>, <code>save_index</code> — Работа с <code>index.json</code>.
-- <code>load_llm_cache</code>, <code>save_llm_cache</code> — Работа с <code>llm_cache.json</code> (с резервным копированием при повреждении).
-- <code>diff_files</code> — Сравнивает текущие файлы с кэшем, возвращает <code>added</code>, <code>changed</code>, <code>deleted</code>, <code>unchanged</code>.</p>
-<h3 id="_20">Вспомогательные функции</h3>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CacheManager</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_llm_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_llm_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">diff_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">added</span><span class="p">,</span> <span class="n">modified</span><span class="p">,</span> <span class="n">deleted</span><span class="p">,</span> <span class="n">unchanged</span><span class="p">]</span>
+</code></pre></div>
+<h3 id="_9">Вспомогательные функции</h3>
 <ul>
-<li><code>init_cache</code> — Инициализирует кэш и загружает данные.</li>
-<li><code>build_file_map</code> — Строит карту файлов с хешами.</li>
-<li><code>diff_files</code> — Вычисляет различия с кэшем.</li>
-<li><code>ensure_summary_dirs</code> — Создаёт директории для сводок.</li>
-<li><code>save_cache_snapshot</code> — Сохраняет снимок состояния.</li>
-<li><code>carry_unchanged_summaries</code> — Переносит сводки для неизменённых файлов.</li>
-<li><code>cleanup_orphan_summaries</code>, <code>cleanup_deleted_summaries</code> — Удаляют устаревшие сводки.</li>
+<li><code>init_cache(cache_dir, use_cache)</code>: инициализирует кэш, возвращает <code>(cache, llm_cache, index_data, prev_files)</code>.</li>
+<li><code>build_file_map(files)</code>: строит карту файлов с хэшами.</li>
+<li><code>diff_files(cache, file_map)</code>: сравнивает текущее и предыдущее состояние.</li>
+<li><code>cleanup_orphan_summaries(...)</code>: удаляет "затерянные" аннотации.</li>
 </ul>
-<h2 id="_21">Список модулей</h2>
+<h2 id="_10">Генерация документации</h2>
+<p>Модуль <code>generate</code> строит иерархический контекст, генерирует разделы и формирует финальный README. Поддерживает принудительную перегенерацию отдельных секций.</p>
+<h3 id="_11">Ключевые функции</h3>
+<ul>
+<li><code>build_sections(...) -&gt; Tuple</code>: основная логика построения документации.</li>
+<li><code>generate_section(...) -&gt; str</code>: генерирует один раздел.</li>
+<li><code>generate_readme(...) -&gt; str</code>: формирует README.md.</li>
+<li><code>build_hierarchical_context(...) -&gt; str</code>: рекурсивно сжимает контекст до лимита токенов.</li>
+</ul>
+<h3 id="_12">Параметры</h3>
+<ul>
+<li><code>file_map</code>: карта всех файлов проекта.</li>
+<li><code>llm</code>, <code>llm_cache</code>: модель и кэш.</li>
+<li><code>language</code>: язык документации.</li>
+<li><code>force_sections</code>: <code>Set[str]</code> — секции, требующие перегенерации.</li>
+</ul>
+<h2 id="_13">Сборка документации</h2>
+<p>Модуль <code>build</code> отвечает за запись файлов, генерацию <code>mkdocs.yml</code>, интеграцию с Mermaid.js и постобработку HTML.</p>
+<h3 id="_14">Основные функции</h3>
+<ul>
+<li><code>write_docs(...)</code>: записывает документацию, удаляет устаревшие файлы.</li>
+<li><code>build_mkdocs(...)</code>: генерирует конфигурацию MkDocs и собирает сайт.</li>
+<li><code>_postprocess_mermaid_html(...)</code>: исправляет escape-последовательности в диаграммах.</li>
+<li><code>write_readme(...)</code>: обновляет <code>README.md</code>.</li>
+</ul>
+<h3 id="_15">Вспомогательные</h3>
+<ul>
+<li><code>build_mkdocs_yaml(...) -&gt; str</code>: генерирует YAML-конфиг.</li>
+<li><code>_build_tree_nav(...) -&gt; List[Dict]</code>: строит иерархию навигации.</li>
+<li><code>__serialize_index(...) -&gt; str</code>: сериализует индекс с метаданными.</li>
+</ul>
+<h2 id="llm-">LLM-клиент</h2>
+<p>Модуль <code>llm_client</code> предоставляет асинхронный интерфейс для работы с OpenAI-совместимыми API.</p>
+<h3 id="llmclient">Класс <code>LLMClient</code></h3>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LLMClient</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="n">api_key</span><span class="p">,</span> <span class="n">base_url</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">max_tokens</span><span class="p">,</span> <span class="n">context_limit</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">chat</span><span class="p">(</span><span class="n">messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">cache</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_read_timeout</span><span class="p">(</span><span class="n">input_tokens</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cache_key</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</code></pre></div>
+<ul>
+<li>Поддерживает кэширование, адаптивный таймаут, повторные попытки.</li>
+<li><code>from_env() -&gt; LLMClient</code>: создаёт клиент из переменных окружения.</li>
+</ul>
+<h2 id="_16">Утилиты</h2>
+<p>Модуль <code>utils</code> включает вспомогательные функции для работы с файлами, путями и данными.</p>
+<h3 id="_17">Основные функции</h3>
+<ul>
+<li><code>sha256_text(text) -&gt; str</code>, <code>sha256_bytes(data) -&gt; str</code>: хеширование.</li>
+<li><code>read_text_file(path) -&gt; str</code>: безопасное чтение файла.</li>
+<li><code>ensure_dir(path)</code>: создание директории с родителями.</li>
+<li><code>is_binary_file(path) -&gt; bool</code>: проверка на бинарный файл.</li>
+<li><code>to_posix(path) -&gt; str</code>: преобразование пути в POSIX-формат.</li>
+<li><code>is_url(value) -&gt; bool</code>: проверка строки на URL.</li>
+</ul>
+<h2 id="_18">Список модулей</h2>
 <ul>
 <li><a href="ai_docs/__init____py.html">modules/ai_docs/__init____py</a></li>
 <li><a href="ai_docs/__main____py.html">modules/ai_docs/__main____py</a></li>

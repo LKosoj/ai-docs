@@ -193,22 +193,6 @@
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_7">Основные изменения</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_8">Поведение по умолчанию</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_9">Управление перегенерацией</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_10">Интеграция с окружением</a>
-<ul class="nav flex-column">
-</ul>
-</li>
 </ul>
 </li>
 </ul>
@@ -218,24 +202,13 @@
 <h1 id="_1">Изменения с последней генерации</h1>
 <h2 id="_2">Добавленные файлы</h2>
 <ul>
-<li>README_EN.md</li>
-<li>ai_docs/generator_cache.py</li>
-<li>ai_docs/generator_output.py</li>
-<li>ai_docs/generator_sections.py</li>
-<li>ai_docs/generator_shared.py</li>
-<li>ai_docs/generator_summarize.py</li>
+<li>нет</li>
 </ul>
 <h2 id="_3">Изменённые файлы</h2>
 <ul>
-<li>README.md</li>
-<li>ai_docs/cache.py</li>
-<li>ai_docs/cli.py</li>
-<li>ai_docs/generator.py</li>
-<li>ai_docs/llm.py</li>
+<li>ai_docs/generator_cache.py</li>
+<li>ai_docs/generator_output.py</li>
 <li>ai_docs/mkdocs.py</li>
-<li>ai_docs/summary.py</li>
-<li>ai_docs/tokenizer.py</li>
-<li>pyproject.toml</li>
 </ul>
 <h2 id="_4">Удалённые файлы</h2>
 <ul>
@@ -245,56 +218,30 @@
 <ul>
 <li>Тестирование</li>
 <li>Зависимости</li>
-<li>Соглашения</li>
 <li>Запуск и окружение</li>
+<li>Соглашения</li>
 <li>Модули</li>
 <li>Конфигурация проекта</li>
-<li>Документация проекта</li>
-<li>Архитектура</li>
 <li>Глоссарий</li>
+<li>Архитектура</li>
+<li>Документация проекта</li>
 </ul>
 <h2 id="_6">Краткое резюме</h2>
-<p>Этот раздел описывает ключевые изменения в поведении и архитектуре инструмента <code>ai_docs</code> на основе анализа исходного кода и конфигураций.</p>
-<h2 id="_7">Основные изменения</h2>
 <ul>
-<li><strong>Инкрементальная генерация</strong>: документация обновляется только для изменённых или отсутствующих файлов. Используется <code>CacheManager</code> для отслеживания хэшей и метаданных через <code>file_map</code> и <code>index.json</code>.</li>
-<li><strong>Параллельная обработка</strong>: асинхронные функции (<code>summarize_changed_files</code>, <code>summarize_changed_modules</code>) работают с ограничением по потокам через <code>asyncio.Semaphore</code>, управляемым параметром <code>--threads</code> или <code>AI_DOCS_THREADS</code>.</li>
-<li><strong>Кэширование LLM-ответов</strong>: запросы к модели кэшируются по хешу <code>payload</code> в <code>llm_cache.json</code>. При повторном запуске без изменений — повторное использование результатов.</li>
-<li><strong>Структура выходных данных</strong>:  </li>
-<li><code>.ai-docs/modules/</code>, <code>.ai-docs/configs/</code> — документация по модулям и конфигурациям.  </li>
-<li><code>changes.md</code> — автоматически генерируется на основе diff'а файлов.  </li>
-<li><code>_index.json</code> — навигационный индекс с меткой времени и ранжированием.</li>
-<li><strong>Очистка устаревших данных</strong>: при обновлении удаляются:</li>
-<li>резюме для удалённых файлов (<code>cleanup_deleted_summaries</code>).</li>
-<li>неиспользуемые промежуточные файлы (<code>cleanup_orphan_summaries</code>).</li>
-<li><strong>Генерация README и MkDocs</strong>:  </li>
-<li><code>write_readme</code> поддерживает принудительную перезапись (<code>--force</code>).  </li>
-<li><code>build_mkdocs</code> генерирует <code>mkdocs.yml</code> с поддержкой <code>mermaid2</code> и адаптирует навигацию под <code>local_site</code>.</li>
-<li><strong>Пагинация</strong>: при превышении 100 элементов в разделах модулей или конфигураций включается пагинация.</li>
-<li><strong>Поддержка Mermaid</strong>: JavaScript-файл <code>mermaid.min.js</code> включается в сборку, HTML-файлы постобрабатываются для корректного отображения <code>&gt;</code> в диаграммах.</li>
-</ul>
-<h2 id="_8">Поведение по умолчанию</h2>
-<ul>
-<li>Генерируются <code>README.md</code> и сайт документации (<code>ai_docs_site/</code>).</li>
-<li>Кэширование включено, директория — <code>.ai_docs_cache/</code>.</li>
-<li>Фильтрация по <code>.gitignore</code>, <code>.build_ignore</code>, и исключениям вроде <code>node_modules</code>, <code>.venv</code>.</li>
-<li>При &lt;50 модулях — полная перегенерация без пагинации.</li>
-<li>Автоматический запуск <code>mkdocs build</code> после генерации.</li>
-</ul>
-<h2 id="_9">Управление перегенерацией</h2>
-<ul>
-<li><code>--regen configs</code> — пересоздаёт только конфигурации.</li>
-<li><code>--regen modules</code> — только модули.</li>
-<li><code>--regen all</code> — полная перегенерация.</li>
-<li><code>AI_DOCS_REGEN_ALL_THRESHOLD</code> — порог, при превышении которого применяется инкрементальный режим.</li>
-</ul>
-<h2 id="_10">Интеграция с окружением</h2>
-<ul>
-<li>LLM настраивается через переменные окружения: <code>OPENAI_API_KEY</code>, <code>OPENAI_MODEL</code>, <code>OPENAI_MAX_TOKENS</code> и др.</li>
-<li>Поддержка сторонних API через <code>OPENAI_BASE_URL</code>.</li>
-<li>Конфигурация расширений и исключений — через <code>.ai-docs.yaml</code>.</li>
-</ul>
-<p>Изменения направлены на повышение производительности, точности и удобства сопровождения документации в CI/CD и локальной разработке.</p></div>
+<li>Добавлена поддержка инкрементальной генерации документации через систему кэширования на основе хешей файлов (<code>sha256_text</code>). Неизменённые файлы переносят существующие сводки, избегая повторной обработки.</li>
+<li>Внедрён <code>CacheManager</code> для управления кэшем LLM-ответов и индекса файлов. При включённом <code>use_cache</code> сохраняются и восстанавливаются промежуточные результаты.</li>
+<li>Реализовано сравнение файлов через <code>diff_files</code>, определяющее изменения по хешам. Учитываются добавленные, изменённые и удалённые файлы.</li>
+<li>Автоматическая очистка устаревших сводок: <code>cleanup_orphan_summaries</code> и <code>cleanup_deleted_summaries</code> удаляют неиспользуемые файлы из промежуточных директорий (<code>files</code>, <code>modules</code>, <code>configs</code>) с детальным логированием.</li>
+<li>Динамическая генерация <code>mkdocs.yml</code> через <code>build_mkdocs_yaml</code> с поддержкой вложенной навигации, включая разделы: архитектура, конфиги, модули, тестирование, глоссарий и др.</li>
+<li>Навигация строится по дереву с <code>_build_tree_nav</code>, преобразующим пути в иерархическую структуру для модулей и конфигураций.</li>
+<li>Добавлена интеграция Mermaid.js: включён плагин <code>mermaid2</code> и расширение <code>pymdownx.superfences</code>. HTML-постобработка через <code>_postprocess_mermaid_html</code> корректирует спецсимволы в диаграммах.</li>
+<li>Генерация индекса поиска через <code>__serialize_index</code> с метаданными: время сборки, приоритеты файлов для ранжирования.</li>
+<li>Поддержка локальной разработки: <code>site_url</code> и <code>use_directory_urls</code> настраиваются при локальной сборке.</li>
+<li>Запись файлов документации (<code>write_docs</code>) включает фильтрацию по <code>keep_files</code> и очистку неиспользуемых файлов.</li>
+<li>Используется кастомный <code>_YamlSafeDumper</code> для корректной сериализации сложных типов (например, <code>mermaid2.fence_mermaid</code>).</li>
+<li><code>write_readme</code> обновляет <code>README.md</code>, обеспечивая синхронность с основной документацией.</li>
+<li>Промежуточные сводки хранятся в структурированных директориях, фильтрация тестовых файлов — через <code>is_test_path</code>.</li>
+</ul></div>
 </div>
 </div>
 <footer class="col-md-12">

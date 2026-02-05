@@ -197,6 +197,7 @@ async def build_sections(
     overview_forced = is_forced("overview", "section:overview", "overview.md")
     should_regen_overview = overview_forced or force_all or not overview_path.exists()
     if should_regen_overview:
+        print("[ai-docs] regen section: overview")
         overview_context = await build_hierarchical_context(
             llm,
             llm_cache,
@@ -208,6 +209,7 @@ async def build_sections(
         )
         docs_files["overview.md"] = f"# Обзор проекта\n\n{overview_context}\n"
     else:
+        print("[ai-docs] skip section: overview (cached)")
         overview_text = read_text_file(overview_path)
         overview_lines = overview_text.splitlines()
         if overview_lines and overview_lines[0].lstrip().startswith("#"):
@@ -239,6 +241,7 @@ async def build_sections(
 
     def submit_section(out_path: str, title: str, context: str) -> None:
         async def run_section() -> None:
+            print(f"[ai-docs] regen section: {title}")
             async with section_sem:
                 content = await generate_section(llm, llm_cache, title, context, language)
             docs_files[out_path] = f"# {title}\n\n{content}\n"
@@ -251,6 +254,7 @@ async def build_sections(
         forced = is_forced(key, title, f"section:{key}", f"section:{title}")
         if forced or not section_path.exists():
             if key == "testing":
+                print(f"[ai-docs] regen section: {title}")
                 docs_files["testing.md"] = f"# {title}\n\n{render_testing_section(test_paths, test_commands)}\n"
                 regenerated_sections.append(title)
                 continue
@@ -263,12 +267,14 @@ async def build_sections(
         domain_path = docs_dir / "configs" / filename
         forced = is_forced(domain, title, f"domain:{domain}", "domains", "configs")
         if forced or not domain_path.exists():
+            print(f"[ai-docs] regen section: {title}")
             submit_section(f"configs/{filename}", title, domain_contexts[domain])
         configs_written[domain] = filename
 
     index_title = "Документация проекта"
     index_path = docs_dir / "index.md"
     if is_forced("index", "docs", "documentation") or not index_path.exists():
+        print(f"[ai-docs] regen section: {index_title}")
         submit_section("index.md", index_title, await get_section_context("index", index_title))
 
     module_summaries = []
@@ -294,6 +300,7 @@ async def build_sections(
         pages = [sorted_modules[i : i + per_page] for i in range(0, total, per_page)]
         modules_index_path = docs_dir / "modules" / "index.md"
         if is_forced("modules") or not modules_index_path.exists():
+            print(f"[ai-docs] regen section: {modules_title}")
             modules_context = await build_hierarchical_context(
                 llm,
                 llm_cache,
@@ -353,6 +360,7 @@ async def build_sections(
         configs_title = "Конфигурация проекта"
         configs_index_path = docs_dir / "configs" / "index.md"
         if is_forced("configs") or not configs_index_path.exists():
+            print(f"[ai-docs] regen section: {configs_title}")
             page_size = 100
             if len(config_nav_paths) > page_size:
                 pages = [config_nav_paths[i:i + page_size] for i in range(0, len(config_nav_paths), page_size)]

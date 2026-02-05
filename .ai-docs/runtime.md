@@ -1,128 +1,123 @@
 # Запуск и окружение
 
-## Базовый запуск
+## Базовые требования
 
-Инструмент запускается через CLI команду `ai-docs`. Минимальный вызов:
+- Python 3.8 или выше
+- Доступ к LLM через OpenAI-совместимое API (например, OpenAI, Azure OpenAI)
+- Установленный `mkdocs` (для генерации сайта)
+
+## Установка
 
 ```bash
-ai-docs --source /путь/к/проекту
+pip install ai-docs-gen
 ```
 
-Поддерживается анализ:
-- Локальных директорий
-- Локальных Git-репозиториев
-- Удалённых репозиториев по URL (автоматическое клонирование)
+Или установка из репозитория:
 
-Пример с URL:
 ```bash
-ai-docs --source https://github.com/user/repo.git
+git clone https://github.com/your-repo/ai-docs-gen.git
+cd ai-docs-gen
+pip install -e .
 ```
 
 ## Переменные окружения
 
-| Переменная | Назначение | Значение по умолчанию |
-|-----------|------------|----------------------|
-| `OPENAI_API_KEY` | Ключ API для доступа к LLM | Обязательна |
-| `OPENAI_BASE_URL` | Базовый URL провайдера (для сторонних хостов) | `https://api.openai.com/v1` |
-| `OPENAI_MODEL` | Модель для генерации | `gpt-4o-mini` |
-| `OPENAI_MAX_TOKENS` | Макс. токенов в ответе | `1200` |
-| `OPENAI_CONTEXT_TOKENS` | Лимит контекста модели | `8192` |
-| `OPENAI_TEMPERATURE` | Уровень креативности генерации | `0.2` |
-| `AI_DOCS_THREADS` | Количество параллельных потоков | `4` |
-| `AI_DOCS_LOCAL_SITE` | Режим локального сайта MkDocs | `false` |
-| `AI_DOCS_REGEN` | Секции для принудительной перегенерации | — |
-
-## Основные CLI-параметры
+Обязательные:
 
 ```bash
-ai-docs \
-  --source <путь_или_url> \
-  --output <директория_вывода> \
-  --language ru \
-  --threads 8 \
-  --max-size 500000 \
-  --include "*.py" "*.tf" \
-  --exclude ".venv" "tests/*" \
-  --readme \
-  --mkdocs \
-  --local-site \
-  --regen configs,modules \
-  --force \
-  --no-cache
+export OPENAI_API_KEY=your_api_key_here
 ```
 
-### Ключевые опции:
-- `--source` — обязательный путь или URL
-- `--output` — директория вывода (по умолчанию: корень проекта)
-- `--language` — язык документации (`ru` или `en`)
-- `--threads` — число потоков (переопределяет `AI_DOCS_THREADS`)
-- `--max-size` — макс. размер файла в байтах (по умолчанию 200 КБ)
-- `--include`/`--exclude` — фильтрация по путям и шаблонам
-- `--readme`, `--mkdocs` — тип генерации
-- `--local-site` — адаптация `mkdocs.yml` для локального запуска
-- `--regen` — принудительная перегенерация разделов
-- `--force` — перезапись существующего `README.md`
-- `--no-cache` — отключение кэширования LLM-ответов
-- `--cache-dir` — кастомная директория кэша (по умолчанию `.ai_docs_cache`)
+Опциональные (с значениями по умолчанию):
+
+```bash
+export OPENAI_BASE_URL=https://api.openai.com/v1  # для сторонних провайдеров
+export OPENAI_MODEL=gpt-4o-mini
+export OPENAI_MAX_TOKENS=4096
+export OPENAI_CONTEXT_TOKENS=32768
+export OPENAI_TEMPERATURE=0.3
+export AI_DOCS_THREADS=4
+export AI_DOCS_LOCAL_SITE=false
+```
+
+## Запуск CLI
+
+### Генерация README
+
+```bash
+ai-docs --source ./my-project --readme --language ru
+```
+
+### Генерация MkDocs-сайта
+
+```bash
+ai-docs --source https://github.com/user/repo.git --mkdocs --language ru
+```
+
+### Принудительная перегенерация разделов
+
+```bash
+ai-docs --source . --mkdocs --regen architecture,configs --force
+```
+
+### Запуск без кэширования
+
+```bash
+ai-docs --source . --readme --no-cache
+```
 
 ## Режимы работы
 
-### 1. Только README
-```bash
-ai-docs --source . --readme --force
-```
+| Флаг | Описание |
+|------|--------|
+| `--readme` | Генерирует `README.md` в корне проекта |
+| `--mkdocs` | Генерирует полный сайт документации |
+| `--local-site` | Настраивает `mkdocs.yml` для локального хостинга (без публикации) |
+| `--force` | Перезаписывает существующие файлы |
+| `--regen [секции]` | Перегенерирует указанные разделы (через запятую) |
+| `--no-cache` | Отключает кэширование LLM-ответов |
 
-### 2. Полный сайт MkDocs
-```bash
-ai-docs --source . --mkdocs --local-site
-```
-Создаёт `mkdocs.yml` и собирает сайт в `ai_docs_site/`.
+## Структура выходных файлов
 
-### 3. Инкрементальная генерация
-По умолчанию:
-- Обновляются только изменённые файлы
-- Не перезаписываются существующие `.md` в `.ai-docs/`
-- Используется кэш в `.ai_docs_cache/`
-
-Принудительная перегенерация:
-```bash
-ai-docs --source . --regen all
-```
-
-## Структура выходных артефактов
+После запуска создаются:
 
 ```
-.
-├── README.md                     # Краткое описание проекта
-├── mkdocs.yml                    # Конфигурация сайта
-├── ai_docs_site/                 # Собранный сайт (при --mkdocs)
-├── .ai-docs/                     # Детальная документация
-│   ├── index.md
+project-root/
+├── README.md                     # краткая документация
+├── .ai-docs/                     # полная документация в Markdown
+│   ├── overview.md
 │   ├── architecture.md
-│   ├── modules/                  # Документация модулей
-│   ├── configs/                  # Документация конфигов
-│   ├── changes.md                # Отчёт об изменениях
-│   └── _index.json               # Навигационный индекс
-└── .ai_docs_cache/               # Кэш (при --no-cache не создаётся)
-    ├── index.json
-    ├── llm_cache.json
-    └── intermediate/
+│   ├── modules/                  # описание модулей
+│   ├── configs/                  # описание конфигов
+│   └── _index.json               # навигационный индекс
+├── mkdocs.yml                    # конфигурация сайта
+├── ai_docs_site/                 # собранный сайт (при --mkdocs)
+└── .ai_docs_cache/               # кэш LLM-запросов
 ```
 
-## Запуск в CI/CD (пример для GitHub Actions)
+## Интеграция в CI/CD
+
+Пример для GitHub Actions:
 
 ```yaml
 - name: Generate Docs
   run: |
     pip install ai-docs-gen
-    ai-docs \
-      --source . \
-      --mkdocs \
-      --local-site \
-      --language en \
-      --threads 4
+    ai-docs --source . --mkdocs --language ru
+    mkdocs build -f mkdocs.yml
   env:
     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 ```
 
-> **Важно**: Убедитесь, что `OPENAI_API_KEY` задан. Без него запуск невозможен.
+## Отладка и мониторинг
+
+- Прогресс обработки логируется каждые 5 файлов.
+- Ошибки накапливаются и выводятся в конце.
+- Изменения фиксируются в `.ai-docs/changes.md`.
+- Кэширование ускоряет повторные запуски: неизменённые файлы не обрабатываются повторно.
+
+## Ограничения
+
+- Максимальный размер файла: 200 КБ (настраивается через `--max-size`).
+- Бинарные файлы и файлы в `.gitignore`, `.build_ignore`, `node_modules`, `.venv` и др. игнорируются.
+- Для больших репозиториев рекомендуется увеличить `AI_DOCS_THREADS` и использовать `--regen` для частичной перегенерации.

@@ -173,19 +173,7 @@
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="1"><a class="nav-link" href="#_1">Архитектура</a>
 <ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="1"><a class="nav-link" href="#_2">Архитектура</a>
-<ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Основные компоненты</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_4">Поток данных</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_5">Особенности реализации</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Архитектура</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -197,128 +185,158 @@
 <div class="col-md-9" role="main">
 <h1 id="_1">Архитектура</h1>
 <div class="mermaid">graph TD
-    A[Источник кода] -->|Локальный путь или Git-URL| B(Сканирование)
-    B --> C{Фильтрация}
-    C -->|Включает| D[Код: .py, .js, .go и др.]
-    C -->|Включает| E[Конфиги: .yaml, .json, .tf]
-    C -->|Включает| F[Документация: .md, .rst]
-    C -->|Исключает| G[.git, node_modules, .venv и др.]
-    D --> H[Анализ доменов: Kubernetes, Terraform, CI/CD и др.]
-    E --> H
-    H --> I[Карта файлов с метаданными]
-    I --> J[CacheManager]
-    J --> K{Сравнение с кэшем}
-    K -->|Изменённые| L[summarize_changed_files]
-    K -->|Новые| L
-    K -->|Отсутствующие| M[summarize_missing_summaries]
-    L --> N[LLMClient]
-    M --> N
-    N -->|GPT-4o-mini и др.| O[Сводки в .ai-docs/modules/ и .ai-docs/configs/]
-    O --> P[Генерация контекста]
-    P --> Q[Построение индекса: build_docs_index]
-    Q --> R[Запись документации: write_docs]
-    R --> S[README.md]
-    R --> T[mkdocs.yml]
-    R --> U[changes.md]
-    T --> V[MkDocs build]
-    V --> W[ai_docs_site/]
-    X[Mermaid.min.js] --> R
-    Y[.ai-docs.yaml] --> B
-    Z[Переменные окружения] --> N
-    style A fill:#4C9,stroke:#333
-    style W fill:#4C9,stroke:#333
-    style S fill:#6D6,stroke:#333
-    style T fill:#6D6,stroke:#333
-    style U fill:#6D6,stroke:#333
+    A[Источник кода] -->|Путь или URL| B[Модуль сканирования]
+    B --> C{Тип источника?}
+    C -->|Локальный| D[Сканирование директории]
+    C -->|Git-репозиторий| E[Клонирование в tmp]
+    D --> F[Фильтрация по .gitignore, .build_ignore, .ai-docs.yaml]
+    E --> F
+    F --> G[Сбор метаданных: тип, домен, содержимое]
+    G --> H[ScanResult]
+    H --> I[CacheManager]
+    I --> J{Кэш существует?}
+    J -->|Да| K[diff_files: added/modified/deleted]
+    J -->|Нет| L[Все файлы — новые]
+    K --> M[Определение изменений]
+    L --> M
+    M --> N[Асинхронная обработка через summarize_*]
+    N --> O[LLMClient с кэшированием]
+    O --> P[Генерация сводок: файлы, модули, конфиги]
+    P --> Q[Запись в .ai-docs/summaries]
+    Q --> R[Генерация документации]
+    R --> S[Создание overview.md, index.md, changes.md]
+    R --> T[Построение навигации: build_docs_index]
+    R --> U[Генерация README.md]
+    R --> V[Формирование mkdocs.yml]
+    S --> W[Запись docs_files]
+    T --> W
+    U --> W
+    V --> W
+    W --> X[build_mkdocs]
+    X --> Y[MkDocs + mermaid2]
+    Y --> Z[ai_docs_site/]
+    Q --> AA[Сохранение кэша: save_cache_snapshot]
+    M --> AB[format_changes_md]
+    AB --> AC[Запись docs/changes.md]
+
+    style A fill:#4C8BF5,stroke:#333
+    style Z fill:#28a745,stroke:#333,color:#fff
+    style AC fill:#FFC107,stroke:#333
 </div>
-<h1 id="_2">Архитектура</h1>
-<p>Архитектура <code>ai_docs</code> построена вокруг модульного, асинхронного и инкрементального подхода к генерации технической документации. Основной принцип — минимизация избыточной обработки за счёт кэширования и анализа изменений.</p>
-<h2 id="_3">Основные компоненты</h2>
-<h3 id="1-scannerpy">1. <strong>Сканирование (<code>scanner.py</code>)</strong></h3>
+<h2 id="_2">Архитектура</h2>
+<p><code>ai_docs</code> построен как модульная CLI-система для автоматической генерации технической документации на основе статического анализа кода и конфигураций. Архитектура ориентирована на инкрементальность, производительность и повторяемость.</p>
+<h3 id="_3">Основные компоненты</h3>
+<h4 id="1-scannerpy">1. <strong>Сканирование (<code>scanner.py</code>)</strong></h4>
 <ul>
 <li>Вход: локальный путь или URL Git-репозитория.</li>
-<li>Фильтрация по:</li>
-<li><code>.gitignore</code>, <code>.build_ignore</code></li>
-<li><code>DEFAULT_EXCLUDE_PATTERNS</code> (<code>.venv</code>, <code>__pycache__</code>, <code>dist</code>)</li>
-<li><code>FIXED_INCLUDE_PATTERNS</code> (всегда включаемые файлы: <code>Dockerfile</code>, <code>*.tf</code>)</li>
-<li>Пользовательские правила из <code>.ai-docs.yaml</code></li>
-<li>Выход: <code>ScanResult</code> с метаданными файлов (путь, размер, тип, домен, первые 4000 символов).</li>
+<li>Выход: <code>ScanResult</code> — структурированный список файлов с метаданными (путь, тип, домен, первые 4000 символов).</li>
+<li>Применяет фильтрацию:</li>
+<li><code>.gitignore</code>, <code>.build_ignore</code> — через <code>pathspec</code>.</li>
+<li><code>.ai-docs.yaml</code> — пользовательские правила включения/исключения.</li>
+<li>Встроенные исключения: <code>.venv</code>, <code>node_modules</code>, <code>__pycache__</code>, <code>.git</code>.</li>
+<li>Для удалённых репозиториев — временное клонирование.</li>
 </ul>
-<h3 id="2">2. <strong>Классификация и анализ доменов</strong></h3>
+<h4 id="2-cachepy-cachemanager">2. <strong>Управление кэшем (<code>cache.py</code>, <code>CacheManager</code>)</strong></h4>
 <ul>
-<li>Определение инфраструктурных доменов по расширениям и именам файлов:</li>
-<li><code>TERRAFORM_EXTENSIONS</code>, <code>DOCKER_FILENAMES</code>, <code>CI_FILENAMES</code></li>
-<li>Используется <code>classify_type</code> и <code>detect_domains</code> для аннотации файлов.</li>
+<li>Хранит:</li>
+<li><code>index.json</code> — хеши файлов, размеры, метаданные.</li>
+<li><code>llm_cache.json</code> — ответы LLM по хешу запроса.</li>
+<li>Основные операции:</li>
+<li><code>diff_files</code> — определяет <code>added</code>, <code>modified</code>, <code>deleted</code>, <code>unchanged</code>.</li>
+<li><code>carry_unchanged_summaries</code> — переносит существующие сводки.</li>
+<li><code>cleanup_orphan_summaries</code> — удаляет устаревшие <code>.md</code> в <code>summaries/</code>.</li>
+<li>Кэш по умолчанию: <code>.ai_docs_cache/</code>.</li>
 </ul>
-<h3 id="3-cachepy-cachemanager">3. <strong>Кэширование (<code>cache.py</code>, <code>CacheManager</code>)</strong></h3>
+<h4 id="3-summarizepy">3. <strong>Генерация сводок (<code>summarize.py</code>)</strong></h4>
 <ul>
-<li>Директория: <code>.ai_docs_cache/</code></li>
-<li>Два уровня кэша:</li>
-<li><code>index.json</code> — хранит хэши, размеры и метаданные файлов для определения изменений.</li>
-<li><code>llm_cache.json</code> — кэш ответов LLM по хешу запроса.</li>
-<li><code>diff_files</code> определяет: добавленные, изменённые, удалённые, неизменные файлы.</li>
-<li><code>carry_unchanged_summaries</code> переносит существующие сводки, избегая повторной генерации.</li>
+<li>Асинхронная обработка с <code>asyncio.Semaphore</code> (ограничение по <code>AI_DOCS_THREADS</code>).</li>
+<li>Функции:</li>
+<li><code>summarize_changed_file</code> — для изменённых файлов.</li>
+<li><code>summarize_missing_*</code> — для новых файлов без сводки.</li>
+<li>Поддержка режимов:</li>
+<li><code>detailed</code> — полное описание.</li>
+<li><code>config</code>, <code>infra</code>, <code>module</code> — специализированные промпты.</li>
+<li>Нормализация формата: исправление Doxygen, Markdown-семантики.</li>
 </ul>
-<h3 id="4-summarizepy">4. <strong>Генерация сводок (<code>summarize.py</code>)</strong></h3>
+<h4 id="4-llm-llmpy-llmclient">4. <strong>LLM-интерфейс (<code>llm.py</code>, <code>LLMClient</code>)</strong></h4>
 <ul>
-<li>Асинхронные функции:</li>
-<li><code>summarize_changed_files</code> — только для изменённых файлов.</li>
-<li><code>summarize_missing_summaries</code> — восстановление утерянных сводок.</li>
-<li>Использует семафор для ограничения параллельных запросов (<code>--threads</code>).</li>
-<li>Промпты:</li>
-<li><code>MODULE_SUMMARY_PROMPT</code> — для Doxygen-подобной документации.</li>
-<li><code>CONFIG_SUMMARY_PROMPT</code> — для конфигурационных файлов.</li>
-<li>Результат: Markdown-файлы в <code>.ai-docs/modules/</code> и <code>.ai-docs/configs/</code>.</li>
+<li>Асинхронный клиент на <code>AsyncOpenAI</code> с поддержкой OpenAI-совместимых API.</li>
+<li>Ключевые функции:</li>
+<li><code>chat</code> — отправка промпта, возврат текста.</li>
+<li><code>count_tokens</code> — оценка длины контекста.</li>
+<li><code>chunk_text</code> — разбиение текста при превышении <code>max_tokens</code>.</li>
+<li>Кэширование по <code>sha256(payload)</code>.</li>
+<li>Повторные попытки при ошибках 429, 5xx, таймаутах.</li>
 </ul>
-<h3 id="5-llm-llmpy-llmclient">5. <strong>LLM-клиент (<code>llm.py</code>, <code>LLMClient</code>)</strong></h3>
+<h4 id="5-docspy">5. <strong>Генерация документации (<code>docs.py</code>)</strong></h4>
 <ul>
-<li>Асинхронный интерфейс через <code>AsyncOpenAI</code>.</li>
-<li>Поддержка OpenAI-совместимых API.</li>
-<li>Повторные попытки при ошибках 408, 429, 5xx.</li>
-<li>Динамический таймаут: <code>_compute_read_timeout</code> на основе размера входа.</li>
-<li>Кэширование по <code>sha256_text(payload)</code>.</li>
+<li>Формирует структуру в <code>.ai-docs/</code>:</li>
+<li><code>overview.md</code> — общее описание проекта.</li>
+<li><code>index.md</code> — оглавление с пагинацией (100 элементов).</li>
+<li><code>modules/</code>, <code>configs/</code> — страницы по компонентам.</li>
+<li><code>changes.md</code> — отчёт об изменениях.</li>
+<li>Использует <code>build_hierarchical_context</code> для укладки в лимит токенов.</li>
+<li>Поддержка многоязычности: <code>language=ru/en</code>.</li>
 </ul>
-<h3 id="6-docspy">6. <strong>Построение документации (<code>docs.py</code>)</strong></h3>
+<h4 id="6-mkdocs-mkdocspy">6. <strong>Интеграция с MkDocs (<code>mkdocs.py</code>)</strong></h4>
 <ul>
-<li><code>build_docs_index</code> — формирует иерархический индекс на основе:</li>
-<li>Наличия файлов в <code>docs/</code></li>
-<li>Доменов и типов из <code>file_map</code></li>
-<li>Приоритетов из <code>_index.json</code></li>
-<li><code>write_docs</code> — записывает файлы, добавляет Mermaid.js, очищает устаревшие.</li>
+<li>Генерация <code>mkdocs.yml</code>:</li>
+<li>Динамическая навигация: <code>nav</code> строится по доменам, модулям, конфигам.</li>
+<li>Плагины: <code>search</code>, <code>mermaid2</code>.</li>
+<li>Расширения: <code>pymdownx.superfences</code> для диаграмм.</li>
+<li>Режимы:</li>
+<li><code>local_site=true</code> — <code>site_url: ""</code>, <code>use_directory_urls: false</code>.</li>
+<li>Сборка: <code>mkdocs build -f mkdocs.yml</code>.</li>
 </ul>
-<h3 id="7-mkdocs-mkdocspy">7. <strong>Генерация MkDocs (<code>mkdocs.py</code>)</strong></h3>
+<h4 id="7">7. <strong>Вспомогательные утилиты</strong></h4>
 <ul>
-<li><code>build_mkdocs_yaml</code> — создаёт <code>mkdocs.yml</code> с:</li>
-<li>Навигацией по разделам: Архитектура, Модули, Конфиги</li>
-<li>Поддержкой <code>mermaid2</code> плагина</li>
-<li>Адаптацией под <code>local_site</code> режим</li>
-<li>Автоматический запуск <code>mkdocs build</code> в <code>ai_docs_site/</code>.</li>
-<li>Постобработка HTML: замена <code>&amp;gt;</code> на <code>></code> для корректного отображения Mermaid.</li>
+<li><code>utils.py</code> — <code>ensure_dir</code>, <code>sha256_text</code>, <code>is_binary</code>, <code>is_url</code>.</li>
+<li><code>types.py</code> — <code>CODE_EXTENSIONS</code>, <code>CONFIG_EXTENSIONS</code>, <code>detect_domains</code>.</li>
+<li><code>helpers.py</code> — <code>collect_dependencies</code>, <code>collect_test_info</code>, <code>render_testing_section</code>.</li>
 </ul>
-<h3 id="8">8. <strong>Вспомогательные утилиты</strong></h3>
-<ul>
-<li><code>tokens.py</code> — токенизация через <code>tiktoken</code>, резервное побайтовое кодирование.</li>
-<li><code>utils.py</code> — безопасное чтение файлов, проверка бинарных данных, нормализация путей.</li>
-<li><code>context.py</code> — построение иерархического контекста с учётом лимита токенов.</li>
-</ul>
-<h2 id="_4">Поток данных</h2>
+<h3 id="_4">Поток выполнения</h3>
 <ol>
-<li><code>main.py</code> — точка входа, парсинг CLI-аргументов.</li>
-<li><code>scan_source</code> — сканирование с фильтрацией.</li>
-<li><code>init_cache</code> → <code>diff_files</code> — определение изменений.</li>
-<li>Параллельная генерация сводок через <code>LLMClient</code>.</li>
-<li>Построение индекса и запись документации.</li>
-<li>Генерация <code>mkdocs.yml</code> и сборка сайта.</li>
+<li>
+<p><strong>Инициализация</strong>:
+   - Чтение <code>--source</code>, <code>--language</code>, <code>--regen</code>.
+   - Загрузка <code>OPENAI_API_KEY</code>, <code>AI_DOCS_THREADS</code>.</p>
+</li>
+<li>
+<p><strong>Сканирование</strong>:
+   - <code>scan_source</code> → <code>ScanResult</code>.</p>
+</li>
+<li>
+<p><strong>Кэширование</strong>:
+   - <code>init_cache</code> → <code>file_map</code> → <code>diff_files</code>.</p>
+</li>
+<li>
+<p><strong>Генерация сводок</strong>:
+   - Асинхронный вызов <code>summarize_*</code> для новых/изменённых файлов.
+   - Запись в <code>summaries/</code>, <code>modules/</code>, <code>configs/</code>.</p>
+</li>
+<li>
+<p><strong>Построение документации</strong>:
+   - Формирование <code>docs_files</code>.
+   - Генерация <code>README.md</code>.
+   - Создание <code>mkdocs.yml</code>.</p>
+</li>
+<li>
+<p><strong>Финализация</strong>:
+   - Запись файлов в <code>.ai-docs/</code>.
+   - Сборка сайта: <code>build_mkdocs</code>.
+   - Логирование изменений: <code>format_changes_md</code> → <code>docs/changes.md</code>.
+   - Сохранение кэша: <code>save_cache_snapshot</code>.</p>
+</li>
 </ol>
-<h2 id="_5">Особенности реализации</h2>
+<h3 id="_5">Особенности реализации</h3>
 <ul>
-<li><strong>Инкрементальность</strong>: перегенерируются только изменённые или отсутствующие сводки.</li>
-<li><strong>Пагинация</strong>: при >100 модулей/конфигов — разбиение на страницы.</li>
-<li><strong>Мультиязычность</strong>: поддержка <code>ru</code>/<code>en</code> через параметр <code>--language</code>.</li>
-<li><strong>Безопасность имён</strong>: <code>write_summary</code> использует slug-идентификаторы.</li>
-<li><strong>Очистка</strong>: <code>cleanup_orphan_summaries</code> удаляет неиспользуемые сводки.</li>
+<li><strong>Инкрементальность</strong>: перегенерируются только изменённые/новые файлы.</li>
+<li><strong>Параллелизм</strong>: <code>AI_DOCS_THREADS</code> управляет числом одновременных LLM-запросов.</li>
+<li><strong>Безопасность</strong>: бинарные файлы не читаются, большие файлы (>200 КБ) пропускаются.</li>
+<li><strong>Поддержка диаграмм</strong>: Mermaid.js внедряется в HTML через <code>_postprocess_mermaid_html</code>.</li>
+<li><strong>Очистка</strong>: удаление устаревших <code>.md</code> в <code>modules/</code>, <code>configs/</code> при реорганизации.</li>
 </ul>
-<p>Архитектура обеспечивает высокую производительность при повторных запусках и масштабируемость за счёт асинхронной обработки и чёткого разделения ответственности.</p></div>
+<p>Архитектура позволяет интегрировать <code>ai_docs</code> в CI/CD, обеспечивая актуальную документацию без ручного вмешательства.</p></div>
 </div>
 </div>
 <footer class="col-md-12">
