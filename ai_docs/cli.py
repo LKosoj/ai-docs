@@ -79,7 +79,7 @@ def main() -> None:
         cache_dir=output_root / args.cache_dir,
         llm=llm,
         language=args.language,
-        write_readme=(args.readme or not args.mkdocs),
+        write_readme_flag=(args.readme or not args.mkdocs),
         write_mkdocs=(args.mkdocs or not args.readme),
         use_cache=not args.no_cache,
         threads=max(1, threads),

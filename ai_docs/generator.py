@@ -32,7 +32,7 @@ async def _generate_docs_async(
     cache_dir: Path,
     llm,
     language: str,
-    write_readme: bool,
+    write_readme_flag: bool,
     write_mkdocs: bool,
     use_cache: bool = True,
     threads: int = 1,
@@ -114,7 +114,7 @@ async def _generate_docs_async(
     has_changes = bool(added or modified or deleted)
     write_docs(output_root, docs_dir, docs_files, file_map, module_pages, config_pages, has_changes)
 
-    if write_readme:
+    if write_readme_flag:
         print("[ai-docs] write README")
         readme = await generate_readme(llm, llm_cache, output_root.name, overview_context, language)
         write_readme(output_root, readme, force)
@@ -143,7 +143,7 @@ def generate_docs(
     cache_dir: Path,
     llm,
     language: str,
-    write_readme: bool,
+    write_readme_flag: bool,
     write_mkdocs: bool,
     use_cache: bool = True,
     threads: int = 1,
@@ -157,7 +157,7 @@ def generate_docs(
             cache_dir=cache_dir,
             llm=llm,
             language=language,
-            write_readme=write_readme,
+            write_readme_flag=write_readme_flag,
             write_mkdocs=write_mkdocs,
             use_cache=use_cache,
             threads=threads,

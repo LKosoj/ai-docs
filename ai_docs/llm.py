@@ -4,6 +4,7 @@ import os
 from typing import Dict, List, Optional
 
 import httpx
+import random
 from openai import AsyncOpenAI
 
 from .utils import sha256_text
@@ -68,14 +69,36 @@ class LLMClient:
                 if key in cache:
                     return cache[key]
 
-        try:
-            input_tokens = self._estimate_input_tokens(messages)
-            read_timeout = self._compute_read_timeout(input_tokens)
-            timeout = httpx.Timeout(read=read_timeout, connect=7.0, write=30.0, pool=read_timeout)
-            response = await self._client.chat.completions.create(**payload, timeout=timeout)
-            content = response.choices[0].message.content
-        except Exception as exc:
-            raise RuntimeError(f"LLM request failed: {exc}") from exc
+        input_tokens = self._estimate_input_tokens(messages)
+        read_timeout = self._compute_read_timeout(input_tokens)
+        max_read_timeout = 1200.0
+        max_retries = 5
+        backoff = 1.0
+        last_exc: Exception | None = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                timeout = httpx.Timeout(read=read_timeout, connect=7.0, write=30.0, pool=read_timeout)
+                response = await self._client.chat.completions.create(**payload, timeout=timeout)
+                content = response.choices[0].message.content
+                break
+            except Exception as exc:
+                last_exc = exc
+                status = getattr(exc, "status_code", None)
+                if status is None:
+                    response = getattr(exc, "response", None)
+                    status = getattr(response, "status_code", None)
+                message = str(exc).lower()
+                is_timeout = isinstance(exc, httpx.TimeoutException) or "timeout" in message
+                retryable = status in {408, 429} or (status is not None and 500 <= status < 600) or is_timeout
+                if not retryable or attempt >= max_retries:
+                    raise RuntimeError(f"LLM request failed: {exc}") from exc
+                if status == 408 or is_timeout:
+                    read_timeout = min(read_timeout * 1.5, max_read_timeout)
+                jitter = random.uniform(0, backoff * 0.1)
+                await asyncio.sleep(backoff + jitter)
+                backoff = min(backoff * 2, 60.0)
+        else:
+            raise RuntimeError(f"LLM request failed: {last_exc}") from last_exc
         if cache is not None:
             async with self._cache_lock:
                 cache[key] = content
