@@ -204,6 +204,7 @@ python -m pytest
 
 Default behavior: if neither `--readme` nor `--mkdocs` is specified, both are generated.
 Docs sections in `.ai-docs/*.md` are not regenerated if the file already exists, unless listed in `--regen`.
+If the module count is below `AI_DOCS_REGEN_ALL_THRESHOLD` (default 50), all sections are regenerated automatically.
 When running without parameters for sections, a hint is printed with a `--regen` example.
 If there are more than 100 modules, `modules/index.md` is paginated into pages of 100 items with ←/→ navigation.
 If there are more than 100 configs, `configs/index.md` is paginated into pages of 100 items with ←/→ navigation.

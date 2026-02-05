@@ -1,4 +1,5 @@
 import asyncio
+import os
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -138,6 +139,15 @@ async def build_sections(
     force_sections: Optional[Set[str]] = None,
 ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str], List[str], List[str], Dict[str, str], List[str], str]:
     force_sections = {item.strip().lower() for item in (force_sections or set()) if item.strip()}
+    regen_all_threshold = int(os.getenv("AI_DOCS_REGEN_ALL_THRESHOLD", "50"))
+    module_count = sum(
+        1
+        for path, meta in file_map.items()
+        if meta.get("type") == "code" and not is_test_path(path)
+    )
+    if module_count and module_count < regen_all_threshold:
+        force_sections.add("all")
+        print(f"[ai-docs] regen all: module_count={module_count} threshold={regen_all_threshold}")
     force_all = "all" in force_sections or "*" in force_sections
 
     def is_forced(*tokens: str) -> bool:
