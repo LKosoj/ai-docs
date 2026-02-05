@@ -18,15 +18,26 @@ async def summarize_changed_files(
 ) -> None:
     if not to_summarize:
         return
+    total = len(to_summarize)
+    done = 0
+    start = time.time()
+    log_every = 5
     sem = asyncio.Semaphore(max(1, threads))
+    lock = asyncio.Lock()
 
     async def run_one(path: str, meta: Dict) -> None:
+        nonlocal done
         async with sem:
             try:
                 summary = await summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, False)
                 summary_path = write_summary(summaries_dir, path, summary)
                 meta["summary_path"] = str(summary_path)
                 save_cb()
+                async with lock:
+                    done += 1
+                    if done % log_every == 0 or done == total:
+                        elapsed = int(time.time() - start)
+                        print(f"[ai-docs] summarize progress: {done}/{total} ({elapsed}s)")
             except Exception as exc:
                 errors.append(f"summarize: {path} -> {exc}")
 
@@ -49,15 +60,26 @@ async def summarize_changed_modules(
     ]
     if not module_candidates:
         return
+    total = len(module_candidates)
+    done = 0
+    start = time.time()
+    log_every = 5
     sem = asyncio.Semaphore(max(1, threads))
+    lock = asyncio.Lock()
 
     async def run_one(path: str, meta: Dict) -> None:
+        nonlocal done
         async with sem:
             try:
                 summary = await summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
                 summary_path = write_summary(module_summaries_dir, path, summary)
                 meta["module_summary_path"] = str(summary_path)
                 save_cb()
+                async with lock:
+                    done += 1
+                    if done % log_every == 0 or done == total:
+                        elapsed = int(time.time() - start)
+                        print(f"[ai-docs] summarize modules progress: {done}/{total} ({elapsed}s)")
             except Exception as exc:
                 errors.append(f"summarize module: {path} -> {exc}")
 
@@ -80,15 +102,26 @@ async def summarize_changed_configs(
     ]
     if not config_candidates:
         return
+    total = len(config_candidates)
+    done = 0
+    start = time.time()
+    log_every = 5
     sem = asyncio.Semaphore(max(1, threads))
+    lock = asyncio.Lock()
 
     async def run_one(path: str, meta: Dict) -> None:
+        nonlocal done
         async with sem:
             try:
                 summary = await summarize_file(meta["content"], meta["type"], meta["domains"], llm, llm_cache, llm.model, True)
                 summary_path = write_summary(config_summaries_dir, path, summary)
                 meta["config_summary_path"] = str(summary_path)
                 save_cb()
+                async with lock:
+                    done += 1
+                    if done % log_every == 0 or done == total:
+                        elapsed = int(time.time() - start)
+                        print(f"[ai-docs] summarize configs progress: {done}/{total} ({elapsed}s)")
             except Exception as exc:
                 errors.append(f"summarize config: {path} -> {exc}")
 

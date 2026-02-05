@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../img/favicon.ico">
-        <title>utils.py - ai-docs</title>
+        <title>generator_sections.py - ai-docs</title>
         <link href="../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../css/brands.min.css" rel="stylesheet">
@@ -126,7 +126,7 @@
 </li>
             
 <li>
-    <a href="generator_sections__py.html" class="dropdown-item">generator_sections.py</a>
+    <a href="generator_sections__py.html" class="dropdown-item active" aria-current="page">generator_sections.py</a>
 </li>
             
 <li>
@@ -158,7 +158,7 @@
 </li>
             
 <li>
-    <a href="utils__py.html" class="dropdown-item active" aria-current="page">utils.py</a>
+    <a href="utils__py.html" class="dropdown-item">utils.py</a>
 </li>
     </ul>
   </li>
@@ -176,12 +176,12 @@
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a rel="prev" href="tokenizer__py.html" class="nav-link">
+                                <a rel="prev" href="generator_output__py.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../../changes.html" class="nav-link">
+                                <a rel="next" href="generator_shared__py.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -203,7 +203,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="1"><a href="#ai_docsutils" class="nav-link">ai_docs/utils</a>
+            <li class="nav-item" data-bs-level="1"><a href="#ai_docsgenerator_sections" class="nav-link">ai_docs/generator_sections</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -212,72 +212,158 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h1 id="ai_docsutils">ai_docs/utils</h1>
-<p>Модуль предоставляет набор утилит для работы с файлами, путями, хешированием и проверкой типов данных.<br />
-Основные функции включают вычисление SHA-256 хешей, безопасное создание слагов, определение двоичных файлов и проверку URL.<br />
-Поддерживает работу с объектами <code>Path</code> из <code>pathlib</code>, обеспечивая кроссплатформенную совместимость.</p>
+<h1 id="ai_docsgenerator_sections">ai_docs/generator_sections</h1>
+<p>Модуль отвечает за генерацию технической документации на основе анализа кодовой базы, изменений в файлах и контекста от LLM.<br />
+Он строит иерархический контекст, разбивает его на управляемые фрагменты, генерирует разделы документации (включая архитектуру, обзор, тестирование) и формирует финальный README.<br />
+Поддерживается многоязычность, кэширование запросов к LLM и принудительное обновление определённых разделов.</p>
 <p>Ключевые структуры данных<br />
-Path — объект для удобной и безопасной работы с файловыми путями в кроссплатформенной среде</p>
-<p>sha256_bytes(data: bytes) -&gt; str<br />
-Вычисляет SHA-256 хеш от байтовых данных и возвращает его в виде шестнадцатеричной строки<br />
-Аргументы<br />
-data — входные данные в виде байтов<br />
-Возвращает<br />
-Шестнадцатеричное строковое представление хеша SHA-256</p>
+file_map — словарь с метаинформацией о файлах проекта, включая тип, домены, путь к сводке<br />
+llm_cache — кэш ответов LLM для ускорения повторной генерации<br />
+DOMAIN_TITLES — отображение внутренних доменов в читаемые заголовки разделов</p>
 <hr />
-<p>sha256_text(text: str) -&gt; str<br />
-Вычисляет SHA-256 хеш от текстовой строки, кодированной в UTF-8<br />
+<p>async def generate_section(llm: LLM, llm_cache: LLMLiteCache, title: str, context: str, language: str) -&gt; str<br />
+Генерирует содержимое раздела документации по заданному контексту и заголовку.<br />
 Аргументы<br />
-text — входная текстовая строка<br />
+llm — экземпляр языковой модели<br />
+llm_cache — кэш для повторного использования результатов LLM<br />
+title — заголовок раздела<br />
+context — входной контекст для генерации<br />
+language — язык вывода<br />
 Возвращает<br />
-Шестнадцатеричное строковое представление хеша SHA-256</p>
+Сгенерированный текст раздела<br />
+Исключения<br />
+Может выбрасывать исключения при ошибках взаимодействия с LLM</p>
 <hr />
-<p>read_text_file(path: Path) -&gt; str<br />
-Считывает содержимое текстового файла с указанным путём, используя кодировку UTF-8<br />
+<p>async def generate_readme(llm, llm_cache: Dict[str, str], project_name: str, overview_context: str, language: str) -&gt; str<br />
+Формирует краткий README.md с обзором, быстрым стартом, архитектурой и ссылками.<br />
 Аргументы<br />
-path — путь к файлу в виде объекта Path<br />
+llm — объект модели языковой модели<br />
+llm_cache — кэш ответов LLM<br />
+project_name — название проекта<br />
+overview_context — обобщённый контекст проекта<br />
+language — язык документации<br />
+Возвращает<br />
+Текст README в формате Markdown<br />
+Исключения<br />
+Возможны исключения от llm.chat</p>
+<hr />
+<p>def truncate_context(context: str, model: str, max_tokens: int) -&gt; str<br />
+Обрезает контекст до указанного лимита токенов, если он превышает лимит.<br />
+Аргументы<br />
+context — исходный текст<br />
+model — название модели для подсчёта токенов<br />
+max_tokens — максимальное количество токенов<br />
+Возвращает<br />
+Обрезанный текст (первый чанк, если требуется разбиение)</p>
+<hr />
+<p>async def summarize_chunk(llm, llm_cache: Dict[str, str], chunk: str, language: str, focus: str = "") -&gt; str<br />
+Сжимает фрагмент текста до краткого конспекта с сохранением ключевой информации.<br />
+Аргументы<br />
+llm — модель для генерации<br />
+llm_cache — кэш LLM<br />
+chunk — текстовый фрагмент для сжатия<br />
+language — язык вывода<br />
+focus — дополнительный фокус (необязательно)<br />
+Возвращает<br />
+Сжатый конспект на указанном языке<br />
+Исключения<br />
+Возможны исключения от llm.chat</p>
+<hr />
+<p>async def build_hierarchical_context(llm: LLM, llm_cache: LLMLiteCache, summaries: List[str], input_budget: float, language: str, cache_key: str, focus: str) -&gt; str<br />
+Генерирует иерархический контекст для указанного раздела документации на основе резюме файлов.<br />
+Аргументы<br />
+llm — экземпляр языковой модели для генерации текста<br />
+llm_cache — кэш для хранения результатов запросов к LLM<br />
+summaries — список текстовых резюме, на основе которых строится контекст<br />
+input_budget — лимит длины входного текста для модели<br />
+language — язык, на котором генерируется документация<br />
+cache_key — ключ для кэширования результата<br />
+focus — тема или заголовок, по которой строится контекст<br />
+Возвращает<br />
+Сгенерированный контекст в виде строки<br />
+Исключения<br />
+Может выбрасывать исключения, связанные с выполнением запроса к LLM</p>
+<hr />
+<p>async def build_sections(file_map: Dict[str, Dict], added: Dict[str, Dict], modified: Dict[str, Dict], deleted: Dict[str, Dict], docs_dir: Path, llm, llm_cache: Dict[str, str], language: str, threads: int, input_budget: int, force_sections: Optional[Set[str]] = None) -&gt; Tuple[Dict[str, str], Dict[str, str], Dict[str, str], List[str], List[str], Dict[str, str], List[str], str]<br />
+Основная функция построения всех разделов документации на основе изменений и контекста.<br />
+Аргументы<br />
+file_map — карта всех файлов проекта с метаданными<br />
+added — добавленные файлы<br />
+modified — изменённые файлы<br />
+deleted — удалённые файлы<br />
+docs_dir — путь к директории документации<br />
+llm — модель для генерации текста<br />
+llm_cache — кэш ответов LLM<br />
+language — язык документации<br />
+threads — количество параллельных потоков (не используется напрямую)<br />
+input_budget — лимит токенов на вход<br />
+force_sections — множество разделов, которые нужно перегенерировать принудительно<br />
+Возвращает<br />
+Кортеж из: контекстов доменов, сгенерированных разделов, контекстов модулей, путей тестов, команд тестов, зависимостей, имён изменённых доменов и обобщённого контекста проекта<br />
+Исключения<br />
+Возможны исключения от llm.chat и операций с файловой системой</p>
+<hr />
+<p>def read_text_file(path: Path) -&gt; str<br />
+Считывает содержимое текстового файла с обработкой кодировки.<br />
+Аргументы<br />
+path — путь к файлу<br />
 Возвращает<br />
 Содержимое файла в виде строки<br />
 Исключения<br />
-OSError — если файл не существует или недоступен для чтения</p>
+Выбрасывает исключение при ошибке чтения файла</p>
 <hr />
-<p>safe_slug(path: str) -&gt; str<br />
-Преобразует строку в безопасный слаг, заменяя неалфавитно-цифровые символы на подчёркивания<br />
+<p>def render_testing_section(test_paths: List[str], test_commands: List[str]) -&gt; str<br />
+Формирует Markdown-содержимое раздела тестирования на основе путей и команд.<br />
 Аргументы<br />
-path — входная строка для преобразования<br />
+test_paths — список путей к тестовым файлам<br />
+test_commands — список команд для запуска тестов<br />
 Возвращает<br />
-Нормализованная строка, пригодная для использования в именах файлов или URL</p>
+Строка в формате Markdown с описанием тестирования</p>
 <hr />
-<p>ensure_dir(path: Path) -&gt; None<br />
-Создаёт директорию по указанному пути, включая родительские, если они отсутствуют<br />
+<p>def is_forced(*keys: str) -&gt; bool<br />
+Проверяет, требуется ли перегенерация контента по ключам принудительного обновления.<br />
 Аргументы<br />
-path — путь к директории, которую необходимо создать<br />
-Исключения<br />
-OSError — если директорию не удаётся создать по системным причинам</p>
-<hr />
-<p>is_binary_file(path: Path, sample_size: int = 2048) -&gt; bool<br />
-Определяет, является ли файл двоичным, на основе наличия нулевых байтов в первых байтах<br />
-Аргументы<br />
-path — путь к файлу<br />
-sample_size — количество байтов для анализа (по умолчанию 2048)<br />
+keys — иерархические ключи, определяющие, должен ли контент быть обновлён<br />
 Возвращает<br />
-True, если файл, вероятно, двоичный; иначе False<br />
-Исключения<br />
-OSError — возвращает True при ошибках доступа к файлу</p>
+True, если хотя бы один из ключей помечен как принудительный для перегенерации</p>
 <hr />
-<p>is_url(value: str) -&gt; bool<br />
-Проверяет, является ли строка URL (HTTP/HTTPS/Git)<br />
+<p>def is_test_path(path: str) -&gt; bool<br />
+Определяет, является ли путь тестовым (по шаблонам включения/исключения).<br />
 Аргументы<br />
-value — строка для проверки<br />
+path — путь к файлу в виде строки<br />
 Возвращает<br />
-True, если строка начинается с http://, https:// или git@; иначе False</p>
+True, если путь соответствует критериям тестового файла</p>
 <hr />
-<p>to_posix(path: Path) -&gt; str<br />
-Преобразует путь в строку в формате POSIX, независимо от ОС<br />
+<p>def format_changes_md(added, modified, deleted, regenerated_sections, summary)<br />
+Форматирует сводку изменений в виде Markdown-документа.<br />
 Аргументы<br />
-path — объект Path для преобразования<br />
+added — словарь добавленных файлов и их метаданных<br />
+modified — словарь изменённых файлов и их метаданных<br />
+deleted — словарь удалённых файлов<br />
+regenerated_sections — список названий секций, которые были перегенерированы<br />
+summary — итоговое резюме изменений<br />
 Возвращает<br />
-Строка пути с косыми чертами (/) в стиле POSIX</p></div>
+Строка в формате Markdown, содержащая детализацию изменений и сводку</p>
+<hr />
+<p>def collect_dependencies(file_map)<br />
+Собирает список внешних зависимостей проекта на основе анализа карты файлов.<br />
+Аргументы<br />
+file_map — словарь, описывающий структуру и содержание файлов проекта<br />
+Возвращает<br />
+Список строк, каждая из которых представляет собой обнаруженную зависимость</p>
+<hr />
+<p>def render_project_configs_index(config_list)<br />
+Генерирует Markdown-представление списка конфигураций.<br />
+Аргументы<br />
+config_list — список конфигураций или путей к ним<br />
+Возвращает<br />
+Строка в формате Markdown с оформлением списка конфигураций как ссылок</p>
+<hr />
+<p>class DOMAIN_TITLES<br />
+Словарь сопоставления внутренних доменных ключей с их отображаемыми заголовками.<br />
+Поля<br />
+key — строковой идентификатор домена (например, "api", "db")<br />
+value — читаемое название домена для использования в заголовках документации</p></div>
             </div>
         </div>
 

@@ -33,6 +33,14 @@
 <li class="nav-item">
 <a class="nav-link" href="index.html">Главная</a>
 </li>
+<li class="nav-item dropdown">
+<a aria-expanded="false" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">Обзор</a>
+<ul class="dropdown-menu">
+<li>
+<a class="dropdown-item" href="overview.html">Обзор проекта</a>
+</li>
+</ul>
+</li>
 <li class="nav-item">
 <a class="nav-link" href="architecture.html">Архитектура</a>
 </li>
@@ -91,6 +99,21 @@
 </li>
 <li>
 <a class="dropdown-item" href="modules/ai_docs/generator__py.html">generator.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="modules/ai_docs/generator_cache__py.html">generator_cache.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="modules/ai_docs/generator_output__py.html">generator_output.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="modules/ai_docs/generator_sections__py.html">generator_sections.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="modules/ai_docs/generator_shared__py.html">generator_shared.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="modules/ai_docs/generator_summarize__py.html">generator_summarize.py</a>
 </li>
 <li>
 <a class="dropdown-item" href="modules/ai_docs/llm__py.html">llm.py</a>
@@ -170,27 +193,19 @@
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#pyprojecttoml">Конфигурация пакета (pyproject.toml)</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_7">Основные изменения</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_7">Сканирование репозиториев</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_8">Поведение по умолчанию</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_8">Генерация документации</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_9">Управление перегенерацией</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#llm">Интеграция с LLM</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_9">Генерируемые артефакты</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_10">Дополнительные возможности</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_10">Интеграция с окружением</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -203,13 +218,23 @@
 <h1 id="_1">Изменения с последней генерации</h1>
 <h2 id="_2">Добавленные файлы</h2>
 <ul>
-<li>нет</li>
+<li>README_EN.md</li>
+<li>ai_docs/generator_cache.py</li>
+<li>ai_docs/generator_output.py</li>
+<li>ai_docs/generator_sections.py</li>
+<li>ai_docs/generator_shared.py</li>
+<li>ai_docs/generator_summarize.py</li>
 </ul>
 <h2 id="_3">Изменённые файлы</h2>
 <ul>
+<li>README.md</li>
+<li>ai_docs/cache.py</li>
+<li>ai_docs/cli.py</li>
 <li>ai_docs/generator.py</li>
+<li>ai_docs/llm.py</li>
 <li>ai_docs/mkdocs.py</li>
-<li>ai_docs/scanner.py</li>
+<li>ai_docs/summary.py</li>
+<li>ai_docs/tokenizer.py</li>
 <li>pyproject.toml</li>
 </ul>
 <h2 id="_4">Удалённые файлы</h2>
@@ -219,68 +244,57 @@
 <h2 id="_5">Перегенерированные разделы</h2>
 <ul>
 <li>Тестирование</li>
-<li>Модули</li>
-<li>Конфигурация проекта</li>
 <li>Зависимости</li>
-<li>Архитектура</li>
 <li>Соглашения</li>
 <li>Запуск и окружение</li>
-<li>Глоссарий</li>
+<li>Модули</li>
+<li>Конфигурация проекта</li>
 <li>Документация проекта</li>
+<li>Архитектура</li>
+<li>Глоссарий</li>
 </ul>
 <h2 id="_6">Краткое резюме</h2>
-<p>Внесённые изменения затрагивают структуру, конфигурацию и функциональность пакета <code>ai-docs-gen</code>, обеспечивая автоматизированную генерацию технической документации на основе анализа исходного кода и конфигураций.</p>
-<h2 id="pyprojecttoml">Конфигурация пакета (<code>pyproject.toml</code>)</h2>
+<p>Этот раздел описывает ключевые изменения в поведении и архитектуре инструмента <code>ai_docs</code> на основе анализа исходного кода и конфигураций.</p>
+<h2 id="_7">Основные изменения</h2>
 <ul>
-<li>Обновлена метаинформация: указано имя пакета (<code>ai-docs-gen</code>), версия, описание, ссылка на <code>README.md</code>.</li>
-<li>Установлена минимальная поддерживаемая версия Python — <strong>3.8</strong>.</li>
-<li>Добавлены зависимости для сборки: <code>setuptools&gt;=68</code>, <code>wheel</code>.</li>
-<li>Настроена точка входа CLI: команда <code>ai-docs</code> вызывает <code>ai_docs.cli:main</code>.</li>
-<li>Включена автоматическая сборка пакета: обнаруживаются модули в <code>ai_docs</code>, исключается директория <code>assets</code>.</li>
-<li>Добавлено включение статических файлов: <code>assets/mermaid.min.js</code> включается в состав пакета через <code>package-data</code>.</li>
+<li><strong>Инкрементальная генерация</strong>: документация обновляется только для изменённых или отсутствующих файлов. Используется <code>CacheManager</code> для отслеживания хэшей и метаданных через <code>file_map</code> и <code>index.json</code>.</li>
+<li><strong>Параллельная обработка</strong>: асинхронные функции (<code>summarize_changed_files</code>, <code>summarize_changed_modules</code>) работают с ограничением по потокам через <code>asyncio.Semaphore</code>, управляемым параметром <code>--threads</code> или <code>AI_DOCS_THREADS</code>.</li>
+<li><strong>Кэширование LLM-ответов</strong>: запросы к модели кэшируются по хешу <code>payload</code> в <code>llm_cache.json</code>. При повторном запуске без изменений — повторное использование результатов.</li>
+<li><strong>Структура выходных данных</strong>:  </li>
+<li><code>.ai-docs/modules/</code>, <code>.ai-docs/configs/</code> — документация по модулям и конфигурациям.  </li>
+<li><code>changes.md</code> — автоматически генерируется на основе diff'а файлов.  </li>
+<li><code>_index.json</code> — навигационный индекс с меткой времени и ранжированием.</li>
+<li><strong>Очистка устаревших данных</strong>: при обновлении удаляются:</li>
+<li>резюме для удалённых файлов (<code>cleanup_deleted_summaries</code>).</li>
+<li>неиспользуемые промежуточные файлы (<code>cleanup_orphan_summaries</code>).</li>
+<li><strong>Генерация README и MkDocs</strong>:  </li>
+<li><code>write_readme</code> поддерживает принудительную перезапись (<code>--force</code>).  </li>
+<li><code>build_mkdocs</code> генерирует <code>mkdocs.yml</code> с поддержкой <code>mermaid2</code> и адаптирует навигацию под <code>local_site</code>.</li>
+<li><strong>Пагинация</strong>: при превышении 100 элементов в разделах модулей или конфигураций включается пагинация.</li>
+<li><strong>Поддержка Mermaid</strong>: JavaScript-файл <code>mermaid.min.js</code> включается в сборку, HTML-файлы постобрабатываются для корректного отображения <code>&gt;</code> в диаграммах.</li>
 </ul>
-<h2 id="_7">Сканирование репозиториев</h2>
+<h2 id="_8">Поведение по умолчанию</h2>
 <ul>
-<li>Реализовано автоматическое сканирование локальных и удалённых репозиториев через <code>scan_source</code>.</li>
-<li>Поддержка клонирования Git-репозиториев во временную директорию.</li>
-<li>Фильтрация файлов по:</li>
-<li>Фиксированным шаблонам включения (<code>Dockerfile</code>, <code>*.tf</code>, <code>package.json</code> и др.).</li>
-<li>Стандартным исключениям (<code>.git</code>, <code>node_modules</code>, <code>__pycache__</code>, <code>.venv</code>).</li>
-<li>Пользовательским правилам из <code>.ai-docs.yaml</code>, <code>.gitignore</code>, <code>.build_ignore</code>.</li>
-<li>Ограничение размера файлов — <strong>200 КБ</strong>; пропуск бинарных и симлинков.</li>
-<li>Результат — объект <code>ScanResult</code> с метаданными файлов: путь, тип, размер, первые 4000 символов содержимого, домены.</li>
+<li>Генерируются <code>README.md</code> и сайт документации (<code>ai_docs_site/</code>).</li>
+<li>Кэширование включено, директория — <code>.ai_docs_cache/</code>.</li>
+<li>Фильтрация по <code>.gitignore</code>, <code>.build_ignore</code>, и исключениям вроде <code>node_modules</code>, <code>.venv</code>.</li>
+<li>При &lt;50 модулях — полная перегенерация без пагинации.</li>
+<li>Автоматический запуск <code>mkdocs build</code> после генерации.</li>
 </ul>
-<h2 id="_8">Генерация документации</h2>
+<h2 id="_9">Управление перегенерацией</h2>
 <ul>
-<li>Реализована поддержка <strong>MkDocs</strong>: генерация <code>mkdocs.yml</code> с кастомной навигацией, включая древовидные структуры для <code>configs/</code> и <code>modules/</code>.</li>
-<li>Добавлены плагины: <code>mermaid2</code> для визуализации диаграмм.</li>
-<li>Поддержка Markdown-расширений и корректная сериализация Python-объектов в YAML через кастомный <code>Dumper</code>.</li>
-<li>Запись файлов документации (<code>write_docs_files</code>) с созданием поддиректорий.</li>
+<li><code>--regen configs</code> — пересоздаёт только конфигурации.</li>
+<li><code>--regen modules</code> — только модули.</li>
+<li><code>--regen all</code> — полная перегенерация.</li>
+<li><code>AI_DOCS_REGEN_ALL_THRESHOLD</code> — порог, при превышении которого применяется инкрементальный режим.</li>
 </ul>
-<h2 id="llm">Интеграция с LLM</h2>
+<h2 id="_10">Интеграция с окружением</h2>
 <ul>
-<li>Генерация описаний файлов и разделов через <code>LLMClient</code>.</li>
-<li>Кэширование ответов LLM (<code>CacheManager</code>, <code>llm_cache</code>) для ускорения повторных запусков.</li>
-<li>Оптимизация контекста: обрезка по токенам (<code>_truncate_context</code>), управление бюджетом ввода (<code>input_budget</code>).</li>
-<li>Параллельная обработка файлов с настраиваемым числом потоков (<code>threads</code>, <code>section_workers</code>).</li>
+<li>LLM настраивается через переменные окружения: <code>OPENAI_API_KEY</code>, <code>OPENAI_MODEL</code>, <code>OPENAI_MAX_TOKENS</code> и др.</li>
+<li>Поддержка сторонних API через <code>OPENAI_BASE_URL</code>.</li>
+<li>Конфигурация расширений и исключений — через <code>.ai-docs.yaml</code>.</li>
 </ul>
-<h2 id="_9">Генерируемые артефакты</h2>
-<ul>
-<li><code>README.md</code> — краткое описание проекта.</li>
-<li><code>docs/index.md</code>, <code>docs/modules/</code>, <code>docs/configs/</code> — структурированная документация.</li>
-<li><code>docs/dependencies.md</code>, <code>changes.md</code>, <code>glossary.md</code> — системные разделы.</li>
-<li><code>_index.json</code> — JSON-индекс для навигации.</li>
-<li><code>js/mermaid.min.js</code> — статический ресурс для диаграмм.</li>
-</ul>
-<h2 id="_10">Дополнительные возможности</h2>
-<ul>
-<li>Локализация заголовков (<code>SECTION_TITLES</code>, <code>DOMAIN_TITLES</code>).</li>
-<li>Опции генерации: <code>write_readme</code>, <code>write_mkdocs</code>, <code>force</code>, <code>language</code>.</li>
-<li>Очистка устаревших файлов перед записью.</li>
-<li>Сборка сайта MkDocs после генерации.</li>
-<li>Обработка ошибок с накоплением и выводом в конце выполнения.</li>
-</ul>
-<p>Изменения обеспечивают <strong>автоматизированную, масштабируемую и кэшируемую</strong> генерацию документации, адаптированную под структуру проекта и используемые технологии (Kubernetes, Terraform и др.).</p></div>
+<p>Изменения направлены на повышение производительности, точности и удобства сопровождения документации в CI/CD и локальной разработке.</p></div>
 </div>
 </div>
 <footer class="col-md-12">

@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Dict, List
+import time
 
 from .generator_shared import DOMAIN_TITLES, SECTION_TITLES, build_docs_index
 from .mkdocs import build_mkdocs_yaml, write_docs_files
@@ -31,6 +32,7 @@ def write_docs(
         print("[ai-docs] cleanup docs: removing orphan files")
         keep_files = {docs_dir / rel for rel in docs_files.keys()}
         keep_files.add(docs_dir / "index.md")
+        keep_files.add(docs_dir / "overview.md")
         keep_files.add(docs_dir / "changes.md")
         keep_files.add(docs_dir / "modules" / "index.md")
         keep_files.add(docs_dir / "configs" / "index.md")
@@ -43,6 +45,7 @@ def write_docs(
         for path in (docs_dir / "configs").glob("page-*.md"):
             keep_files.add(path)
         keep_dirs = {docs_dir / "plans"}
+        to_remove: List[Path] = []
         for path in docs_dir.rglob("*"):
             if path.is_dir():
                 continue
@@ -50,7 +53,18 @@ def write_docs(
                 continue
             if path in keep_files:
                 continue
-            path.unlink()
+            to_remove.append(path)
+        total = len(to_remove)
+        if total:
+            done = 0
+            start = time.time()
+            log_every = 5
+            for path in to_remove:
+                path.unlink()
+                done += 1
+                if done % log_every == 0 or done == total:
+                    elapsed = int(time.time() - start)
+                    print(f"[ai-docs] cleanup docs progress: {done}/{total} ({elapsed}s)")
     elif docs_dir.exists():
         print("[ai-docs] cleanup docs: skipped (no source changes)")
 
@@ -87,22 +101,39 @@ def build_mkdocs(
     import shutil
     import subprocess
 
-    mkdocs_bin = shutil.which("mkdocs")
-    if not mkdocs_bin:
-        raise RuntimeError("mkdocs is not installed or not on PATH")
-    subprocess.check_call([mkdocs_bin, "build", "-f", "mkdocs.yml"], cwd=output_root)
+    venv_mkdocs = output_root / ".venv" / "bin" / "mkdocs"
+    venv_python = output_root / ".venv" / "bin" / "python"
+    if venv_mkdocs.exists():
+        cmd = [str(venv_mkdocs), "build", "-f", "mkdocs.yml"]
+    elif venv_python.exists():
+        cmd = [str(venv_python), "-m", "mkdocs", "build", "-f", "mkdocs.yml"]
+    else:
+        mkdocs_bin = shutil.which("mkdocs")
+        if not mkdocs_bin:
+            raise RuntimeError("mkdocs is not installed or not on PATH")
+        cmd = [mkdocs_bin, "build", "-f", "mkdocs.yml"]
+    subprocess.check_call(cmd, cwd=output_root)
     _postprocess_mermaid_html(output_root / "ai_docs_site")
 
 
 def _postprocess_mermaid_html(site_dir: Path) -> None:
     if not site_dir.exists():
         return
-    for html_path in site_dir.rglob("*.html"):
+    html_paths = list(site_dir.rglob("*.html"))
+    total = len(html_paths)
+    done = 0
+    start = time.time()
+    log_every = 5
+    for html_path in html_paths:
         text = html_path.read_text(encoding="utf-8", errors="ignore")
         if "<div class=\"mermaid\"" not in text:
             continue
         text = text.replace("&gt;", ">")
         html_path.write_text(text, encoding="utf-8")
+        done += 1
+        if done % log_every == 0 or done == total:
+            elapsed = int(time.time() - start)
+            print(f"[ai-docs] mkdocs postprocess progress: {done}/{total} ({elapsed}s)")
 
 
 def __serialize_index(index: Dict[str, object]) -> str:

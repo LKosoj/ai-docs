@@ -20,6 +20,8 @@ markdown_extensions:
       format: !!python/name:mermaid2.fence_mermaid ''
 nav:
 - Главная: index.md
+- Обзор:
+  - Обзор проекта: overview.md
 - Архитектура: architecture.md
 - Запуск: runtime.md
 - Зависимости: dependencies.md
@@ -39,6 +41,11 @@ nav:
     - cli.py: modules/ai_docs/cli__py.md
     - domain.py: modules/ai_docs/domain__py.md
     - generator.py: modules/ai_docs/generator__py.md
+    - generator_cache.py: modules/ai_docs/generator_cache__py.md
+    - generator_output.py: modules/ai_docs/generator_output__py.md
+    - generator_sections.py: modules/ai_docs/generator_sections__py.md
+    - generator_shared.py: modules/ai_docs/generator_shared__py.md
+    - generator_summarize.py: modules/ai_docs/generator_summarize__py.md
     - llm.py: modules/ai_docs/llm__py.md
     - mkdocs.py: modules/ai_docs/mkdocs__py.md
     - scanner.py: modules/ai_docs/scanner__py.md

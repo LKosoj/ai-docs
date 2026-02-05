@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../../img/favicon.ico">
-        <title>utils.py - ai-docs</title>
+        <title>generator_cache.py - ai-docs</title>
         <link href="../../css/bootstrap.min.css" rel="stylesheet">
         <link href="../../css/fontawesome.min.css" rel="stylesheet">
         <link href="../../css/brands.min.css" rel="stylesheet">
@@ -118,7 +118,7 @@
 </li>
             
 <li>
-    <a href="generator_cache__py.html" class="dropdown-item">generator_cache.py</a>
+    <a href="generator_cache__py.html" class="dropdown-item active" aria-current="page">generator_cache.py</a>
 </li>
             
 <li>
@@ -158,7 +158,7 @@
 </li>
             
 <li>
-    <a href="utils__py.html" class="dropdown-item active" aria-current="page">utils.py</a>
+    <a href="utils__py.html" class="dropdown-item">utils.py</a>
 </li>
     </ul>
   </li>
@@ -176,12 +176,12 @@
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a rel="prev" href="tokenizer__py.html" class="nav-link">
+                                <a rel="prev" href="generator__py.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../../changes.html" class="nav-link">
+                                <a rel="next" href="generator_output__py.html" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -203,7 +203,7 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-bs-level="1"><a href="#ai_docsutils" class="nav-link">ai_docs/utils</a>
+            <li class="nav-item" data-bs-level="1"><a href="#ai_docsgenerator_cache" class="nav-link">ai_docs/generator_cache</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -212,72 +212,98 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<h1 id="ai_docsutils">ai_docs/utils</h1>
-<p>Модуль предоставляет набор утилит для работы с файлами, путями, хешированием и проверкой типов данных.<br />
-Основные функции включают вычисление SHA-256 хешей, безопасное создание слагов, определение двоичных файлов и проверку URL.<br />
-Поддерживает работу с объектами <code>Path</code> из <code>pathlib</code>, обеспечивая кроссплатформенную совместимость.</p>
-<p>Ключевые структуры данных<br />
-Path — объект для удобной и безопасной работы с файловыми путями в кроссплатформенной среде</p>
-<p>sha256_bytes(data: bytes) -&gt; str<br />
-Вычисляет SHA-256 хеш от байтовых данных и возвращает его в виде шестнадцатеричной строки<br />
-Аргументы<br />
-data — входные данные в виде байтов<br />
-Возвращает<br />
-Шестнадцатеричное строковое представление хеша SHA-256</p>
-<hr />
-<p>sha256_text(text: str) -&gt; str<br />
-Вычисляет SHA-256 хеш от текстовой строки, кодированной в UTF-8<br />
-Аргументы<br />
-text — входная текстовая строка<br />
-Возвращает<br />
-Шестнадцатеричное строковое представление хеша SHA-256</p>
-<hr />
-<p>read_text_file(path: Path) -&gt; str<br />
-Считывает содержимое текстового файла с указанным путём, используя кодировку UTF-8<br />
-Аргументы<br />
-path — путь к файлу в виде объекта Path<br />
-Возвращает<br />
-Содержимое файла в виде строки<br />
-Исключения<br />
-OSError — если файл не существует или недоступен для чтения</p>
-<hr />
-<p>safe_slug(path: str) -&gt; str<br />
-Преобразует строку в безопасный слаг, заменяя неалфавитно-цифровые символы на подчёркивания<br />
-Аргументы<br />
-path — входная строка для преобразования<br />
-Возвращает<br />
-Нормализованная строка, пригодная для использования в именах файлов или URL</p>
-<hr />
-<p>ensure_dir(path: Path) -&gt; None<br />
-Создаёт директорию по указанному пути, включая родительские, если они отсутствуют<br />
-Аргументы<br />
-path — путь к директории, которую необходимо создать<br />
-Исключения<br />
-OSError — если директорию не удаётся создать по системным причинам</p>
-<hr />
-<p>is_binary_file(path: Path, sample_size: int = 2048) -&gt; bool<br />
-Определяет, является ли файл двоичным, на основе наличия нулевых байтов в первых байтах<br />
-Аргументы<br />
-path — путь к файлу<br />
-sample_size — количество байтов для анализа (по умолчанию 2048)<br />
-Возвращает<br />
-True, если файл, вероятно, двоичный; иначе False<br />
-Исключения<br />
-OSError — возвращает True при ошибках доступа к файлу</p>
-<hr />
-<p>is_url(value: str) -&gt; bool<br />
-Проверяет, является ли строка URL (HTTP/HTTPS/Git)<br />
-Аргументы<br />
-value — строка для проверки<br />
-Возвращает<br />
-True, если строка начинается с http://, https:// или git@; иначе False</p>
-<hr />
-<p>to_posix(path: Path) -&gt; str<br />
-Преобразует путь в строку в формате POSIX, независимо от ОС<br />
-Аргументы<br />
-path — объект Path для преобразования<br />
-Возвращает<br />
-Строка пути с косыми чертами (/) в стиле POSIX</p></div>
+<h1 id="ai_docsgenerator_cache">ai_docs/generator_cache</h1>
+<div class="highlight"><pre><span></span><code>Модуль предоставляет функции для управления кэшированием, сравнения файлов, построения карты файлов и управления промежуточными результатами (например, аннотациями и сводками).  
+Он интегрируется с <span class="sb">`CacheManager`</span> для хранения состояния файлов и LLM-кэша, а также обеспечивает синхронизацию данных между запусками.  
+Ключевая логика включает вычисление различий, восстановление существующих результатов и очистку устаревших артефактов.
+
+Ключевые структуры данных
+file_map — словарь, сопоставляющий путь файла с его метаданными: хешем, размером, типом, доменами и содержимым
+index_data — словарь с информацией о предыдущем состоянии индекса, включая файлы и секции
+
+init_cache(cache_dir: Path, use_cache: bool)
+Инициализирует менеджер кэша и загружает сохранённые данные
+Аргументы
+cache_dir — директория для хранения кэша
+use_cache — флаг, указывающий, следует ли использовать кэширование LLM
+Возвращает
+Кортеж: (cache, llm_cache, index_data, prev_files), где llm_cache может быть None
+Исключения
+Может выбрасывать исключения, связанные с чтением файлов или десериализацией данных
+
+---
+build_file_map(files: List[Dict]) -&gt; Dict[str, Dict]
+Создаёт карту файлов с хешами и метаданными из списка файлов
+Аргументы
+files — список словарей с полями path, content, size, type, domains
+Возвращает
+Словарь, индексированный путями, содержащий хеш, размер, тип, домены и содержимое
+Исключения
+Не выбрасывает исключения при корректных входных данных
+
+---
+diff_files(cache: CacheManager, file_map: Dict[str, Dict])
+Вычисляет различия между текущей картой файлов и данными в кэше
+Аргументы
+cache — экземпляр CacheManager
+file_map — текущая карта файлов
+Возвращает
+Словарь с ключами &#39;added&#39;, &#39;changed&#39;, &#39;unchanged&#39;, &#39;deleted&#39;, содержащий соответствующие пути
+Исключения
+Может выбрасывать исключения при отсутствии ожидаемых данных в кэше
+
+---
+ensure_summary_dirs(cache_dir: Path)
+Создаёт директории для хранения промежуточных сводок (файлов, модулей, конфигов)
+Аргументы
+cache_dir — корневая директория кэша
+Возвращает
+Кортеж из путей: (summaries_dir, module_summaries_dir, config_summaries_dir)
+Исключения
+Может выбрасывать исключения при ошибках создания директорий
+
+---
+save_cache_snapshot(cache: CacheManager, file_map: Dict[str, Dict], index_data: Dict, llm_cache: Dict[str, str], use_cache: bool) -&gt; None
+Сохраняет снимок состояния файлов и кэша LLM (если включено)
+Аргументы
+cache — экземпляр CacheManager
+file_map — текущая карта файлов
+index_data — данные индекса, включая секции
+llm_cache — кэш ответов LLM
+use_cache — флаг использования кэша
+Исключения
+Может выбрасывать исключения при ошибках записи в файловую систему
+
+---
+carry_unchanged_summaries(unchanged: Dict[str, Dict], prev_files: Dict[str, Dict]) -&gt; Tuple[List[Tuple[str, Dict]], List[Tuple[str, Dict]], List[Tuple[str, Dict]]]
+Переносит пути к существующим сводкам для неизменённых файлов или определяет, какие нужно перегенерировать
+Аргументы
+unchanged — словарь неизменённых файлов
+prev_files — словарь файлов из предыдущего запуска
+Возвращает
+Кортеж из трёх списков: файлы без summary, без module_summary, без config_summary
+Исключения
+Не выбрасывает исключения при корректных входных данных
+
+---
+cleanup_orphan_summaries(file_map: Dict[str, Dict], summaries_dir: Path, module_summaries_dir: Path, config_summaries_dir: Path) -&gt; None
+Удаляет сводки, на которые больше нет ссылок в текущей карте файлов
+Аргументы
+file_map — текущая карта файлов
+summaries_dir — директория сводок по файлам
+module_summaries_dir — директория сводок по модулям
+config_summaries_dir — директория сводок по конфигурациям
+Исключения
+Может выбрасывать исключения при ошибках удаления файлов
+
+---
+cleanup_deleted_summaries(deleted: Dict[str, Dict]) -&gt; None
+Удаляет сводки для файлов, которые были удалены из проекта
+Аргументы
+deleted — словарь удалённых файлов с их метаданными
+Исключения
+Может выбрасывать исключения при ошибках удаления файлов
+</code></pre></div></div>
             </div>
         </div>
 

@@ -33,6 +33,14 @@
 <li class="nav-item">
 <a class="nav-link" href="index.html">Главная</a>
 </li>
+<li class="nav-item dropdown">
+<a aria-expanded="false" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">Обзор</a>
+<ul class="dropdown-menu">
+<li>
+<a class="dropdown-item" href="overview.html">Обзор проекта</a>
+</li>
+</ul>
+</li>
 <li class="nav-item">
 <a class="nav-link" href="architecture.html">Архитектура</a>
 </li>
@@ -93,6 +101,21 @@
 <a class="dropdown-item" href="modules/ai_docs/generator__py.html">generator.py</a>
 </li>
 <li>
+<a class="dropdown-item" href="modules/ai_docs/generator_cache__py.html">generator_cache.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="modules/ai_docs/generator_output__py.html">generator_output.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="modules/ai_docs/generator_sections__py.html">generator_sections.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="modules/ai_docs/generator_shared__py.html">generator_shared.py</a>
+</li>
+<li>
+<a class="dropdown-item" href="modules/ai_docs/generator_summarize__py.html">generator_summarize.py</a>
+</li>
+<li>
 <a class="dropdown-item" href="modules/ai_docs/llm__py.html">llm.py</a>
 </li>
 <li>
@@ -150,11 +173,7 @@
 <ul class="nav flex-column">
 <li class="nav-item" data-bs-level="1"><a class="nav-link" href="#_1">Соглашения</a>
 <ul class="nav flex-column">
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Структура проекта</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Именование файлов</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_2">Именование и структура файлов</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -162,31 +181,27 @@
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_4">Классификация файлов</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_3">Классификация файлов</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_5">Генерация контента</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_4">Обработка изменений</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_6">Кэширование</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_5">Работа с кэшем</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_7">Язык документации</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_6">Язык и локализация</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_8">Обработка изменений</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#cicd">Интеграция в CI/CD</a>
 <ul class="nav flex-column">
 </ul>
 </li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#mkdocs">Работа с MkDocs</a>
-<ul class="nav flex-column">
-</ul>
-</li>
-<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_9">Безопасность и совместимость</a>
+<li class="nav-item" data-bs-level="2"><a class="nav-link" href="#_7">Пользовательские настройки</a>
 <ul class="nav flex-column">
 </ul>
 </li>
@@ -197,126 +212,105 @@
 </div></div>
 <div class="col-md-9" role="main">
 <h1 id="_1">Соглашения</h1>
-<p>При работе с <code>ai_docs</code> и генерируемой документацией соблюдаются единые технические и стилистические соглашения. Они обеспечивают согласованность, читаемость и автоматическую обработку.</p>
-<h2 id="_2">Структура проекта</h2>
-<p>Генерируемая документация размещается в следующей структуре:</p>
-<div class="highlight"><pre><span></span><code>.ai-docs/
-├── _index.json          # Навигационный индекс
-├── changes.md           # Отчёт об изменениях
-├── glossary.md          # Заглушка глоссария
-├── dependencies.md      # Список зависимостей
-├── modules/             # Описания модулей
-├── configs/             # Документация конфигураций
-└── js/mermaid.min.js    # Поддержка диаграмм Mermaid
-</code></pre></div>
+<p>При работе с <code>ai_docs</code> соблюдайте следующие соглашения для обеспечения согласованности, предсказуемости и эффективности генерации документации.</p>
+<h2 id="_2">Именование и структура файлов</h2>
 <ul>
-<li>Все промежуточные данные и кэш хранятся в <code>.ai-docs/</code> и <code>.ai_docs_cache/</code>.</li>
-<li>Исходные файлы проекта не изменяются, если не указан флаг <code>--force</code>.</li>
-</ul>
-<h2 id="_3">Именование файлов</h2>
-<ul>
-<li>Имена файлов в <code>modules/</code> и <code>configs/</code> нормализуются:</li>
-<li>Удаляются недопустимые символы.</li>
-<li>Пробелы заменяются на дефисы.</li>
-<li>Пути преобразуются в slug-формат (например, <code>src/utils/helper.py</code> → <code>src-utils-helper.md</code>).</li>
-<li>Файлы сохраняются в UTF-8 без BOM.</li>
+<li>Все сгенерированные файлы используют <strong>нижний регистр</strong> и <strong>kebab-case</strong> в названиях:<br/>
+<code>architecture.md</code>, <code>deployment-guide.md</code>, <code>ci-cd-pipeline.md</code>.</li>
+<li>Структура выходной директории:
+  <div class="highlight"><pre><span></span><code>.ai-docs/
+├── modules/          # Документация по модулям
+├── configs/          # Описание конфигурационных файлов
+├── index.md          # Главная страница документации
+├── architecture.md
+├── testing.md
+└── changes.md        # Отчёт об изменениях
+</code></pre></div></li>
+<li>Служебные директории:</li>
+<li><code>.ai_docs_cache/</code> — кэш LLM и метаданных (не коммитится).</li>
+<li><code>ai_docs_site/</code> — собранный MkDocs-сайт (может коммититься при необходимости).</li>
 </ul>
 <h2 id="markdown">Форматирование Markdown</h2>
 <ul>
-<li>Заголовки разделов используют <code>#</code>, <code>##</code>, <code>###</code> в соответствии с иерархией.</li>
-<li>Код оформляется в блоки с указанием языка:
-  <div class="highlight"><pre><span></span><code><span class="sb">```python</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">example</span><span class="p">():</span>
-    <span class="k">pass</span>
+<li>Используется <strong>CommonMark</strong> с поддержкой GitHub Flavored Markdown (GFM).</li>
+<li>Заголовки: один пробел после <code>#</code>, например: <code>## Архитектура</code>.</li>
+<li>Кодовые блоки всегда с указанием языка:
+  <div class="highlight"><pre><span></span><code><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nginx:1.21</span>
+<span class="nt">ports</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"80:80"</span>
+</code></pre></div></li>
+<li>Диаграммы Mermaid вставляются через:
+  <div class="highlight"><pre><span></span><code><span class="sb">```mermaid</span>
+<span class="s">graph TD</span>
+<span class="s">  A[Start] --&gt; B[Process]</span>
 <span class="sb">```</span>
 </code></pre></div></li>
-<li>Для конфигурационных блоков (YAML, JSON, TOML) используется перенос строк с <code>&lt;br&gt;</code> только при необходимости отображения в MkDocs.</li>
-<li>Ссылки на другие разделы — относительные (например, <code>[Модули](modules/)</code>).</li>
+<li>Списки: один пробел после <code>-</code> или <code>*</code>, вложенные списки — отступ 2 пробела.</li>
 </ul>
-<h2 id="_4">Классификация файлов</h2>
-<p>Файлы автоматически классифицируются по типу и домену:</p>
-<table>
-<thead>
-<tr>
-<th>Тип</th>
-<th>Примеры расширений/имён</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>code</code></td>
-<td><code>.py</code>, <code>.js</code>, <code>.ts</code>, <code>.go</code>, <code>.java</code>, <code>.cpp</code></td>
-</tr>
-<tr>
-<td><code>config</code></td>
-<td><code>.yaml</code>, <code>.yml</code>, <code>.json</code>, <code>.toml</code>, <code>.env</code></td>
-</tr>
-<tr>
-<td><code>docs</code></td>
-<td><code>.md</code>, <code>.rst</code>, <code>.txt</code></td>
-</tr>
-<tr>
-<td><code>docker</code></td>
-<td><code>Dockerfile</code>, <code>.dockerignore</code></td>
-</tr>
-<tr>
-<td><code>terraform</code></td>
-<td><code>.tf</code>, <code>.tfvars</code></td>
-</tr>
-<tr>
-<td><code>kubernetes</code></td>
-<td><code>k8s/</code>, <code>helm/</code>, <code>*.k8s.yaml</code></td>
-</tr>
-<tr>
-<td><code>ci</code></td>
-<td><code>.gitlab-ci.yml</code>, <code>.github/workflows/</code></td>
-</tr>
-</tbody>
-</table>
-<p>Домены определяются по наличию ключевых файлов или путей (например, <code>requirements.txt</code> → Python, <code>package.json</code> → JS/TS).</p>
-<h2 id="_5">Генерация контента</h2>
+<h2 id="_3">Классификация файлов</h2>
+<p>Тип файла определяется автоматически по:
+- Расширению (из <code>CODE_EXTENSIONS</code>, <code>CONFIG_EXTENSIONS</code> и др.).
+- Имени (<code>Dockerfile</code>, <code>Makefile</code>, <code>.github/workflows/*.yml</code>).
+- Расположению (<code>terraform/</code>, <code>k8s/</code>, <code>docs/</code>).</p>
+<p>Примеры:
+- <code>.py</code>, <code>.js</code>, <code>.go</code> → <code>code</code>
+- <code>.yaml</code>, <code>.tf</code>, <code>.json</code> → <code>config</code>
+- <code>README.md</code>, <code>docs/*.md</code> → <code>doc</code></p>
+<h2 id="_4">Обработка изменений</h2>
 <ul>
-<li>Все описания генерируются с помощью LLM, с нормализацией вывода:</li>
-<li>Для модулей — через <code>MODULE_SUMMARY_PROMPT</code>.</li>
-<li>Для конфигов — через <code>CONFIG_SUMMARY_PROMPT</code>.</li>
-<li>Общие резюме — через <code>SUMMARY_PROMPT</code>.</li>
-<li>Длинные файлы разбиваются на чанки (<code>chunk_text</code>) с учётом лимита токенов модели.</li>
-<li>Вывод LLM нормализуется: удаляются лишние префиксы, приводится к единому формату.</li>
+<li>При запуске <code>ai_docs</code> сравнивает хэши файлов с предыдущим состоянием (через <code>CacheManager</code>).</li>
+<li>Изменения фиксируются в <code>changes.md</code>:</li>
+<li>Добавленные, изменённые, удалённые файлы.</li>
+<li>Перегенерированные разделы (если указан <code>--regen</code>).</li>
+<li>Ручная правка сгенерированных файлов <strong>не рекомендуется</strong>. Вместо этого:</li>
+<li>Обновите исходный код или конфигурацию.</li>
+<li>Перезапустите <code>ai_docs</code> с нужными флагами.</li>
 </ul>
-<h2 id="_6">Кэширование</h2>
+<h2 id="_5">Работа с кэшем</h2>
 <ul>
-<li>Результаты LLM-запросов кэшируются по SHA256 от payload.</li>
-<li>Состояние файлов отслеживается через <code>CacheManager</code>:</li>
-<li><code>index.json</code> — хэши и метаданные файлов.</li>
-<li><code>llm_cache.json</code> — ответы модели.</li>
-<li>При запуске с <code>--no-cache</code> кэш игнорируется, но не удаляется.</li>
+<li>Кэш LLM-ответов хранится в <code>.ai_docs_cache/llm_cache.json</code>.</li>
+<li>Для принудительного обновления:</li>
+<li><code>--no-cache</code> — отключает кэш LLM.</li>
+<li><code>--regen configs</code> — перегенерирует только конфигурации.</li>
+<li><code>--force</code> — перезаписывает <code>README.md</code>.</li>
+<li>При CI/CD используйте кэширование директории <code>.ai_docs_cache</code> для ускорения сборки.</li>
 </ul>
-<h2 id="_7">Язык документации</h2>
+<h2 id="_6">Язык и локализация</h2>
 <ul>
-<li>Язык задаётся флагом <code>--language</code> (по умолчанию <code>ru</code>).</li>
-<li>Все заголовки, описания и сообщения генерируются на указанном языке.</li>
-<li>Локализованные заголовки хранятся в <code>SECTION_TITLES</code>, <code>DOMAIN_TITLES</code>.</li>
+<li>Язык документации задаётся через <code>--language ru|en</code>.</li>
+<li>Все сгенерированные заголовки и описания соответствуют выбранному языку.</li>
+<li>Ключевые термины (например, <code>Kubernetes</code>, <code>Terraform</code>) не переводятся.</li>
 </ul>
-<h2 id="_8">Обработка изменений</h2>
-<p>После генерации формируется <code>changes.md</code> со списками:
-- Добавленные файлы.
-- Изменённые файлы.
-- Удалённые файлы.
-- Перегенерированные разделы.</p>
-<p>Отчёт используется для аудита и CI/CD-интеграций.</p>
-<h2 id="mkdocs">Работа с MkDocs</h2>
+<h2 id="cicd">Интеграция в CI/CD</h2>
+<p>Пример для GitHub Actions:
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Generate Docs</span>
+<span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">    </span><span class="no">ai-docs --source . --readme --mkdocs --language ru</span>
+<span class="w">  </span><span class="nt">env</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">OPENAI_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.OPENAI_API_KEY }}</span>
+<span class="w">    </span><span class="nt">AI_DOCS_THREADS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+</code></pre></div></p>
 <ul>
-<li>Генерируется <code>mkdocs.yml</code> с поддержкой:</li>
-<li>Плагина <code>mermaid2</code> для диаграмм.</li>
-<li>Кастомной навигации из <code>_index.json</code>.</li>
-<li>Локализованных заголовков.</li>
-<li>Сборка выполняется автоматически, если не указан <code>--local-site</code>.</li>
+<li>Убедитесь, что <code>OPENAI_API_KEY</code> задан.</li>
+<li>Рекомендуется кэшировать <code>.ai_docs_cache</code> между запусками.</li>
 </ul>
-<h2 id="_9">Безопасность и совместимость</h2>
+<h2 id="_7">Пользовательские настройки</h2>
+<p>Конфигурация через <code>.ai-docs.yaml</code>:
+<div class="highlight"><pre><span></span><code><span class="nt">code_extensions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">.py</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Python</span>
+<span class="w">  </span><span class="nt">.sh</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Bash</span>
+
+<span class="nt">exclude</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">temp/*</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="err">*</span><span class="l l-Scalar l-Scalar-Plain">.log</span>
+
+<span class="nt">config_extensions</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">.yaml</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">YAML</span>
+<span class="w">  </span><span class="nt">.tf</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Terraform</span>
+</code></pre></div></p>
 <ul>
-<li>Бинарные файлы определяются по наличию нулевых байтов и исключаются из анализа.</li>
-<li>Симлинки обрабатываются, но не следуют за циклами.</li>
-<li>Поддерживается только UTF-8 кодировка текстовых файлов.</li>
+<li>Файл <code>.ai-docs.yaml</code> коммитится в репозиторий.</li>
+<li>Пользовательские исключения дополняют стандартные (<code>.git</code>, <code>node_modules</code>, <code>.venv</code> и др.).</li>
 </ul>
 <p>Соблюдение этих соглашений гарантирует стабильную и предсказуемую работу <code>ai_docs</code> в любых проектах.</p></div>
 </div>

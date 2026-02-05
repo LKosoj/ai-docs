@@ -31,6 +31,7 @@ def build_mkdocs_yaml(
     nav = [
         {"Главная": "index.md"},
     ]
+    nav.append({"Обзор": [{"Обзор проекта": "overview.md"}]})
     if "architecture" in sections:
         nav.append({"Архитектура": "architecture.md"})
     if "runtime" in sections:
@@ -155,7 +156,19 @@ def _tree_to_nav(tree: Dict[str, object]) -> List[Dict[str, object]]:
 
 def write_docs_files(docs_dir: Path, files: Dict[str, str]) -> None:
     docs_dir.mkdir(parents=True, exist_ok=True)
+    total = len(files)
+    done = 0
+    start = None
+    log_every = 5
     for rel_path, content in files.items():
         out_path = docs_dir / rel_path
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(content, encoding="utf-8")
+        if total:
+            if start is None:
+                import time
+                start = time.time()
+            done += 1
+            if done % log_every == 0 or done == total:
+                elapsed = int(time.time() - start)
+                print(f"[ai-docs] write docs progress: {done}/{total} ({elapsed}s)")

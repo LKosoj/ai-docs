@@ -37,6 +37,15 @@
                             <li class="nav-item">
                                 <a href="../../index.html" class="nav-link">Главная</a>
                             </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Обзор</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../overview.html" class="dropdown-item">Обзор проекта</a>
+</li>
+                                </ul>
+                            </li>
                             <li class="nav-item">
                                 <a href="../../architecture.html" class="nav-link">Архитектура</a>
                             </li>
@@ -109,6 +118,26 @@
 </li>
             
 <li>
+    <a href="generator_cache__py.html" class="dropdown-item">generator_cache.py</a>
+</li>
+            
+<li>
+    <a href="generator_output__py.html" class="dropdown-item">generator_output.py</a>
+</li>
+            
+<li>
+    <a href="generator_sections__py.html" class="dropdown-item">generator_sections.py</a>
+</li>
+            
+<li>
+    <a href="generator_shared__py.html" class="dropdown-item">generator_shared.py</a>
+</li>
+            
+<li>
+    <a href="generator_summarize__py.html" class="dropdown-item">generator_summarize.py</a>
+</li>
+            
+<li>
     <a href="llm__py.html" class="dropdown-item active" aria-current="page">llm.py</a>
 </li>
             
@@ -147,7 +176,7 @@
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a rel="prev" href="generator__py.html" class="nav-link">
+                                <a rel="prev" href="generator_summarize__py.html" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
@@ -184,44 +213,38 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="ai_docsllm">ai_docs/llm</h1>
-<div class="highlight"><pre><span></span><code>Клиент для взаимодействия с моделью LLM через API, поддерживающий кэширование запросов и настройку параметров генерации. Работает с любым совместимым с OpenAI API сервером, позволяет отправлять чат-запросы и управлять контекстом. Кэширование осуществляется по хешу тела запроса, потокобезопасно. Конфигурация может быть загружена из переменных окружения через функцию <span class="sb">`from_env`</span>.
+<div class="highlight"><pre><span></span><code>Асинхронный клиент для взаимодействия с LLM через OpenAI-совместимое API с поддержкой кэширования, автоматических повторных попыток и адаптивного таймаута. Поддерживает настройку параметров модели через конструктор и переменные окружения. Предоставляет методы для оценки длины входных данных и управления таймаутами на основе объёма запроса.
 
 Ключевые структуры данных
-LLMClient — Клиент для отправки запросов к LLM с поддержкой кэширования и настройкой параметров генерации
+LLMClient — Асинхронный клиент для работы с LLM через OpenAI-совместимое API
 
+---
 class LLMClient
-Клиент для взаимодействия с LLM через API с поддержкой кэширования и управления контекстом
+Асинхронный клиент для выполнения запросов к языковым моделям с поддержкой кэширования и повторных попыток
 Поля
-api_key — Ключ аутентификации для доступа к API
-base_url — Базовый URL API (с опциональным суффиксом /v1)
-model — Имя модели для генерации (например, gpt-4o-mini)
-temperature — Параметр температуры для разнообразия ответов
+api_key — Ключ API для аутентификации
+base_url — Базовый URL для API, может быть пустым для использования стандартного
+model — Имя модели, используемой для генерации
+temperature — Параметр температуры для контролирования случайности вывода
 max_tokens — Максимальное количество токенов в ответе
-context_limit — Общий лимит токенов в контексте
-
+context_limit — Ограничение контекстного окна модели в токенах
+<span class="ge">_context_</span>limit — Внутренняя защита от превышения лимита контекста
+<span class="ge">_cache_</span>lock — Асинхронная блокировка для потокобезопасного доступа к кэшу
+_client — Экземпляр AsyncOpenAI для выполнения HTTP-запросов
 Методы
-<span class="gu">LLMClient.__init__(self, api_key: str, base_url: str, model: str, temperature: float = 0.2, max_tokens: int = 1200, context_limit: int = 8192) — Инициализирует клиент для работы с LLM API</span>
-<span class="gu">---</span>
-LLMClient._cache_key(self, payload: dict) — Генерирует SHA256-хеш JSON-представления payload для использования в кэшировании
-Аргументы
-payload — Словарь с данными запроса
-Возвращает
-<span class="gu">Хешированный ключ в виде строки</span>
-<span class="gu">---</span>
-LLMClient.chat(self, messages: list[dict], cache: dict | None = None) — Отправляет запрос к чат-модели и возвращает сгенерированный ответ
-Аргументы
-messages — Список сообщений диалога в формате {&quot;role&quot;: &quot;...&quot;, &quot;content&quot;: &quot;...&quot;}
-cache — Опциональный словарь для кэширования ответов (ключ — хеш запроса, значение — ответ)
-Возвращает
-Текст сгенерированного ответа от модели
-Исключения
-<span class="gu">RuntimeError — Если ответ API не содержит ожидаемого поля с контентом</span>
-<span class="gu">---</span>
-from_env() — Создаёт экземпляр LLMClient на основе переменных окружения
+<span class="gs">__init__</span>(api_key: str, base_url: str, model: str, temperature: float = 0.2, max_tokens: int = 1200, context_limit: int = 8192) — Инициализирует клиент с параметрами модели и HTTP-клиентом
+<span class="ge">_estimate_</span>input_tokens(messages: List[Dict[str, str]]) -&gt; int — Оценивает количество токенов во входных сообщениях
+<span class="ge">_compute_</span>read_timeout(input_tokens: int) -&gt; float — Вычисляет адаптивный таймаут чтения на основе количества входных токенов
+<span class="ge">_cache_</span>key(payload: Dict) -&gt; str — Генерирует хеш-ключ для кэширования на основе содержимого запроса
+chat(messages: List[Dict[str, str]], cache: Optional[Dict[str, str]] = None) -&gt; str — Асинхронно отправляет запрос к модели и возвращает сгенерированный ответ
+
+---
+from_env() -&gt; LLMClient
+Создаёт экземпляр LLMClient, используя параметры из переменных окружения
 Возвращает
 Настроенный экземпляр LLMClient
 Исключения
-RuntimeError — Если не задана переменная окружения OPENAI_API_KEY
+RuntimeError — Если обязательная переменная окружения OPENAI_API_KEY не установлена
 </code></pre></div></div>
             </div>
         </div>

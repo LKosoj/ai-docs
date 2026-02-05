@@ -37,6 +37,15 @@
                             <li class="nav-item">
                                 <a href="../../index.html" class="nav-link">Главная</a>
                             </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Обзор</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../../overview.html" class="dropdown-item">Обзор проекта</a>
+</li>
+                                </ul>
+                            </li>
                             <li class="nav-item">
                                 <a href="../../architecture.html" class="nav-link">Архитектура</a>
                             </li>
@@ -106,6 +115,26 @@
             
 <li>
     <a href="generator__py.html" class="dropdown-item">generator.py</a>
+</li>
+            
+<li>
+    <a href="generator_cache__py.html" class="dropdown-item">generator_cache.py</a>
+</li>
+            
+<li>
+    <a href="generator_output__py.html" class="dropdown-item">generator_output.py</a>
+</li>
+            
+<li>
+    <a href="generator_sections__py.html" class="dropdown-item">generator_sections.py</a>
+</li>
+            
+<li>
+    <a href="generator_shared__py.html" class="dropdown-item">generator_shared.py</a>
+</li>
+            
+<li>
+    <a href="generator_summarize__py.html" class="dropdown-item">generator_summarize.py</a>
 </li>
             
 <li>
@@ -184,24 +213,76 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="ai_docscache">ai_docs/cache</h1>
-<p>Модуль предоставляет класс <code>CacheManager</code> для управления кэшем файлов и данных, связанных с обработкой текстов и LLM-кэшированием.<br />
-Он хранит индекс файлов и кэш ответов LLM в виде JSON-файлов на диске.<br />
-Класс поддерживает загрузку и сохранение данных, а также вычисление различий между текущим и предыдущим состоянием файлов.</p>
-<p>Ключевые структуры данных
-Dict — Словарь, представляющий индекс файлов или кэш LLM; структура: {"files": {path: {meta}}, "sections": {...}} или {prompt: response}</p>
-<p>class CacheManager
-Менеджер кэша для хранения индекса файлов и кэша ответов LLM
+<div class="highlight"><pre><span></span><code>Модуль предоставляет класс <span class="sb">`CacheManager`</span> для управления кэшем файлов и данных, связанных с обработкой текстов и LLM-кэшированием. Он хранит индекс файлов и кэш ответов модели в JSON-файлах, обеспечивая загрузку, сохранение и сравнение состояний. Класс поддерживает восстановление после повреждения данных и безопасную запись с проверкой кодировки.
+
+Ключевые структуры данных
+Dict[str, Dict] — Словарь, представляющий метаданные файлов, где ключ — путь, значение — словарь с полями, например, hash.
+Dict[str, str] — Кэш запросов и ответов LLM, где ключ — хэш запроса, значение — текст ответа.
+
+class CacheManager
+Менеджер кэша для хранения индекса файлов и кэша ответов LLM в файловой системе
 Поля
-cache_dir — Директория, в которой хранятся файлы кэша
-index_path — Путь к файлу index.json с метаданными файлов
-llm_cache_path — Путь к файлу llm_cache.json с кэшированными ответами LLM
+cache_dir — Директория, в которой хранятся все кэшированные данные
+index_path — Путь к файлу index.json с информацией о проиндексированных файлах
+llm_cache_path — Путь к файлу llm_cache.json с кэшем ответов LLM
 Методы
-<strong>init</strong>(self, cache_dir: Path) — Инициализирует менеджер кэша и создает необходимые директории и файлы
-load_index(self) -&gt; Dict — Загружает индекс файлов из index.json; при отсутствии возвращает пустую структуру
-save_index(self, data: Dict) -&gt; None — Сохраняет переданный словарь данных в index.json
-load_llm_cache(self) -&gt; Dict[str, str] — Загружает кэш LLM из llm_cache.json; при отсутствии возвращает пустой словарь
-save_llm_cache(self, data: Dict[str, str]) -&gt; None — Сохраняет переданный словарь в llm_cache.json
-diff_files(self, current_files: Dict[str, Dict]) -&gt; Tuple[Dict, Dict, Dict, Dict] — Сравнивает текущие файлы с предыдущим состоянием и возвращает словари добавленных, изменённых, удалённых и неизменённых файлов</p></div>
+<span class="gs">__init__</span>(self, cache_dir: Path) — Инициализирует менеджер кэша и создает необходимые директории и файлы
+load_index(self) -&gt; Dict — Загружает индекс файлов из index.json, возвращает пустую структуру при отсутствии файла
+save_index(self, data: Dict) -&gt; None — Сохраняет индекс файлов в index.json с форматированием и поддержкой UTF-8
+load_llm_cache(self) -&gt; Dict[str, str] — Загружает кэш LLM из llm_cache.json, возвращает пустой словарь при отсутствии или ошибке
+save_llm_cache(self, data: Dict[str, str]) -&gt; None — Сохраняет кэш LLM в llm_cache.json с резервным копированием при повреждении
+diff_files(self, current_files: Dict[str, Dict]) -&gt; Tuple[Dict, Dict, Dict, Dict] — Сравнивает текущие файлы с предыдущим индексом и возвращает добавленные, изменённые, удалённые и неизменённые файлы
+
+---
+<span class="gs">__init__</span>(self, cache_dir: Path)
+Инициализирует менеджер кэша, создает директорию кэша и устанавливает пути к файлам
+Аргументы
+cache_dir — Директория для хранения кэша
+
+---
+load_index(self) -&gt; Dict
+Загружает индекс файлов из JSON-файла или возвращает начальную структуру при его отсутствии
+Возвращает
+Словарь с ключами &quot;files&quot; и &quot;sections&quot;, представляющий состояние индекса
+Исключения
+UnicodeDecodeError — При ошибке декодирования файла из-за некорректной кодировки
+JSONDecodeError — При повреждении формата JSON в файле index.json
+
+---
+save_index(self, data: Dict) -&gt; None
+Сохраняет переданный словарь в файл index.json с отступами и поддержкой UTF-8
+Аргументы
+data — Данные индекса для сохранения
+Исключения
+TypeError — Если данные не могут быть сериализованы в JSON
+IOError — При ошибке записи файла
+
+---
+load_llm_cache(self) -&gt; Dict[str, str]
+Загружает кэш LLM из JSON-файла; при ошибке парсинга сохраняет повреждённый файл как .bad и возвращает пустой словарь
+Возвращает
+Словарь вида {request_hash: response_text}, либо пустой словарь при отсутствии или ошибке
+Исключения
+UnicodeDecodeError — При ошибке декодирования файла из-за некорректной кодировки
+JSONDecodeError — При повреждении формата JSON в файле llm_cache.json
+
+---
+save_llm_cache(self, data: Dict[str, str]) -&gt; None
+Сохраняет кэш LLM в файл, предварительно делая снимок данных
+Аргументы
+data — Кэш запросов и ответов для сохранения
+Исключения
+TypeError — Если данные не могут быть сериализованы в JSON
+IOError — При ошибке записи файла
+
+---
+diff_files(self, current_files: Dict[str, Dict]) -&gt; Tuple[Dict, Dict, Dict, Dict]
+Сравнивает текущее состояние файлов с предыдущим индексом и определяет, какие файлы были добавлены, изменены, удалены или остались без изменений
+Аргументы
+current_files — Текущий словарь файлов с их метаданными, ключ — путь
+Возвращает
+Кортеж из четырёх словарей: добавленные, изменённые, удалённые, неизменённые файлы
+</code></pre></div></div>
             </div>
         </div>
 

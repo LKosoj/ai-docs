@@ -192,15 +192,29 @@ async def build_sections(
         if m.get("summary_path")
     ]
 
-    overview_context = await build_hierarchical_context(
-        llm,
-        llm_cache,
-        all_summaries,
-        input_budget,
-        language,
-        "overview",
-        focus="Обзор проекта",
-    )
+    docs_files: Dict[str, str] = {}
+    overview_path = docs_dir / "overview.md"
+    overview_forced = is_forced("overview", "section:overview", "overview.md")
+    should_regen_overview = overview_forced or force_all or not overview_path.exists()
+    if should_regen_overview:
+        overview_context = await build_hierarchical_context(
+            llm,
+            llm_cache,
+            all_summaries,
+            input_budget,
+            language,
+            "overview",
+            focus="Обзор проекта",
+        )
+        docs_files["overview.md"] = f"# Обзор проекта\n\n{overview_context}\n"
+    else:
+        overview_text = read_text_file(overview_path)
+        overview_lines = overview_text.splitlines()
+        if overview_lines and overview_lines[0].lstrip().startswith("#"):
+            overview_context = "\n".join(overview_lines[1:]).lstrip()
+        else:
+            overview_context = overview_text.strip()
+        docs_files["overview.md"] = overview_text if overview_text.endswith("\n") else overview_text + "\n"
 
     section_contexts: Dict[str, str] = {}
 
@@ -218,7 +232,6 @@ async def build_sections(
         return section_contexts[section_key]
 
     regenerated_sections: List[str] = []
-    docs_files: Dict[str, str] = {}
     module_pages: Dict[str, str] = {}
     configs_written: Dict[str, str] = {}
     section_tasks: List[asyncio.Task] = []
@@ -275,21 +288,22 @@ async def build_sections(
         module_summaries.append(summary)
     if module_summaries:
         modules_title = "Модули"
-        modules_context = await build_hierarchical_context(
-            llm,
-            llm_cache,
-            module_summaries,
-            input_budget,
-            language,
-            "modules",
-            focus=modules_title,
-        )
-        intro = await generate_section(llm, llm_cache, modules_title, modules_context, language)
         sorted_modules = sorted(module_nav_paths)
         per_page = 100
         total = len(sorted_modules)
         pages = [sorted_modules[i : i + per_page] for i in range(0, total, per_page)]
-        if is_forced("modules") or not (docs_dir / "modules" / "index.md").exists():
+        modules_index_path = docs_dir / "modules" / "index.md"
+        if is_forced("modules") or not modules_index_path.exists():
+            modules_context = await build_hierarchical_context(
+                llm,
+                llm_cache,
+                module_summaries,
+                input_budget,
+                language,
+                "modules",
+                focus=modules_title,
+            )
+            intro = await generate_section(llm, llm_cache, modules_title, modules_context, language)
             for page_idx, page_items in enumerate(pages, start=1):
                 toc_lines = "\n".join(
                     [

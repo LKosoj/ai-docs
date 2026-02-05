@@ -103,15 +103,34 @@ def cleanup_orphan_summaries(
     for summary_dir in (summaries_dir, module_summaries_dir, config_summaries_dir):
         if not summary_dir.exists():
             continue
+        to_remove: List[Path] = []
         for summary_path in summary_dir.glob("*.md"):
             if str(summary_path.resolve()) not in referenced_summary_paths:
+                to_remove.append(summary_path)
+        total = len(to_remove)
+        if total:
+            import time
+            done = 0
+            start = time.time()
+            log_every = 5
+            for summary_path in to_remove:
                 try:
                     summary_path.unlink()
                 except FileNotFoundError:
                     pass
+                done += 1
+                if done % log_every == 0 or done == total:
+                    elapsed = int(time.time() - start)
+                    print(f"[ai-docs] cleanup summaries progress: {done}/{total} ({elapsed}s)")
 
 
 def cleanup_deleted_summaries(deleted: Dict[str, Dict]) -> None:
+    total = len(deleted)
+    if total:
+        import time
+        done = 0
+        start = time.time()
+        log_every = 5
     for path, meta in deleted.items():
         summary_path = meta.get("summary_path")
         if summary_path:
@@ -131,3 +150,8 @@ def cleanup_deleted_summaries(deleted: Dict[str, Dict]) -> None:
                 Path(config_summary_path).unlink()
             except FileNotFoundError:
                 pass
+        if total:
+            done += 1
+            if done % log_every == 0 or done == total:
+                elapsed = int(time.time() - start)
+                print(f"[ai-docs] cleanup deleted summaries progress: {done}/{total} ({elapsed}s)")

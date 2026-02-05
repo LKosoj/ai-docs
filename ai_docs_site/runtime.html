@@ -37,6 +37,15 @@
                             <li class="nav-item">
                                 <a href="index.html" class="nav-link">Главная</a>
                             </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Обзор</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="overview.html" class="dropdown-item">Обзор проекта</a>
+</li>
+                                </ul>
+                            </li>
                             <li class="nav-item">
                                 <a href="architecture.html" class="nav-link">Архитектура</a>
                             </li>
@@ -109,6 +118,26 @@
 </li>
             
 <li>
+    <a href="modules/ai_docs/generator_cache__py.html" class="dropdown-item">generator_cache.py</a>
+</li>
+            
+<li>
+    <a href="modules/ai_docs/generator_output__py.html" class="dropdown-item">generator_output.py</a>
+</li>
+            
+<li>
+    <a href="modules/ai_docs/generator_sections__py.html" class="dropdown-item">generator_sections.py</a>
+</li>
+            
+<li>
+    <a href="modules/ai_docs/generator_shared__py.html" class="dropdown-item">generator_shared.py</a>
+</li>
+            
+<li>
+    <a href="modules/ai_docs/generator_summarize__py.html" class="dropdown-item">generator_summarize.py</a>
+</li>
+            
+<li>
     <a href="modules/ai_docs/llm__py.html" class="dropdown-item">llm.py</a>
 </li>
             
@@ -176,7 +205,7 @@
             
             <li class="nav-item" data-bs-level="1"><a href="#_1" class="nav-link">Запуск и окружение</a>
               <ul class="nav flex-column">
-            <li class="nav-item" data-bs-level="2"><a href="#_2" class="nav-link">Установка</a>
+            <li class="nav-item" data-bs-level="2"><a href="#_2" class="nav-link">Базовый запуск</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -184,27 +213,19 @@
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#cli" class="nav-link">Запуск CLI</a>
+            <li class="nav-item" data-bs-level="2"><a href="#cli-" class="nav-link">Основные CLI-параметры</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#cli_1" class="nav-link">Параметры CLI</a>
+            <li class="nav-item" data-bs-level="2"><a href="#_5" class="nav-link">Режимы работы</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#_7" class="nav-link">Каталоги и кэширование</a>
+            <li class="nav-item" data-bs-level="2"><a href="#_6" class="nav-link">Структура выходных артефактов</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#_8" class="nav-link">Конфигурация проекта</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#_9" class="nav-link">Ограничения и безопасность</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#_10" class="nav-link">Пример полного запуска</a>
+            <li class="nav-item" data-bs-level="2"><a href="#cicd-github-actions" class="nav-link">Запуск в CI/CD (пример для GitHub Actions)</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -216,215 +237,154 @@
                     <div class="col-md-9" role="main">
 
 <h1 id="_1">Запуск и окружение</h1>
-<h2 id="_2">Установка</h2>
-<p>Установите пакет через <code>pip</code>:</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>ai-docs-gen
+<h2 id="_2">Базовый запуск</h2>
+<p>Инструмент запускается через CLI команду <code>ai-docs</code>. Минимальный вызов:</p>
+<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>/путь/к/проекту
 </code></pre></div>
-<p>Или установите локально в режиме разработки:</p>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>&lt;репозиторий&gt;
-<span class="nb">cd</span><span class="w"> </span>ai_docs
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
-</code></pre></div>
-<p>После установки доступна CLI-команда: <code>ai-docs</code>.</p>
-<hr />
+<p>Поддерживается анализ:
+- Локальных директорий
+- Локальных Git-репозиториев
+- Удалённых репозиториев по URL (автоматическое клонирование)</p>
+<p>Пример с URL:
+<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>https://github.com/user/repo.git
+</code></pre></div></p>
 <h2 id="_3">Переменные окружения</h2>
-<p>Инструмент использует следующие переменные окружения (поддерживаются <code>.env</code>-файлы):</p>
 <table>
 <thead>
 <tr>
 <th>Переменная</th>
 <th>Назначение</th>
-<th>Обязательная</th>
 <th>Значение по умолчанию</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>OPENAI_API_KEY</code></td>
-<td>Ключ для доступа к LLM</td>
-<td>Да</td>
-<td>—</td>
+<td>Ключ API для доступа к LLM</td>
+<td>Обязательна</td>
 </tr>
 <tr>
 <td><code>OPENAI_BASE_URL</code></td>
-<td>Базовый URL API (для OpenAI-совместимых)</td>
-<td>Нет</td>
+<td>Базовый URL провайдера (для сторонних хостов)</td>
 <td><code>https://api.openai.com/v1</code></td>
 </tr>
 <tr>
 <td><code>OPENAI_MODEL</code></td>
-<td>Модель LLM (например, <code>gpt-4o-mini</code>)</td>
-<td>Нет</td>
+<td>Модель для генерации</td>
 <td><code>gpt-4o-mini</code></td>
-</tr>
-<tr>
-<td><code>OPENAI_TEMPERATURE</code></td>
-<td>Температура генерации (0.0 – 1.0)</td>
-<td>Нет</td>
-<td><code>0.2</code></td>
 </tr>
 <tr>
 <td><code>OPENAI_MAX_TOKENS</code></td>
 <td>Макс. токенов в ответе</td>
-<td>Нет</td>
 <td><code>1200</code></td>
 </tr>
 <tr>
 <td><code>OPENAI_CONTEXT_TOKENS</code></td>
-<td>Общий лимит контекста</td>
-<td>Нет</td>
+<td>Лимит контекста модели</td>
 <td><code>8192</code></td>
 </tr>
 <tr>
+<td><code>OPENAI_TEMPERATURE</code></td>
+<td>Уровень креативности генерации</td>
+<td><code>0.2</code></td>
+</tr>
+<tr>
 <td><code>AI_DOCS_THREADS</code></td>
-<td>Количество потоков обработки</td>
-<td>Нет</td>
+<td>Количество параллельных потоков</td>
 <td><code>4</code></td>
 </tr>
 <tr>
 <td><code>AI_DOCS_LOCAL_SITE</code></td>
-<td>Режим локальной сборки MkDocs (без публикации)</td>
-<td>Нет</td>
+<td>Режим локального сайта MkDocs</td>
 <td><code>false</code></td>
 </tr>
-</tbody>
-</table>
-<p>Пример <code>.env</code>:</p>
-<div class="highlight"><pre><span></span><code>OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini
-AI_DOCS_THREADS=6
-AI_DOCS_LOCAL_SITE=true
-</code></pre></div>
-<hr />
-<h2 id="cli">Запуск CLI</h2>
-<h3 id="_4">Базовый запуск</h3>
-<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>/путь/к/проекту
-</code></pre></div>
-<p>Сгенерирует <code>README.md</code> и сайт MkDocs в выходной директории.</p>
-<h3 id="readme">Генерация только README</h3>
-<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>/путь/к/проекту<span class="w"> </span>--readme
-</code></pre></div>
-<h3 id="mkdocs">Генерация только MkDocs</h3>
-<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>/путь/к/проекту<span class="w"> </span>--mkdocs
-</code></pre></div>
-<h3 id="_5">Работа с удалённым репозиторием</h3>
-<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>https://github.com/user/repo.git<span class="w"> </span>--mkdocs
-</code></pre></div>
-<p>Репозиторий будет временно клонирован.</p>
-<h3 id="_6">Язык документации</h3>
-<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--language<span class="w"> </span>ru
-</code></pre></div>
-<p>Поддерживаемые языки: <code>ru</code>, <code>en</code> (по умолчанию <code>ru</code>).</p>
-<hr />
-<h2 id="cli_1">Параметры CLI</h2>
-<table>
-<thead>
 <tr>
-<th>Флаг</th>
-<th>Описание</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--source</code></td>
-<td>Путь к локальной директории или URL Git-репозитория (обязательный)</td>
-</tr>
-<tr>
-<td><code>--output</code></td>
-<td>Директория вывода (по умолчанию: <code>.ai-docs/output</code>)</td>
-</tr>
-<tr>
-<td><code>--readme</code></td>
-<td>Генерировать только <code>README.md</code></td>
-</tr>
-<tr>
-<td><code>--mkdocs</code></td>
-<td>Генерировать только сайт MkDocs</td>
-</tr>
-<tr>
-<td><code>--language</code></td>
-<td>Язык документации (<code>ru</code> или <code>en</code>)</td>
-</tr>
-<tr>
-<td><code>--threads</code></td>
-<td>Количество потоков (переопределяет <code>AI_DOCS_THREADS</code>)</td>
-</tr>
-<tr>
-<td><code>--force</code></td>
-<td>Перезаписать существующий <code>README.md</code></td>
-</tr>
-<tr>
-<td><code>--no-cache</code></td>
-<td>Отключить кэширование LLM-ответов и анализа файлов</td>
-</tr>
-<tr>
-<td><code>--local-site</code></td>
-<td>Включить режим локальной сборки MkDocs (переопределяет переменную окружения)</td>
-</tr>
-<tr>
-<td><code>--include</code></td>
-<td>Дополнительные glob-шаблоны для включения файлов (можно указать несколько)</td>
-</tr>
-<tr>
-<td><code>--exclude</code></td>
-<td>Дополнительные glob-шаблоны для исключения файлов</td>
-</tr>
-<tr>
-<td><code>--max-size</code></td>
-<td>Макс. размер файла в байтах (по умолчанию: 200000)</td>
+<td><code>AI_DOCS_REGEN</code></td>
+<td>Секции для принудительной перегенерации</td>
+<td>—</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2 id="_7">Каталоги и кэширование</h2>
-<ul>
-<li><code>.ai-docs/</code> — основная рабочая директория:</li>
-<li><code>output/</code> — сгенерированная документация.</li>
-<li><code>_index.json</code> — навигационный индекс проекта.</li>
-<li><code>changes.md</code> — отчёт об изменениях.</li>
-<li><code>.ai_docs_cache/</code> — кэш LLM и хэши файлов:</li>
-<li><code>llm_cache.json</code> — закэшированные ответы от модели.</li>
-<li><code>index.json</code> — хэши и метаданные файлов для инкрементальной обработки.</li>
-</ul>
-<p>Кэширование позволяет избежать повторной обработки неизменённых файлов и повторных запросов к LLM.</p>
-<hr />
-<h2 id="_8">Конфигурация проекта</h2>
-<p>Создайте <code>.ai-docs.yaml</code> в корне проекта для кастомизации:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">include</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;*.yaml&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;scripts/*.sh&quot;</span>
-<span class="nt">exclude</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;temp/&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;logs/&quot;</span>
-<span class="nt">code_extensions</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.py&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.go&quot;</span>
-<span class="nt">config_extensions</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.tf&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.hcl&quot;</span>
-</code></pre></div>
-<p>Также учитываются:
-- <code>.gitignore</code>
-- <code>.build_ignore</code></p>
-<hr />
-<h2 id="_9">Ограничения и безопасность</h2>
-<ul>
-<li>Файлы свыше 200 КБ игнорируются (настраивается через <code>--max-size</code>).</li>
-<li>Бинарные файлы автоматически исключаются.</li>
-<li>Симлинки не обрабатываются.</li>
-<li>Временные директории (например, при клонировании) удаляются после завершения.</li>
-</ul>
-<hr />
-<h2 id="_10">Пример полного запуска</h2>
+<h2 id="cli-">Основные CLI-параметры</h2>
 <div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--source<span class="w"> </span>https://github.com/example/project.git<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--mkdocs<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--language<span class="w"> </span>en<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--source<span class="w"> </span>&lt;путь_или_url&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>&lt;директория_вывода&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--language<span class="w"> </span>ru<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--threads<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--include<span class="w"> </span><span class="s2">&quot;docs/*.md&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--exclude<span class="w"> </span><span class="s2">&quot;tests/&quot;</span>
+<span class="w">  </span>--max-size<span class="w"> </span><span class="m">500000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--include<span class="w"> </span><span class="s2">&quot;*.py&quot;</span><span class="w"> </span><span class="s2">&quot;*.tf&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--exclude<span class="w"> </span><span class="s2">&quot;.venv&quot;</span><span class="w"> </span><span class="s2">&quot;tests/*&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--readme<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mkdocs<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--local-site<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--regen<span class="w"> </span>configs,modules<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--force<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--no-cache
 </code></pre></div>
-<p>Результат: сайт документации в <code>./.ai-docs/output/</code>, собранный через <code>mkdocs build</code>.</p></div>
+<h3 id="_4">Ключевые опции:</h3>
+<ul>
+<li><code>--source</code> — обязательный путь или URL</li>
+<li><code>--output</code> — директория вывода (по умолчанию: корень проекта)</li>
+<li><code>--language</code> — язык документации (<code>ru</code> или <code>en</code>)</li>
+<li><code>--threads</code> — число потоков (переопределяет <code>AI_DOCS_THREADS</code>)</li>
+<li><code>--max-size</code> — макс. размер файла в байтах (по умолчанию 200 КБ)</li>
+<li><code>--include</code>/<code>--exclude</code> — фильтрация по путям и шаблонам</li>
+<li><code>--readme</code>, <code>--mkdocs</code> — тип генерации</li>
+<li><code>--local-site</code> — адаптация <code>mkdocs.yml</code> для локального запуска</li>
+<li><code>--regen</code> — принудительная перегенерация разделов</li>
+<li><code>--force</code> — перезапись существующего <code>README.md</code></li>
+<li><code>--no-cache</code> — отключение кэширования LLM-ответов</li>
+<li><code>--cache-dir</code> — кастомная директория кэша (по умолчанию <code>.ai_docs_cache</code>)</li>
+</ul>
+<h2 id="_5">Режимы работы</h2>
+<h3 id="1-readme">1. Только README</h3>
+<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--readme<span class="w"> </span>--force
+</code></pre></div>
+<h3 id="2-mkdocs">2. Полный сайт MkDocs</h3>
+<p><div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--mkdocs<span class="w"> </span>--local-site
+</code></pre></div>
+Создаёт <code>mkdocs.yml</code> и собирает сайт в <code>ai_docs_site/</code>.</p>
+<h3 id="3">3. Инкрементальная генерация</h3>
+<p>По умолчанию:
+- Обновляются только изменённые файлы
+- Не перезаписываются существующие <code>.md</code> в <code>.ai-docs/</code>
+- Используется кэш в <code>.ai_docs_cache/</code></p>
+<p>Принудительная перегенерация:
+<div class="highlight"><pre><span></span><code>ai-docs<span class="w"> </span>--source<span class="w"> </span>.<span class="w"> </span>--regen<span class="w"> </span>all
+</code></pre></div></p>
+<h2 id="_6">Структура выходных артефактов</h2>
+<div class="highlight"><pre><span></span><code>.
+├── README.md                     # Краткое описание проекта
+├── mkdocs.yml                    # Конфигурация сайта
+├── ai_docs_site/                 # Собранный сайт (при --mkdocs)
+├── .ai-docs/                     # Детальная документация
+│   ├── index.md
+│   ├── architecture.md
+│   ├── modules/                  # Документация модулей
+│   ├── configs/                  # Документация конфигов
+│   ├── changes.md                # Отчёт об изменениях
+│   └── _index.json               # Навигационный индекс
+└── .ai_docs_cache/               # Кэш (при --no-cache не создаётся)
+    ├── index.json
+    ├── llm_cache.json
+    └── intermediate/
+</code></pre></div>
+<h2 id="cicd-github-actions">Запуск в CI/CD (пример для GitHub Actions)</h2>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Generate Docs</span>
+<span class="w">  </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">    </span><span class="no">pip install ai-docs-gen</span>
+<span class="w">    </span><span class="no">ai-docs \</span>
+<span class="w">      </span><span class="no">--source . \</span>
+<span class="w">      </span><span class="no">--mkdocs \</span>
+<span class="w">      </span><span class="no">--local-site \</span>
+<span class="w">      </span><span class="no">--language en \</span>
+<span class="w">      </span><span class="no">--threads 4</span>
+<span class="w">  </span><span class="nt">env</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">OPENAI_API_KEY</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.OPENAI_API_KEY }}</span>
+</code></pre></div>
+<blockquote>
+<p><strong>Важно</strong>: Убедитесь, что <code>OPENAI_API_KEY</code> задан. Без него запуск невозможен.</p>
+</blockquote></div>
             </div>
         </div>
 
