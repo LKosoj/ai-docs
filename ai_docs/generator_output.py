@@ -102,13 +102,13 @@ def build_mkdocs(
     import subprocess
     import sys
 
-    cmd = [sys.executable, "-m", "mkdocs", "build", "-f", "mkdocs.yml"]
     venv_mkdocs = output_root / ".venv" / "bin" / "mkdocs"
-    venv_python = output_root / ".venv" / "bin" / "python"
+
+    # Prefer an explicit mkdocs binary if available. Do NOT auto-use output_root/.venv/bin/python:
+    # the output repo may have its own venv without mkdocs installed, which breaks builds.
+    cmd = [sys.executable, "-m", "mkdocs", "build", "-f", "mkdocs.yml"]
     if venv_mkdocs.exists():
         cmd = [str(venv_mkdocs), "build", "-f", "mkdocs.yml"]
-    elif venv_python.exists():
-        cmd = [str(venv_python), "-m", "mkdocs", "build", "-f", "mkdocs.yml"]
     else:
         mkdocs_bin = shutil.which("mkdocs")
         if mkdocs_bin:
