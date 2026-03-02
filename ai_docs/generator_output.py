@@ -98,21 +98,15 @@ def build_mkdocs(
         local_site=local_site,
     )
     (output_root / "mkdocs.yml").write_text(mkdocs_yaml, encoding="utf-8")
-    import shutil
     import subprocess
     import sys
 
-    venv_mkdocs = output_root / ".venv" / "bin" / "mkdocs"
-
-    # Prefer an explicit mkdocs binary if available. Do NOT auto-use output_root/.venv/bin/python:
-    # the output repo may have its own venv without mkdocs installed, which breaks builds.
+    # Always run MkDocs via the same interpreter as ai-docs.
+    #
+    # Rationale: calling an arbitrary `mkdocs` binary from PATH can pick up a different
+    # Python environment where plugins (e.g. mkdocs-mermaid2-plugin -> `mermaid2`) are missing,
+    # causing errors like "No module named 'mermaid2'".
     cmd = [sys.executable, "-m", "mkdocs", "build", "-f", "mkdocs.yml"]
-    if venv_mkdocs.exists():
-        cmd = [str(venv_mkdocs), "build", "-f", "mkdocs.yml"]
-    else:
-        mkdocs_bin = shutil.which("mkdocs")
-        if mkdocs_bin:
-            cmd = [mkdocs_bin, "build", "-f", "mkdocs.yml"]
     subprocess.check_call(cmd, cwd=output_root)
     _postprocess_mermaid_html(output_root / "ai_docs_site")
 

@@ -50,6 +50,7 @@ CODE_EXTENSION_DESCRIPTIONS = {
     ".htm": "HTML",
     ".html": "HTML",
     ".css": "CSS",
+    ".clp": "CLIPS",
 }
 
 DOC_EXTENSION_DESCRIPTIONS = {
