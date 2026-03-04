@@ -164,7 +164,7 @@ def _scan_directory(root: Path, include: Optional[Set[str]], exclude: Optional[S
         # Avoid .git directory traversal
         dirnames[:] = [d for d in dirnames if d != ".git"]
         for filename in filenames:
-            abs_path = Path(dirpath) / filename
+            abs_path = Path(dirpath) / filename.lower()
             rel_path = abs_path.relative_to(root)
             rel_path_str = to_posix(rel_path)
 

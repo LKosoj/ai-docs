@@ -51,6 +51,16 @@ CODE_EXTENSION_DESCRIPTIONS = {
     ".html": "HTML",
     ".css": "CSS",
     ".clp": "CLIPS",
+    ".clle": "IBM Control Language",
+    ".rpgle": "IBM Language Extention",
+    ".dspf": "IBM Display File",
+    ".bnd": "IBM Bind File",
+    ".sqlc": "SQL C",
+    ".lisp": "Lisp",
+    ".lsp": "Lisp",
+    ".lspx": "Lisp (Script)",
+    ".lspx": "Lisp (Script)",
+    ".lua": "Lua"
 }
 
 DOC_EXTENSION_DESCRIPTIONS = {

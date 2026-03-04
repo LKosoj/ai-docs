@@ -28,7 +28,8 @@ class LLMClient:
         self.max_tokens = max_tokens
         self.context_limit = context_limit
         self._cache_lock = asyncio.Lock()
-        client_kwargs = {"api_key": self.api_key, "timeout": 1200.0}
+        http_client = httpx.AsyncClient(verify=False)
+        client_kwargs = {"api_key": self.api_key, "timeout": 1200.0, "http_client": http_client}
         if self.base_url:
             client_kwargs["base_url"] = self.base_url
         self._client = AsyncOpenAI(**client_kwargs)
