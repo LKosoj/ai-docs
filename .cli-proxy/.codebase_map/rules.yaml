@@ -1,0 +1,345 @@
+version: 1
+node_rules:
+  - id: update-nodeai-docs-site
+    when:
+      any_path_matches:
+        - "ai_docs_site/**"
+    update:
+      docs:
+        - "nodes/ai-docs-site.md"
+    policy:
+      severity: medium
+      self_heal: true
+  - id: update-nodeai-docs
+    when:
+      any_path_matches:
+        - "ai_docs/**"
+    update:
+      docs:
+        - "nodes/ai-docs.md"
+    policy:
+      severity: medium
+      self_heal: true
+  - id: update-nodetests
+    when:
+      any_path_matches:
+        - "tests/**"
+    update:
+      docs:
+        - "nodes/tests.md"
+    policy:
+      severity: medium
+      self_heal: true
+  - id: update-nodedocumentary-skill
+    when:
+      any_path_matches:
+        - "documentary.skill"
+    update:
+      docs:
+        - "nodes/documentary-skill.md"
+    policy:
+      severity: medium
+      self_heal: true
+  - id: update-nodemkdocs-yml
+    when:
+      any_path_matches:
+        - "mkdocs.yml"
+    update:
+      docs:
+        - "nodes/mkdocs-yml.md"
+    policy:
+      severity: medium
+      self_heal: true
+  - id: update-nodepyproject-toml
+    when:
+      any_path_matches:
+        - "pyproject.toml"
+    update:
+      docs:
+        - "nodes/pyproject-toml.md"
+    policy:
+      severity: medium
+      self_heal: true
+  - id: update-noderun-docs-bg-sh
+    when:
+      any_path_matches:
+        - "run_docs_bg.sh"
+    update:
+      docs:
+        - "nodes/run-docs-bg-sh.md"
+    policy:
+      severity: medium
+      self_heal: true
+organizational_rules:
+  - id: rule-sync-ai-docs-gitignore
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.63
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - ".ai-docs"
+        - ".gitignore"
+    then:
+      enforce_sync_with:
+        - ".ai-docs"
+        - ".gitignore"
+    evidence:
+      - "observed:git_cochange:2/71"
+  - id: rule-sync-ai-docs-ai-docs-art-v4-jpg
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.63
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - ".ai-docs"
+        - "ai-docs-art-v4.jpg"
+    then:
+      enforce_sync_with:
+        - ".ai-docs"
+        - "ai-docs-art-v4.jpg"
+    evidence:
+      - "observed:git_cochange:2/71"
+  - id: rule-sync-ai-docs-ai-docs
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.91
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - ".ai-docs"
+        - "ai_docs/**"
+    then:
+      enforce_sync_with:
+        - ".ai-docs"
+        - "ai_docs"
+    evidence:
+      - "observed:git_cochange:13/71"
+  - id: rule-sync-ai-docs-ai-docs-site
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.91
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - ".ai-docs"
+        - "ai_docs_site/**"
+    then:
+      enforce_sync_with:
+        - ".ai-docs"
+        - "ai_docs_site"
+    evidence:
+      - "observed:git_cochange:13/71"
+  - id: rule-sync-ai-docs-mkdocs-yml
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.90
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - ".ai-docs"
+        - "mkdocs.yml"
+    then:
+      enforce_sync_with:
+        - ".ai-docs"
+        - "mkdocs.yml"
+    evidence:
+      - "observed:git_cochange:12/71"
+  - id: rule-sync-ai-docs-pyproject-toml
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.63
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - ".ai-docs"
+        - "pyproject.toml"
+    then:
+      enforce_sync_with:
+        - ".ai-docs"
+        - "pyproject.toml"
+    evidence:
+      - "observed:git_cochange:2/71"
+  - id: rule-sync-gitignore-ai-docs
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.80
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - ".gitignore"
+        - "ai_docs/**"
+    then:
+      enforce_sync_with:
+        - ".gitignore"
+        - "ai_docs"
+    evidence:
+      - "observed:git_cochange:4/71"
+  - id: rule-sync-gitignore-pyproject-toml
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.72
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - ".gitignore"
+        - "pyproject.toml"
+    then:
+      enforce_sync_with:
+        - ".gitignore"
+        - "pyproject.toml"
+    evidence:
+      - "observed:git_cochange:3/71"
+  - id: rule-sync-ai-docs-ai-docs-site
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.88
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - "ai_docs/**"
+        - "ai_docs_site/**"
+    then:
+      enforce_sync_with:
+        - "ai_docs"
+        - "ai_docs_site"
+    evidence:
+      - "observed:git_cochange:10/71"
+  - id: rule-sync-ai-docs-docs
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.63
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - "ai_docs/**"
+        - "docs/**"
+    then:
+      enforce_sync_with:
+        - "ai_docs"
+        - "docs"
+    evidence:
+      - "observed:git_cochange:2/71"
+  - id: rule-sync-ai-docs-mkdocs-yml
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.90
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - "ai_docs/**"
+        - "mkdocs.yml"
+    then:
+      enforce_sync_with:
+        - "ai_docs"
+        - "mkdocs.yml"
+    evidence:
+      - "observed:git_cochange:12/71"
+  - id: rule-sync-ai-docs-pyproject-toml
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.88
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - "ai_docs/**"
+        - "pyproject.toml"
+    then:
+      enforce_sync_with:
+        - "ai_docs"
+        - "pyproject.toml"
+    evidence:
+      - "observed:git_cochange:10/71"
+  - id: rule-sync-ai-docs-run-docs-bg-sh
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.63
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - "ai_docs/**"
+        - "run_docs_bg.sh"
+    then:
+      enforce_sync_with:
+        - "ai_docs"
+        - "run_docs_bg.sh"
+    evidence:
+      - "observed:git_cochange:2/71"
+  - id: rule-sync-ai-docs-site-mkdocs-yml
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.86
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - "ai_docs_site/**"
+        - "mkdocs.yml"
+    then:
+      enforce_sync_with:
+        - "ai_docs_site"
+        - "mkdocs.yml"
+    evidence:
+      - "observed:git_cochange:7/71"
+  - id: rule-sync-ai-docs-site-pyproject-toml
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.63
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - "ai_docs_site/**"
+        - "pyproject.toml"
+    then:
+      enforce_sync_with:
+        - "ai_docs_site"
+        - "pyproject.toml"
+    evidence:
+      - "observed:git_cochange:2/71"
+  - id: rule-sync-docs-mkdocs-yml
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.63
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - "docs/**"
+        - "mkdocs.yml"
+    then:
+      enforce_sync_with:
+        - "docs"
+        - "mkdocs.yml"
+    evidence:
+      - "observed:git_cochange:2/71"
+  - id: rule-sync-pyproject-toml-run-docs-bg-sh
+    kind: sync_areas
+    source_class: observed
+    confidence: 0.63
+    status: proposed
+    needs_review: true
+    when:
+      any_path_matches:
+        - "pyproject.toml"
+        - "run_docs_bg.sh"
+    then:
+      enforce_sync_with:
+        - "pyproject.toml"
+        - "run_docs_bg.sh"
+    evidence:
+      - "observed:git_cochange:2/71"

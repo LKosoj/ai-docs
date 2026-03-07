@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-03-07T07:34:05Z",
+  "head_commit": "1971a28b5c1229f5b787f22c5758bf557e47980f",
+  "changed_files": [],
+  "docs": [
+    "STACK.md",
+    "INTEGRATIONS.md",
+    "ARCHITECTURE.md",
+    "STRUCTURE.md",
+    "CONVENTIONS.md",
+    "TESTING.md",
+    "CONCERNS.md"
+  ],
+  "run_mode": "bootstrap",
+  "full_scan": true,
+  "updated_docs": [
+    "STACK.md",
+    "INTEGRATIONS.md",
+    "ARCHITECTURE.md",
+    "STRUCTURE.md",
+    "CONVENTIONS.md",
+    "TESTING.md",
+    "CONCERNS.md"
+  ],
+  "file_markers": {}
+}

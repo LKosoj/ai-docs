@@ -1,0 +1,492 @@
+{
+  "version": 1,
+  "generated_at": "2026-03-07T07:34:06Z",
+  "operation": "init",
+  "force": false,
+  "nodes": [
+    {
+      "id": "node:ai-docs-site",
+      "type": "instruction_node",
+      "title": "ai_docs_site",
+      "path": "nodes/ai-docs-site.md",
+      "source_glob": "ai_docs_site/**",
+      "file_count": 60
+    },
+    {
+      "id": "node:ai-docs",
+      "type": "instruction_node",
+      "title": "ai_docs",
+      "path": "nodes/ai-docs.md",
+      "source_glob": "ai_docs/**",
+      "file_count": 19
+    },
+    {
+      "id": "node:tests",
+      "type": "instruction_node",
+      "title": "tests",
+      "path": "nodes/tests.md",
+      "source_glob": "tests/**",
+      "file_count": 4
+    },
+    {
+      "id": "node:documentary-skill",
+      "type": "instruction_node",
+      "title": "documentary.skill",
+      "path": "nodes/documentary-skill.md",
+      "source_glob": "documentary.skill",
+      "file_count": 1
+    },
+    {
+      "id": "node:mkdocs-yml",
+      "type": "instruction_node",
+      "title": "mkdocs.yml",
+      "path": "nodes/mkdocs-yml.md",
+      "source_glob": "mkdocs.yml",
+      "file_count": 1
+    },
+    {
+      "id": "node:pyproject-toml",
+      "type": "instruction_node",
+      "title": "pyproject.toml",
+      "path": "nodes/pyproject-toml.md",
+      "source_glob": "pyproject.toml",
+      "file_count": 1
+    },
+    {
+      "id": "node:run-docs-bg-sh",
+      "type": "instruction_node",
+      "title": "run_docs_bg.sh",
+      "path": "nodes/run-docs-bg-sh.md",
+      "source_glob": "run_docs_bg.sh",
+      "file_count": 1
+    }
+  ],
+  "organizational_rules": [
+    {
+      "id": "rule-sync-ai-docs-gitignore",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `.gitignore`",
+      "areas": [
+        ".ai-docs",
+        ".gitignore"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-ai-docs-art-v4-jpg",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `ai-docs-art-v4.jpg`",
+      "areas": [
+        ".ai-docs",
+        "ai-docs-art-v4.jpg"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-ai-docs",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `ai_docs`",
+      "areas": [
+        ".ai-docs",
+        "ai_docs"
+      ],
+      "source_class": "observed",
+      "confidence": 0.91,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:13/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-ai-docs-site",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `ai_docs_site`",
+      "areas": [
+        ".ai-docs",
+        "ai_docs_site"
+      ],
+      "source_class": "observed",
+      "confidence": 0.91,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:13/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-mkdocs-yml",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `mkdocs.yml`",
+      "areas": [
+        ".ai-docs",
+        "mkdocs.yml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.9,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:12/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-pyproject-toml",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `pyproject.toml`",
+      "areas": [
+        ".ai-docs",
+        "pyproject.toml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-gitignore-ai-docs",
+      "kind": "sync_areas",
+      "title": "Sync `.gitignore` with `ai_docs`",
+      "areas": [
+        ".gitignore",
+        "ai_docs"
+      ],
+      "source_class": "observed",
+      "confidence": 0.8,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:4/71"
+      ]
+    },
+    {
+      "id": "rule-sync-gitignore-pyproject-toml",
+      "kind": "sync_areas",
+      "title": "Sync `.gitignore` with `pyproject.toml`",
+      "areas": [
+        ".gitignore",
+        "pyproject.toml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.72,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:3/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-ai-docs-site",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs` with `ai_docs_site`",
+      "areas": [
+        "ai_docs",
+        "ai_docs_site"
+      ],
+      "source_class": "observed",
+      "confidence": 0.88,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:10/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-docs",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs` with `docs`",
+      "areas": [
+        "ai_docs",
+        "docs"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-mkdocs-yml",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs` with `mkdocs.yml`",
+      "areas": [
+        "ai_docs",
+        "mkdocs.yml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.9,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:12/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-pyproject-toml",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs` with `pyproject.toml`",
+      "areas": [
+        "ai_docs",
+        "pyproject.toml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.88,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:10/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-run-docs-bg-sh",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs` with `run_docs_bg.sh`",
+      "areas": [
+        "ai_docs",
+        "run_docs_bg.sh"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-site-mkdocs-yml",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs_site` with `mkdocs.yml`",
+      "areas": [
+        "ai_docs_site",
+        "mkdocs.yml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.86,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:7/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-site-pyproject-toml",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs_site` with `pyproject.toml`",
+      "areas": [
+        "ai_docs_site",
+        "pyproject.toml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-docs-mkdocs-yml",
+      "kind": "sync_areas",
+      "title": "Sync `docs` with `mkdocs.yml`",
+      "areas": [
+        "docs",
+        "mkdocs.yml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-pyproject-toml-run-docs-bg-sh",
+      "kind": "sync_areas",
+      "title": "Sync `pyproject.toml` with `run_docs_bg.sh`",
+      "areas": [
+        "pyproject.toml",
+        "run_docs_bg.sh"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "index",
+      "to": "node:ai-docs-site",
+      "type": "references"
+    },
+    {
+      "from": "index",
+      "to": "node:ai-docs",
+      "type": "references"
+    },
+    {
+      "from": "index",
+      "to": "node:tests",
+      "type": "references"
+    },
+    {
+      "from": "index",
+      "to": "node:documentary-skill",
+      "type": "references"
+    },
+    {
+      "from": "index",
+      "to": "node:mkdocs-yml",
+      "type": "references"
+    },
+    {
+      "from": "index",
+      "to": "node:pyproject-toml",
+      "type": "references"
+    },
+    {
+      "from": "index",
+      "to": "node:run-docs-bg-sh",
+      "type": "references"
+    },
+    {
+      "from": "node:ai-docs-site",
+      "to": "node:ai-docs",
+      "type": "related",
+      "confidence": "0.88",
+      "levels": "L0"
+    },
+    {
+      "from": "node:ai-docs-site",
+      "to": "node:mkdocs-yml",
+      "type": "related",
+      "confidence": "0.86",
+      "levels": "L0"
+    },
+    {
+      "from": "node:ai-docs-site",
+      "to": "node:pyproject-toml",
+      "type": "related",
+      "confidence": "0.63",
+      "levels": "L0"
+    },
+    {
+      "from": "node:ai-docs",
+      "to": "node:ai-docs-site",
+      "type": "related",
+      "confidence": "0.88",
+      "levels": "L0"
+    },
+    {
+      "from": "node:ai-docs",
+      "to": "node:mkdocs-yml",
+      "type": "related",
+      "confidence": "0.90",
+      "levels": "L0"
+    },
+    {
+      "from": "node:ai-docs",
+      "to": "node:pyproject-toml",
+      "type": "related",
+      "confidence": "0.88",
+      "levels": "L0"
+    },
+    {
+      "from": "node:ai-docs",
+      "to": "node:run-docs-bg-sh",
+      "type": "related",
+      "confidence": "0.63",
+      "levels": "L0"
+    },
+    {
+      "from": "node:tests",
+      "to": "node:ai-docs",
+      "type": "related",
+      "confidence": "0.90",
+      "levels": "L1,L2"
+    },
+    {
+      "from": "node:mkdocs-yml",
+      "to": "node:ai-docs",
+      "type": "related",
+      "confidence": "0.90",
+      "levels": "L0"
+    },
+    {
+      "from": "node:mkdocs-yml",
+      "to": "node:ai-docs-site",
+      "type": "related",
+      "confidence": "0.86",
+      "levels": "L0"
+    },
+    {
+      "from": "node:pyproject-toml",
+      "to": "node:ai-docs",
+      "type": "related",
+      "confidence": "0.88",
+      "levels": "L0"
+    },
+    {
+      "from": "node:pyproject-toml",
+      "to": "node:ai-docs-site",
+      "type": "related",
+      "confidence": "0.63",
+      "levels": "L0"
+    },
+    {
+      "from": "node:pyproject-toml",
+      "to": "node:run-docs-bg-sh",
+      "type": "related",
+      "confidence": "0.63",
+      "levels": "L0"
+    },
+    {
+      "from": "node:run-docs-bg-sh",
+      "to": "node:ai-docs",
+      "type": "related",
+      "confidence": "0.63",
+      "levels": "L0"
+    },
+    {
+      "from": "node:run-docs-bg-sh",
+      "to": "node:pyproject-toml",
+      "type": "related",
+      "confidence": "0.63",
+      "levels": "L0"
+    }
+  ],
+  "tree": [
+    ".cli-proxy/.codebase_map/",
+    "  INDEX.md",
+    "  nodes/",
+    "    ai-docs-site.md",
+    "    ai-docs.md",
+    "    tests.md",
+    "    documentary-skill.md",
+    "    mkdocs-yml.md",
+    "    pyproject-toml.md",
+    "    run-docs-bg-sh.md"
+  ]
+}

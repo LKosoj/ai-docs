@@ -1,0 +1,585 @@
+{
+  "state": "needs_review",
+  "updated_at": "2026-03-07T07:34:06Z",
+  "operation": "init",
+  "nodes_count": 7,
+  "tree": [
+    ".cli-proxy/.codebase_map/",
+    "  INDEX.md",
+    "  nodes/",
+    "    ai-docs-site.md",
+    "    ai-docs.md",
+    "    tests.md",
+    "    documentary-skill.md",
+    "    mkdocs-yml.md",
+    "    pyproject-toml.md",
+    "    run-docs-bg-sh.md"
+  ],
+  "review_items": [
+    "nodes/ai-docs-site.md",
+    "nodes/ai-docs.md",
+    "nodes/tests.md",
+    "nodes/documentary-skill.md",
+    "nodes/mkdocs-yml.md",
+    "nodes/pyproject-toml.md",
+    "nodes/run-docs-bg-sh.md"
+  ],
+  "needs_review": [],
+  "reviewed": {
+    "nodes/ai-docs-site.md": true,
+    "nodes/ai-docs.md": true,
+    "nodes/tests.md": true,
+    "nodes/documentary-skill.md": true,
+    "nodes/mkdocs-yml.md": true,
+    "nodes/pyproject-toml.md": true,
+    "nodes/run-docs-bg-sh.md": true
+  },
+  "rules_review_items": [
+    "rule-sync-ai-docs-gitignore",
+    "rule-sync-ai-docs-ai-docs-art-v4-jpg",
+    "rule-sync-ai-docs-ai-docs",
+    "rule-sync-ai-docs-ai-docs-site",
+    "rule-sync-ai-docs-mkdocs-yml",
+    "rule-sync-ai-docs-pyproject-toml",
+    "rule-sync-gitignore-ai-docs",
+    "rule-sync-gitignore-pyproject-toml",
+    "rule-sync-ai-docs-ai-docs-site",
+    "rule-sync-ai-docs-docs",
+    "rule-sync-ai-docs-mkdocs-yml",
+    "rule-sync-ai-docs-pyproject-toml",
+    "rule-sync-ai-docs-run-docs-bg-sh",
+    "rule-sync-ai-docs-site-mkdocs-yml",
+    "rule-sync-ai-docs-site-pyproject-toml",
+    "rule-sync-docs-mkdocs-yml",
+    "rule-sync-pyproject-toml-run-docs-bg-sh"
+  ],
+  "rules_needs_review": [
+    "rule-sync-ai-docs-gitignore",
+    "rule-sync-ai-docs-ai-docs-art-v4-jpg",
+    "rule-sync-ai-docs-ai-docs",
+    "rule-sync-ai-docs-ai-docs-site",
+    "rule-sync-ai-docs-mkdocs-yml",
+    "rule-sync-ai-docs-pyproject-toml",
+    "rule-sync-gitignore-ai-docs",
+    "rule-sync-gitignore-pyproject-toml",
+    "rule-sync-ai-docs-ai-docs-site",
+    "rule-sync-ai-docs-docs",
+    "rule-sync-ai-docs-mkdocs-yml",
+    "rule-sync-ai-docs-pyproject-toml",
+    "rule-sync-ai-docs-run-docs-bg-sh",
+    "rule-sync-ai-docs-site-mkdocs-yml",
+    "rule-sync-ai-docs-site-pyproject-toml",
+    "rule-sync-docs-mkdocs-yml",
+    "rule-sync-pyproject-toml-run-docs-bg-sh"
+  ],
+  "rules_reviewed": {},
+  "inferred_rules": [
+    {
+      "id": "rule-sync-ai-docs-gitignore",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `.gitignore`",
+      "areas": [
+        ".ai-docs",
+        ".gitignore"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-ai-docs-art-v4-jpg",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `ai-docs-art-v4.jpg`",
+      "areas": [
+        ".ai-docs",
+        "ai-docs-art-v4.jpg"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-ai-docs",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `ai_docs`",
+      "areas": [
+        ".ai-docs",
+        "ai_docs"
+      ],
+      "source_class": "observed",
+      "confidence": 0.91,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:13/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-ai-docs-site",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `ai_docs_site`",
+      "areas": [
+        ".ai-docs",
+        "ai_docs_site"
+      ],
+      "source_class": "observed",
+      "confidence": 0.91,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:13/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-mkdocs-yml",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `mkdocs.yml`",
+      "areas": [
+        ".ai-docs",
+        "mkdocs.yml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.9,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:12/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-pyproject-toml",
+      "kind": "sync_areas",
+      "title": "Sync `.ai-docs` with `pyproject.toml`",
+      "areas": [
+        ".ai-docs",
+        "pyproject.toml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-gitignore-ai-docs",
+      "kind": "sync_areas",
+      "title": "Sync `.gitignore` with `ai_docs`",
+      "areas": [
+        ".gitignore",
+        "ai_docs"
+      ],
+      "source_class": "observed",
+      "confidence": 0.8,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:4/71"
+      ]
+    },
+    {
+      "id": "rule-sync-gitignore-pyproject-toml",
+      "kind": "sync_areas",
+      "title": "Sync `.gitignore` with `pyproject.toml`",
+      "areas": [
+        ".gitignore",
+        "pyproject.toml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.72,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:3/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-ai-docs-site",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs` with `ai_docs_site`",
+      "areas": [
+        "ai_docs",
+        "ai_docs_site"
+      ],
+      "source_class": "observed",
+      "confidence": 0.88,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:10/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-docs",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs` with `docs`",
+      "areas": [
+        "ai_docs",
+        "docs"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-mkdocs-yml",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs` with `mkdocs.yml`",
+      "areas": [
+        "ai_docs",
+        "mkdocs.yml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.9,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:12/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-pyproject-toml",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs` with `pyproject.toml`",
+      "areas": [
+        "ai_docs",
+        "pyproject.toml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.88,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:10/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-run-docs-bg-sh",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs` with `run_docs_bg.sh`",
+      "areas": [
+        "ai_docs",
+        "run_docs_bg.sh"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-site-mkdocs-yml",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs_site` with `mkdocs.yml`",
+      "areas": [
+        "ai_docs_site",
+        "mkdocs.yml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.86,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:7/71"
+      ]
+    },
+    {
+      "id": "rule-sync-ai-docs-site-pyproject-toml",
+      "kind": "sync_areas",
+      "title": "Sync `ai_docs_site` with `pyproject.toml`",
+      "areas": [
+        "ai_docs_site",
+        "pyproject.toml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-docs-mkdocs-yml",
+      "kind": "sync_areas",
+      "title": "Sync `docs` with `mkdocs.yml`",
+      "areas": [
+        "docs",
+        "mkdocs.yml"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    },
+    {
+      "id": "rule-sync-pyproject-toml-run-docs-bg-sh",
+      "kind": "sync_areas",
+      "title": "Sync `pyproject.toml` with `run_docs_bg.sh`",
+      "areas": [
+        "pyproject.toml",
+        "run_docs_bg.sh"
+      ],
+      "source_class": "observed",
+      "confidence": 0.63,
+      "status": "proposed",
+      "needs_review": true,
+      "evidence": [
+        "observed:git_cochange:2/71"
+      ]
+    }
+  ],
+  "validate_queue": [],
+  "repair_queue": [],
+  "validation_report": {
+    "invalid_nodes": [],
+    "invalid_reasons": {},
+    "orphan_nodes": [],
+    "tree": [
+      ".cli-proxy/.codebase_map/",
+      "  INDEX.md",
+      "  nodes/",
+      "    ai-docs-site.md",
+      "    ai-docs.md",
+      "    tests.md",
+      "    documentary-skill.md",
+      "    mkdocs-yml.md",
+      "    pyproject-toml.md",
+      "    run-docs-bg-sh.md"
+    ],
+    "validated_at": "2026-03-07T07:34:06Z"
+  },
+  "nodes_status": {
+    "nodes/ai-docs-site.md": {
+      "status": "ok",
+      "repair_attempts": 0,
+      "last_error": "",
+      "updated_at": "2026-03-07T07:34:06Z"
+    },
+    "nodes/ai-docs.md": {
+      "status": "ok",
+      "repair_attempts": 0,
+      "last_error": "",
+      "updated_at": "2026-03-07T07:34:06Z"
+    },
+    "nodes/tests.md": {
+      "status": "ok",
+      "repair_attempts": 0,
+      "last_error": "",
+      "updated_at": "2026-03-07T07:34:06Z"
+    },
+    "nodes/documentary-skill.md": {
+      "status": "ok",
+      "repair_attempts": 0,
+      "last_error": "",
+      "updated_at": "2026-03-07T07:34:06Z"
+    },
+    "nodes/mkdocs-yml.md": {
+      "status": "ok",
+      "repair_attempts": 0,
+      "last_error": "",
+      "updated_at": "2026-03-07T07:34:06Z"
+    },
+    "nodes/pyproject-toml.md": {
+      "status": "ok",
+      "repair_attempts": 0,
+      "last_error": "",
+      "updated_at": "2026-03-07T07:34:06Z"
+    },
+    "nodes/run-docs-bg-sh.md": {
+      "status": "ok",
+      "repair_attempts": 0,
+      "last_error": "",
+      "updated_at": "2026-03-07T07:34:06Z"
+    }
+  },
+  "relation_graph": {
+    "ai_docs_site": [
+      {
+        "target": "ai_docs",
+        "score": 0.88,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:10/71"
+        ]
+      },
+      {
+        "target": "mkdocs.yml",
+        "score": 0.86,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:7/71"
+        ]
+      },
+      {
+        "target": "pyproject.toml",
+        "score": 0.63,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:2/71"
+        ]
+      }
+    ],
+    "ai_docs": [
+      {
+        "target": "ai_docs_site",
+        "score": 0.88,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:10/71"
+        ]
+      },
+      {
+        "target": "mkdocs.yml",
+        "score": 0.9,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:12/71"
+        ]
+      },
+      {
+        "target": "pyproject.toml",
+        "score": 0.88,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:10/71"
+        ]
+      },
+      {
+        "target": "run_docs_bg.sh",
+        "score": 0.63,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:2/71"
+        ]
+      }
+    ],
+    "tests": [
+      {
+        "target": "ai_docs",
+        "score": 0.9,
+        "levels": [
+          "L1",
+          "L2"
+        ],
+        "evidence": [
+          "regex_ref:tests/test_cache.py",
+          "regex_ref:tests/test_changes.py",
+          "regex_ref:tests/test_scanner.py",
+          "lang_specific:tests/test_cache.py",
+          "lang_specific:tests/test_changes.py",
+          "lang_specific:tests/test_scanner.py"
+        ]
+      }
+    ],
+    "documentary.skill": [],
+    "mkdocs.yml": [
+      {
+        "target": "ai_docs",
+        "score": 0.9,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:12/71"
+        ]
+      },
+      {
+        "target": "ai_docs_site",
+        "score": 0.86,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:7/71"
+        ]
+      }
+    ],
+    "pyproject.toml": [
+      {
+        "target": "ai_docs",
+        "score": 0.88,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:10/71"
+        ]
+      },
+      {
+        "target": "ai_docs_site",
+        "score": 0.63,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:2/71"
+        ]
+      },
+      {
+        "target": "run_docs_bg.sh",
+        "score": 0.63,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:2/71"
+        ]
+      }
+    ],
+    "run_docs_bg.sh": [
+      {
+        "target": "ai_docs",
+        "score": 0.63,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:2/71"
+        ]
+      },
+      {
+        "target": "pyproject.toml",
+        "score": 0.63,
+        "levels": [
+          "L0"
+        ],
+        "evidence": [
+          "observed:git_cochange:2/71"
+        ]
+      }
+    ]
+  }
+}
