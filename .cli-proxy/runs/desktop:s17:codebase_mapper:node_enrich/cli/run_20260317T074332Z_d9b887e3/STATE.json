@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "run_id": "run_20260317T074332Z_d9b887e3",
+  "session_uid": "desktop:s17:codebase_mapper:node_enrich",
+  "mode_id": "cli",
+  "status": "completed",
+  "phase": "execute",
+  "started_at": 1773733412.567602,
+  "updated_at": 1773733498.3539176,
+  "finished_at": 1773733498.3539176,
+  "current_unit_id": null,
+  "current_step_id": null,
+  "checkpoint_index": 0,
+  "last_successful_phase": null,
+  "resume_token": null,
+  "source_prompt_hash": "sha256:46ce98157be49d3ad71c1ff0c5cdcda87898900410cebb0165b5c7b9cf7dedf6",
+  "mode_context": {
+    "source": "use_cli_plugin",
+    "task_bearing": true
+  },
+  "source": "use_cli_plugin",
+  "selected_skill_ids": [],
+  "skill_cache_hit": false,
+  "skill_model_used": "llmgateway/light_model",
+  "selector_bypassed": false
+}

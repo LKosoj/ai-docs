@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "run_id": "run_20260317T072709Z_f7f67ba0",
+  "session_uid": "desktop:s17:codebase_mapper:arch",
+  "mode_id": "cli",
+  "status": "completed",
+  "phase": "execute",
+  "started_at": 1773732429.558832,
+  "updated_at": 1773732625.8621612,
+  "finished_at": 1773732625.8621612,
+  "current_unit_id": null,
+  "current_step_id": null,
+  "checkpoint_index": 0,
+  "last_successful_phase": null,
+  "resume_token": null,
+  "source_prompt_hash": "sha256:094ca32d6b9f6e12bf6f9471197b64b787d6959a4b1fe350d218bf869f307fb1",
+  "mode_context": {
+    "source": "use_cli_plugin",
+    "task_bearing": true
+  },
+  "source": "use_cli_plugin",
+  "selected_skill_ids": [],
+  "skill_cache_hit": false,
+  "skill_model_used": "llmgateway/light_model",
+  "selector_bypassed": false
+}

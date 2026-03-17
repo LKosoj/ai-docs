@@ -1,6 +1,6 @@
 # Codebase Mapper Instruction Graph
 
-Generated: 2026-03-07T07:34:06Z
+Generated: 2026-03-17T07:32:37Z
 
 This index is the entrypoint for agent instructions.
 

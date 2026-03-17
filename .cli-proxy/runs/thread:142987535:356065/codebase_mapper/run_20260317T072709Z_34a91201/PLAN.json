@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "mode_id": "codebase_mapper",
+  "plan_kind": "mode_run",
+  "task_family": "codebase_mapper_operation",
+  "units": [
+    {
+      "id": "mapper_init_full",
+      "phase": "operation",
+      "kind": "init_full"
+    }
+  ],
+  "boundary_map": [
+    {
+      "phase": "operation",
+      "validator": "codebase_mapper_operation"
+    }
+  ],
+  "validation_contracts": [
+    "codebase_mapper:operation"
+  ],
+  "operation": "init_full",
+  "usage": "auto",
+  "expected_graph_artifacts": [
+    "meta.json",
+    "state.json",
+    "graph.json",
+    "INDEX.md"
+  ]
+}

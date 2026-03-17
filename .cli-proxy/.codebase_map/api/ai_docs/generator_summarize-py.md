@@ -1,6 +1,6 @@
 # API Spec: `ai_docs/generator_summarize.py`
 
-Generated: 2026-03-07T07:34:06Z
+Generated: 2026-03-17T07:32:37Z
 
 ## Symbols
 - `async def summarize_changed_files(to_summarize, summaries_dir, llm, llm_cache, threads, save_cb, errors)` (line 10)

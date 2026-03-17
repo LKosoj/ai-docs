@@ -91,3 +91,54 @@ config_extensions:
 - **Расположение**: `tests/` вне пакета
 - **Именование**: `test_*.py`, классы `*Tests`
 - **Запуск**: `python -m unittest discover -s tests`
+
+## Documentation Conventions
+
+### Section Generation (`generator_sections.py`)
+
+**Prompts**:
+| Section | Prompt Focus |
+|---------|-------------|
+| Architecture | Mermaid diagram (no `()` in labels, use `[]`) |
+| Overview | Hierarchical summarization of all module summaries |
+| Testing | Rendered from `render_testing_section()` (no LLM) |
+| Dependencies | Collected from `pyproject.toml`, `requirements.txt`, `package.json` |
+
+**Context Budget**:
+- Default: `input_budget = context_limit - max_tokens - 200`
+- Hierarchical summarization: 6 rounds max, chunk by `max_tokens`
+- Logging: `[ai-docs] summarize chunk {label}: {round}.{chunk}/{total}`
+
+### Output Formatting (`generator_output.py`)
+
+**File Cleanup**:
+- Orphan removal: files not in `keep_files` set
+- Protected dirs: `plans/`
+- Protected files: `index.md`, `overview.md`, `changes.md`, `modules/index.md`, `configs/index.md`
+
+**MkDocs Postprocess**:
+- Replace `&gt;` → `>` in HTML for Mermaid compatibility
+- Run via `sys.executable -m mkdocs build` (same interpreter)
+
+### Index Generation (`_index.json`)
+
+**Structure**:
+```json
+{
+  "sections": [...],
+  "modules": [...],
+  "configs": [...],
+  "files": [...],
+  "generated_at": "ISO8601Z",
+  "docs_dir": ".ai-docs",
+  "rules": {
+    "priority": ["modules/index.md", "modules/*", ...],
+    "ranking": "keyword frequency + file priority"
+  }
+}
+```
+
+### Mermaid Asset
+
+**Path**: `ai_docs/assets/mermaid.min.js` → `js/mermaid.min.js` (output)
+**Fallback**: Warning if missing, no crash

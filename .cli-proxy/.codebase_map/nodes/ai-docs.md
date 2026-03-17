@@ -1,66 +1,50 @@
 # Node: ai_docs
 
-Generated: 2026-03-07T07:34:06Z
-
 ## Purpose
-Instruction node for `ai_docs` area.
+Core Python package implementing CLI documentation generator — scans repositories, summarizes files/configs via LLM, generates Markdown + MkDocs site.
 
 ## Scope
-- Source glob: `ai_docs/**`
-- Estimated files: 19
+- **Source glob**: `ai_docs/**` (19 files)
+- **Entry points**: `ai_docs/cli.py:main()`, `ai_docs/__main__.py`
+- **CLI command**: `ai-docs` (via `pyproject.toml` scripts)
+- **Key components**: scanner, LLM client, generator orchestrator, summarizers, MkDocs builder
 
 ## Instructions for agent
-- Read only files relevant to the active task.
-- Prefer deterministic checks before edits.
-- Keep changes minimal and validate with tests/linters where applicable.
+- **Read first**: `cli.py` (args), `scanner.py` (file discovery), `generator.py` (orchestration).
+- **LLM changes**: Always check `llm.py` retry/cache logic and `summary.py` prompts.
+- **Test requirement**: Any behavior change needs tests in `tests/` (currently 3 files, ~20% coverage).
+- **Run tests**: `pytest -q tests/` or `python -m unittest discover -s tests`.
+- **Lint**: `ruff check ai_docs/` before commit.
 
 ## Source of truth
-- `ai_docs/**`
-- `ai_docs/__init__.py`
-- `ai_docs/assets/mermaid.min.js`
-- `ai_docs/__main__.py`
-- `ai_docs/cache.py`
-- `ai_docs/changes.py`
-- `ai_docs/cli.py`
-- `ai_docs/domain.py`
-- `ai_docs/generator.py`
-- `ai_docs/generator_cache.py`
-- `ai_docs/generator_output.py`
-
-## Module API
-Детальные интерфейсы модулей этой области:
-
-- [ai_docs/cache.py](../api/ai_docs/cache-py.md)
-- [ai_docs/changes.py](../api/ai_docs/changes-py.md)
-- [ai_docs/cli.py](../api/ai_docs/cli-py.md)
-- [ai_docs/domain.py](../api/ai_docs/domain-py.md)
-- [ai_docs/generator.py](../api/ai_docs/generator-py.md)
-- [ai_docs/generator_cache.py](../api/ai_docs/generator_cache-py.md)
-- [ai_docs/generator_output.py](../api/ai_docs/generator_output-py.md)
-- [ai_docs/generator_sections.py](../api/ai_docs/generator_sections-py.md)
-- [ai_docs/generator_shared.py](../api/ai_docs/generator_shared-py.md)
-- [ai_docs/generator_summarize.py](../api/ai_docs/generator_summarize-py.md)
+- **Package root**: `ai_docs/`
+- **CLI**: `ai_docs/cli.py` (argparse, main entry)
+- **Scanner**: `ai_docs/scanner.py` (scan_source, _scan_directory, classify_type, detect_domains)
+- **LLM**: `ai_docs/llm.py` (LLMClient, from_env, retry/cache)
+- **Generator**: `ai_docs/generator.py` (_generate_docs_async, generate_docs)
+- **Summarization**: `ai_docs/summary.py` (SUMMARY_PROMPT, MODULE_SUMMARY_PROMPT, summarize_file)
+- **Cache**: `ai_docs/cache.py` (CacheManager), `ai_docs/generator_cache.py` (diff, carry, cleanup)
+- **Output**: `ai_docs/generator_output.py` (build_mkdocs, write_docs, _postprocess_mermaid_html)
+- **Config**: `ai_docs/domain.py` (extension maps, domain detection)
+- **Assets**: `ai_docs/assets/mermaid.min.js`
 
 ## When to update
-- Any commit touching `ai_docs/**`.
-- Any commit touching `ai_docs_site/**` because this node has import/call dependency on it.
-- Any commit touching `mkdocs.yml` because this node has import/call dependency on it.
-- Any commit touching `pyproject.toml` because this node has import/call dependency on it.
-- Any commit touching `run_docs_bg.sh` because this node has import/call dependency on it.
-- Any architecture or behavior change affecting this area.
+- **Direct**: Any change to `ai_docs/*.py` or `ai_docs/assets/**`.
+- **Dependency changes**: `pyproject.toml` dependencies (openai, tiktoken, mkdocs, etc.).
+- **Config changes**: `.ai-docs.yaml` schema updates (extensions, exclude patterns).
+- **Test changes**: `tests/test_*.py` additions or modifications.
+- **Output changes**: `ai_docs_site/**` regeneration logic (`generator_output.py`).
+- **Script changes**: `run_docs_bg.sh` (background execution).
 
 ## Related nodes
-- `nodes/ai-docs-site.md`
-- `nodes/mkdocs-yml.md`
-- `nodes/pyproject-toml.md`
-- `nodes/run-docs-bg-sh.md`
-- `ai_docs_site` confidence=0.88 via L0
-- `mkdocs.yml` confidence=0.90 via L0
-- `pyproject.toml` confidence=0.88 via L0
-- `run_docs_bg.sh` confidence=0.63 via L0
+- `ai-docs-site.md` — generated HTML output
+- `mkdocs-yml.md` — MkDocs configuration
+- `pyproject-toml.md` — package dependencies, entry points
+- `run-docs-bg-sh.md` — background runner script
+- `ai-docs-cache.md` — cache directory structure
 
 ## Owner
-- project-maintainers
+- `project-maintainers`
 
 ## Last reviewed
-- 2026-03-07T07:34:06Z
+- 2026-03-17

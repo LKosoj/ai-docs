@@ -1,6 +1,6 @@
 # API Spec: `ai_docs/generator_cache.py`
 
-Generated: 2026-03-07T07:34:06Z
+Generated: 2026-03-17T07:32:37Z
 
 ## Symbols
 - `def init_cache(cache_dir, use_cache)` (line 9)

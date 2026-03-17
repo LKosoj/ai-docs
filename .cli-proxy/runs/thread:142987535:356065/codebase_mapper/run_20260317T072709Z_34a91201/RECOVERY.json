@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "status": "needs_recovery",
+  "diagnosed_at": 1773733498.460922,
+  "recommended_action": "manual_review_required",
+  "last_consistent_checkpoint": 1,
+  "issues": [
+    {
+      "code": "boundary_contract_failed",
+      "message": "Boundary validation reported inconsistencies for the current phase.",
+      "severity": "error",
+      "details": {
+        "boundary_issue_codes": [
+          "manual_review_pending"
+        ]
+      }
+    },
+    {
+      "code": "manual_review_pending",
+      "message": "Manual review items are pending.",
+      "severity": "error",
+      "details": {}
+    }
+  ],
+  "attempts": [
+    {
+      "diagnosed_at": 1773733498.460922,
+      "mode_id": "codebase_mapper",
+      "phase": "operation",
+      "recommended_action": "manual_review_required",
+      "issues": [
+        {
+          "code": "boundary_contract_failed",
+          "message": "Boundary validation reported inconsistencies for the current phase.",
+          "severity": "error",
+          "details": {
+            "boundary_issue_codes": [
+              "manual_review_pending"
+            ]
+          }
+        },
+        {
+          "code": "manual_review_pending",
+          "message": "Manual review items are pending.",
+          "severity": "error",
+          "details": {}
+        }
+      ]
+    }
+  ],
+  "can_resume": false,
+  "mode_id": "codebase_mapper",
+  "phase": "operation"
+}

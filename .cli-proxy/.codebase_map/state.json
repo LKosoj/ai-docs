@@ -1,7 +1,7 @@
 {
   "state": "needs_review",
-  "updated_at": "2026-03-07T07:34:06Z",
-  "operation": "init",
+  "updated_at": "2026-03-17T07:44:58Z",
+  "operation": "init_full",
   "nodes_count": 7,
   "tree": [
     ".cli-proxy/.codebase_map/",
@@ -24,16 +24,16 @@
     "nodes/pyproject-toml.md",
     "nodes/run-docs-bg-sh.md"
   ],
-  "needs_review": [],
-  "reviewed": {
-    "nodes/ai-docs-site.md": true,
-    "nodes/ai-docs.md": true,
-    "nodes/tests.md": true,
-    "nodes/documentary-skill.md": true,
-    "nodes/mkdocs-yml.md": true,
-    "nodes/pyproject-toml.md": true,
-    "nodes/run-docs-bg-sh.md": true
-  },
+  "needs_review": [
+    "nodes/ai-docs-site.md",
+    "nodes/ai-docs.md",
+    "nodes/tests.md",
+    "nodes/documentary-skill.md",
+    "nodes/mkdocs-yml.md",
+    "nodes/pyproject-toml.md",
+    "nodes/run-docs-bg-sh.md"
+  ],
+  "reviewed": {},
   "rules_review_items": [
     "rule-sync-ai-docs-gitignore",
     "rule-sync-ai-docs-ai-docs-art-v4-jpg",
@@ -365,50 +365,50 @@
       "    pyproject-toml.md",
       "    run-docs-bg-sh.md"
     ],
-    "validated_at": "2026-03-07T07:34:06Z"
+    "validated_at": "2026-03-17T07:44:58Z"
   },
   "nodes_status": {
     "nodes/ai-docs-site.md": {
       "status": "ok",
       "repair_attempts": 0,
       "last_error": "",
-      "updated_at": "2026-03-07T07:34:06Z"
+      "updated_at": "2026-03-17T07:44:58Z"
     },
     "nodes/ai-docs.md": {
       "status": "ok",
       "repair_attempts": 0,
       "last_error": "",
-      "updated_at": "2026-03-07T07:34:06Z"
+      "updated_at": "2026-03-17T07:44:58Z"
     },
     "nodes/tests.md": {
       "status": "ok",
       "repair_attempts": 0,
       "last_error": "",
-      "updated_at": "2026-03-07T07:34:06Z"
+      "updated_at": "2026-03-17T07:44:58Z"
     },
     "nodes/documentary-skill.md": {
       "status": "ok",
       "repair_attempts": 0,
       "last_error": "",
-      "updated_at": "2026-03-07T07:34:06Z"
+      "updated_at": "2026-03-17T07:44:58Z"
     },
     "nodes/mkdocs-yml.md": {
       "status": "ok",
       "repair_attempts": 0,
       "last_error": "",
-      "updated_at": "2026-03-07T07:34:06Z"
+      "updated_at": "2026-03-17T07:44:58Z"
     },
     "nodes/pyproject-toml.md": {
       "status": "ok",
       "repair_attempts": 0,
       "last_error": "",
-      "updated_at": "2026-03-07T07:34:06Z"
+      "updated_at": "2026-03-17T07:44:58Z"
     },
     "nodes/run-docs-bg-sh.md": {
       "status": "ok",
       "repair_attempts": 0,
       "last_error": "",
-      "updated_at": "2026-03-07T07:34:06Z"
+      "updated_at": "2026-03-17T07:44:58Z"
     }
   },
   "relation_graph": {

@@ -1,6 +1,6 @@
 # API Spec: `ai_docs/generator_output.py`
 
-Generated: 2026-03-07T07:34:06Z
+Generated: 2026-03-17T07:32:37Z
 
 ## Symbols
 - `def add_mermaid_asset(docs_files)` (line 9)

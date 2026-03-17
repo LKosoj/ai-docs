@@ -82,16 +82,21 @@ python -m unittest tests.test_cache.CacheManagerTests.test_diff_files
 
 **Не покрыто**:
 - `ai_docs/llm.py` — LLMClient (требует моки API)
-- `ai_docs/generator*.py` — оркестрация генерации
-- `ai_docs/summary.py` — summarization logic
+- `ai_docs/generator.py` — оркестрация генерации
+- `ai_docs/generator_sections.py` — build_sections, generate_section, hierarchical summarization
+- `ai_docs/generator_output.py` — write_docs, build_mkdocs, _postprocess_mermaid_html
+- `ai_docs/generator_cache.py` — carry_unchanged_summaries, cleanup_orphan_summaries
+- `ai_docs/summary.py` — summarization logic, _normalize_module_summary
 - `ai_docs/domain.py` — detect_domains, classify_type
 - `ai_docs/utils.py` — утилиты (sha256_text, is_binary_file)
 - `ai_docs/tokenizer.py` — chunk_text, count_tokens
+- `ai_docs/mkdocs.py` — build_mkdocs_yaml, _build_tree_nav
 
 **Ограничения**:
 - Нет интеграционных тестов с реальным LLM
-- Нет тестов для `generator_sections.py`, `generator_output.py`
+- Нет тестов для generator_*.py (9 файлов, ~800+ строк)
 - Нет fixtures для сложных сценариев сканирования
+- Нет тестов для domain detection (kubernetes, docker, terraform, etc.)
 
 ## Test Infrastructure
 
@@ -108,5 +113,16 @@ python -m unittest tests.test_cache.CacheManagerTests.test_diff_files
 | Test files | 3 |
 | Test classes | 3 |
 | Test methods | 3 |
-| Coverage (estimated) | ~15-20% |
+| Coverage (estimated) | ~10-15% |
 | Mock usage | None (тесты локальные) |
+| Untested modules | 12+ (generator_*, summary, domain, llm, mkdocs) |
+
+## Recommended Test Additions
+
+| Priority | Module | Test Focus |
+|----------|--------|------------|
+| High | `generator_cache.py` | diff_files, carry_unchanged_summaries |
+| High | `domain.py` | detect_domains, classify_type, is_infra |
+| Medium | `summary.py` | _needs_doxygen_fix, _format_config_blocks |
+| Medium | `tokenizer.py` | chunk_text boundaries, count_tokens |
+| Low | `mkdocs.py` | build_mkdocs_yaml, _tree_to_nav |

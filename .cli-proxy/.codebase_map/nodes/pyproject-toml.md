@@ -1,40 +1,47 @@
-# Node: pyproject.toml
-
-Generated: 2026-03-07T07:34:06Z
+# Node: pyproject-toml
 
 ## Purpose
-Instruction node for `pyproject.toml` area.
+Python package configuration for `ai-docs-gen` — defines build system, dependencies, CLI entry point, and package data for documentation generator tool.
 
 ## Scope
-- Source glob: `pyproject.toml`
-- Estimated files: 1
+- **File**: `pyproject.toml` (PEP 517/518 build config)
+- **Package name**: `ai-docs-gen` (v0.1.10)
+- **CLI command**: `ai-docs` → `ai_docs.cli:main`
+- **Python version**: ≥3.8
 
 ## Instructions for agent
-- Read only files relevant to the active task.
-- Prefer deterministic checks before edits.
-- Keep changes minimal and validate with tests/linters where applicable.
+- **Dependencies**: Any new dependency requires adding to `[project.dependencies]` and updating `requirements.txt` (if used).
+- **Entry points**: CLI commands defined in `[project.scripts]` — format: `command = "module:function"`.
+- **Package data**: `ai_docs/assets/mermaid.min.js` included via `[tool.setuptools.package-data]`.
+- **Build**: `pip install -e .` for development, `pip build` for distribution.
+- **Version**: Update `version` in `[project]` following semver (current: 0.1.10).
 
 ## Source of truth
-- `pyproject.toml`
-- `pyproject.toml`
+- **Config file**: `pyproject.toml` (root directory)
+- **Build system**: `setuptools>=68` + `wheel` (PEP 517)
+- **Dependencies**:
+  - LLM: `openai`, `tiktoken`, `httpx` (via openai)
+  - Parsing: `pyyaml`, `tomli`, `pathspec`
+  - Docs: `mkdocs`, `mkdocs-mermaid2-plugin`, `pymdown-extensions`
+  - Utils: `requests`, `python-dotenv`
+- **Entry point**: `ai_docs/cli.py:main()` (argparse CLI)
+- **Package structure**: `ai_docs/` (excludes `ai_docs/assets/` from discovery, includes as package-data)
 
 ## When to update
-- Any commit touching `pyproject.toml`.
-- Any commit touching `ai_docs/**` because this node has import/call dependency on it.
-- Any commit touching `ai_docs_site/**` because this node has import/call dependency on it.
-- Any commit touching `run_docs_bg.sh` because this node has import/call dependency on it.
-- Any architecture or behavior change affecting this area.
+- **New dependencies**: Add to `[project.dependencies]` when new libraries are required (e.g., new LLM provider, parser).
+- **Version bump**: Update `version` on releases (semver: major.minor.patch).
+- **Entry points**: Add/remove CLI commands in `[project.scripts]`.
+- **Package structure**: Changes to `ai_docs/` layout require updating `[tool.setuptools.packages.find]`.
+- **Build system**: Switching from setuptools to alternative (hatch, poetry) requires full rewrite.
+- **Python version**: Update `requires-python` when dropping/adding version support.
 
 ## Related nodes
-- `nodes/ai-docs.md`
-- `nodes/ai-docs-site.md`
-- `nodes/run-docs-bg-sh.md`
-- `ai_docs` confidence=0.88 via L0
-- `ai_docs_site` confidence=0.63 via L0
-- `run_docs_bg.sh` confidence=0.63 via L0
+- `ai-docs.md` — main package (entry point `ai_docs.cli:main`)
+- `ai-docs-site.md` — MkDocs dependency (mkdocs, mkdocs-mermaid2-plugin)
+- `run-docs-bg-sh.md` — shell script that invokes `ai-docs` CLI
 
 ## Owner
-- project-maintainers
+- `project-maintainers`
 
 ## Last reviewed
-- 2026-03-07T07:34:06Z
+- 2026-03-17

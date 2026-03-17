@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-03-07T07:34:05Z",
-  "head_commit": "1971a28b5c1229f5b787f22c5758bf557e47980f",
+  "generated_at": "2026-03-17T07:32:36Z",
+  "head_commit": "f2fd314af2e7624b1cf94f1d583c983a3911412c",
   "changed_files": [],
   "docs": [
     "STACK.md",
@@ -11,7 +11,7 @@
     "TESTING.md",
     "CONCERNS.md"
   ],
-  "run_mode": "bootstrap",
+  "run_mode": "force",
   "full_scan": true,
   "updated_docs": [
     "STACK.md",

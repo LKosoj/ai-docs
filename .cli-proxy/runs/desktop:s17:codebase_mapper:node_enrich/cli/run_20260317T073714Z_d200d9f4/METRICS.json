@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "run_id": "run_20260317T073714Z_d200d9f4",
+  "totals": {
+    "units": 1,
+    "duration_sec": 113.23735070228577,
+    "retries": 0,
+    "recovery_attempts": 0,
+    "tool_calls": 0,
+    "input_tokens": null,
+    "output_tokens": null,
+    "cost_usd": null,
+    "skill_selections": 1,
+    "skill_discoveries": 0,
+    "skill_installs": 0
+  },
+  "units": [
+    {
+      "unit_id": "cli:use_cli_plugin",
+      "phase": "execute",
+      "status": "ok",
+      "started_at": 1773733034.7719684,
+      "ended_at": 1773733148.009334,
+      "duration_sec": 113.23735070228577,
+      "tool_calls": 0,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null,
+      "retries": 0,
+      "recovery_attempts": 0,
+      "skill_selection_count": 1,
+      "skill_discovery_count": 0,
+      "skill_install_count": 0,
+      "totals_counted": true
+    }
+  ],
+  "phase_aggregates": [],
+  "runtime_progress": {
+    "events": 0,
+    "last_event": null
+  }
+}

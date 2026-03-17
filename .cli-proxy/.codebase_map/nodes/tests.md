@@ -1,44 +1,42 @@
 # Node: tests
 
-Generated: 2026-03-07T07:34:06Z
-
 ## Purpose
-Instruction node for `tests` area.
+Unit tests for `ai_docs` package — validates cache diff logic, scanner filtering, and changes markdown formatting.
 
 ## Scope
-- Source glob: `tests/**`
-- Estimated files: 4
+- **Source glob**: `tests/**` (3 test files)
+- **Framework**: `unittest` (stdlib), no pytest dependency
+- **Coverage**: ~20% (cache, scanner, changes only)
+- **Test files**: `test_cache.py`, `test_scanner.py`, `test_changes.py`
 
 ## Instructions for agent
-- Read only files relevant to the active task.
-- Prefer deterministic checks before edits.
-- Keep changes minimal and validate with tests/linters where applicable.
+- **Run all**: `python -m unittest discover -s tests` or `pytest -q tests/`
+- **Run single**: `python -m unittest tests.test_cache.CacheManagerTests.test_diff_files`
+- **Test pattern**: `unittest.TestCase` classes, `test_*` methods, `tempfile.TemporaryDirectory()` for isolation
+- **Add tests**: Required for any new/changed behavior in `ai_docs/`
+- **Gaps**: No tests for `llm.py`, `generator*.py`, `summary.py`, `domain.py` — prioritize these
 
 ## Source of truth
-- `tests/**`
-- `tests/__init__.py`
-- `tests/test_cache.py`
-- `tests/test_changes.py`
-- `tests/test_scanner.py`
-
-## Module API
-Детальные интерфейсы модулей этой области:
-
-- [tests/test_cache.py](../api/tests/test_cache-py.md)
-- [tests/test_changes.py](../api/tests/test_changes-py.md)
-- [tests/test_scanner.py](../api/tests/test_scanner-py.md)
+- **Test root**: `tests/`
+- **Cache tests**: `tests/test_cache.py` (CacheManager.diff_files, save/load index)
+- **Scanner tests**: `tests/test_scanner.py` (scan_source, .gitignore, .venv exclusion)
+- **Changes tests**: `tests/test_changes.py` (format_changes_md output validation)
+- **Test utils**: `tests/__init__.py` (empty package marker)
 
 ## When to update
-- Any commit touching `tests/**`.
-- Any commit touching `ai_docs/**` because this node has import/call dependency on it.
-- Any architecture or behavior change affecting this area.
+- **Direct**: Any change to `tests/*.py` (new tests, fixes, refactors).
+- **Source changes**: Any modification to `ai_docs/cache.py`, `ai_docs/scanner.py`, `ai_docs/changes.py` requires test updates.
+- **New features**: Add tests for new modules (priority: `llm.py`, `generator.py`, `summary.py`, `domain.py`).
+- **Bug fixes**: Add regression test before fixing.
+- **Framework changes**: Switch to pytest requires updating all test files.
 
 ## Related nodes
-- `nodes/ai-docs.md`
-- `ai_docs` confidence=0.90 via L1/L2
+- `ai-docs.md` — tested package (direct dependency)
+- `ai-docs-cache.md` — cache logic tested in `test_cache.py`
+- `ai-docs-scanner.md` — scanner logic tested in `test_scanner.py`
 
 ## Owner
-- project-maintainers
+- `project-maintainers`
 
 ## Last reviewed
-- 2026-03-07T07:34:06Z
+- 2026-03-17
