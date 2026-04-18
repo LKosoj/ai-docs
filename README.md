@@ -11,7 +11,7 @@
 - Автоопределение доменов инфраструктуры (Kubernetes, Helm, Terraform, Ansible, Docker, CI/CD, Observability, Service Mesh / Ingress, Data / Storage)
 - Инкрементальная генерация и кэширование
 - Учет `.gitignore` и фильтрация файлов
-- Параллельная LLM‑суммаризация (`--threads` / `AI_DOCS_THREADS`)
+- Параллельное сканирование и LLM‑суммаризация (`--threads` / `AI_DOCS_THREADS`)
 - Отчёт об изменениях в `docs/changes.md`
 
 ## Быстрый старт
@@ -45,7 +45,7 @@ OPENAI_MODEL=gpt-4o-mini
 OPENAI_MAX_TOKENS=1200
 OPENAI_CONTEXT_TOKENS=8192
 OPENAI_TEMPERATURE=0.2
-AI_DOCS_THREADS=1
+AI_DOCS_THREADS=5
 AI_DOCS_LOCAL_SITE=false
 ```
 
@@ -57,7 +57,7 @@ export OPENAI_MODEL="gpt-4o-mini"
 export OPENAI_MAX_TOKENS="1200"
 export OPENAI_CONTEXT_TOKENS="8192"
 export OPENAI_TEMPERATURE="0.2"
-export AI_DOCS_THREADS="1"
+export AI_DOCS_THREADS="5"
 export AI_DOCS_LOCAL_SITE="false"
 ```
 
@@ -88,7 +88,7 @@ $env:OPENAI_MODEL="gpt-4o-mini"
 $env:OPENAI_MAX_TOKENS="1200"
 $env:OPENAI_CONTEXT_TOKENS="8192"
 $env:OPENAI_TEMPERATURE="0.2"
-$env:AI_DOCS_THREADS="1"
+$env:AI_DOCS_THREADS="5"
 $env:AI_DOCS_LOCAL_SITE="false"
 ```
 
@@ -196,7 +196,7 @@ python -m pytest
 - `--language ru|en` — язык документации
 - `--include/--exclude` — фильтры
 - `--max-size` — максимальный размер файла
-- `--threads` — число потоков LLM
+- `--threads` — число параллельных воркеров для сканирования и LLM
 - `--cache-dir` — директория кэша (по умолчанию `.ai_docs_cache`)
 - `--no-cache` — отключить LLM‑кэш
 - `--local-site` — добавить `site_url` и `use_directory_urls` в `mkdocs.yml`

@@ -11,7 +11,7 @@ Key features:
 - Automatic detection of infrastructure domains (Kubernetes, Helm, Terraform, Ansible, Docker, CI/CD, Observability, Service Mesh / Ingress, Data / Storage)
 - Incremental generation and caching
 - Respects `.gitignore` and filters files
-- Parallel LLM summarization (`--threads` / `AI_DOCS_THREADS`)
+- Parallel scanning and LLM summarization (`--threads` / `AI_DOCS_THREADS`)
 - Change report in `docs/changes.md`
 
 ## Quick start
@@ -45,7 +45,7 @@ OPENAI_MODEL=gpt-4o-mini
 OPENAI_MAX_TOKENS=1200
 OPENAI_CONTEXT_TOKENS=8192
 OPENAI_TEMPERATURE=0.2
-AI_DOCS_THREADS=1
+AI_DOCS_THREADS=5
 AI_DOCS_LOCAL_SITE=false
 ```
 
@@ -57,7 +57,7 @@ export OPENAI_MODEL="gpt-4o-mini"
 export OPENAI_MAX_TOKENS="1200"
 export OPENAI_CONTEXT_TOKENS="8192"
 export OPENAI_TEMPERATURE="0.2"
-export AI_DOCS_THREADS="1"
+export AI_DOCS_THREADS="5"
 export AI_DOCS_LOCAL_SITE="false"
 ```
 
@@ -88,7 +88,7 @@ $env:OPENAI_MODEL="gpt-4o-mini"
 $env:OPENAI_MAX_TOKENS="1200"
 $env:OPENAI_CONTEXT_TOKENS="8192"
 $env:OPENAI_TEMPERATURE="0.2"
-$env:AI_DOCS_THREADS="1"
+$env:AI_DOCS_THREADS="5"
 $env:AI_DOCS_LOCAL_SITE="false"
 ```
 
@@ -196,7 +196,7 @@ python -m pytest
 - `--language ru|en` — documentation language
 - `--include/--exclude` — filters
 - `--max-size` — max file size
-- `--threads` — number of LLM threads
+- `--threads` — number of parallel workers for scanning and LLM
 - `--cache-dir` — cache directory (default `.ai_docs_cache`)
 - `--no-cache` — disable LLM cache
 - `--local-site` — add `site_url` and `use_directory_urls` to `mkdocs.yml`

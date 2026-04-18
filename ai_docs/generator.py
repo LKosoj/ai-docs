@@ -16,14 +16,7 @@ from .generator_cache import (
 from .generator_output import build_mkdocs, write_docs, write_readme
 from .generator_sections import build_sections, generate_readme
 from .generator_shared import DOMAIN_TITLES, SECTION_TITLES
-from .generator_summarize import (
-    summarize_changed_configs,
-    summarize_changed_files,
-    summarize_changed_modules,
-    summarize_missing,
-    summarize_missing_configs,
-    summarize_missing_modules,
-)
+from .generator_summarize import summarize_entries
 
 
 async def _generate_docs_async(
@@ -59,25 +52,37 @@ async def _generate_docs_async(
     to_summarize = list({**added, **modified}.items())
     if to_summarize:
         print(f"[ai-docs] summarize: {len(to_summarize)} changed files (threads={threads})")
-    await summarize_changed_files(to_summarize, summaries_dir, llm, llm_cache, threads, save_cb, errors)
-    await summarize_changed_modules(to_summarize, module_summaries_dir, llm, llm_cache, threads, save_cb, errors)
-    await summarize_changed_configs(to_summarize, config_summaries_dir, llm, llm_cache, threads, save_cb, errors)
+    await summarize_entries(
+        to_summarize,
+        summaries_dir,
+        module_summaries_dir,
+        config_summaries_dir,
+        llm,
+        llm_cache,
+        threads,
+        save_cb,
+        errors,
+        label="summarize progress",
+    )
     if to_summarize:
         save_cb()
 
-    missing_summaries, missing_module_summaries, missing_config_summaries = carry_unchanged_summaries(
-        unchanged, prev_files
+    missing_entries = carry_unchanged_summaries(unchanged, prev_files)
+    if missing_entries:
+        print(f"[ai-docs] summarize: {len(missing_entries)} missing summaries")
+    await summarize_entries(
+        missing_entries,
+        summaries_dir,
+        module_summaries_dir,
+        config_summaries_dir,
+        llm,
+        llm_cache,
+        threads,
+        save_cb,
+        errors,
+        label="summarize missing progress",
     )
-    if missing_summaries:
-        print(f"[ai-docs] summarize: {len(missing_summaries)} missing summaries")
-    await summarize_missing(missing_summaries, summaries_dir, llm, llm_cache, threads, save_cb, errors)
-    if missing_module_summaries:
-        print(f"[ai-docs] summarize modules: {len(missing_module_summaries)} missing module summaries")
-    await summarize_missing_modules(missing_module_summaries, module_summaries_dir, llm, llm_cache, threads, save_cb, errors)
-    if missing_config_summaries:
-        print(f"[ai-docs] summarize configs: {len(missing_config_summaries)} missing config summaries")
-    await summarize_missing_configs(missing_config_summaries, config_summaries_dir, llm, llm_cache, threads, save_cb, errors)
-    if missing_summaries or missing_module_summaries or missing_config_summaries:
+    if missing_entries:
         save_cb()
 
     cleanup_orphan_summaries(file_map, summaries_dir, module_summaries_dir, config_summaries_dir)

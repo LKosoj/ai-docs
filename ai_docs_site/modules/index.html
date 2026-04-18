@@ -222,7 +222,7 @@
 <li><code>_should_include(rel_path: str, include, exclude, ignore_specs) -&gt; bool</code> — проверяет, должен ли файл быть включён в результат.</li>
 </ul>
 <h3 id="_4">Структуры данных</h3>
-<div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">ScanResult</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ScanResult</span><span class="p">:</span>
     <span class="n">root</span><span class="p">:</span> <span class="n">Path</span>
     <span class="n">files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span>  <span class="c1"># Каждый словарь содержит: path, content, type, domains, size</span>
     <span class="n">source</span><span class="p">:</span> <span class="nb">str</span>
@@ -249,13 +249,13 @@
 <h2 id="_8">Управление кэшем</h2>
 <p>Модуль <code>cache</code> обеспечивает сохранение и восстановление состояния между запусками. Использует <code>CacheManager</code> для работы с <code>index.json</code> и <code>llm_cache.json</code>.</p>
 <h3 id="cachemanager">Класс <code>CacheManager</code></h3>
-<div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CacheManager</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">load_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span>
-    <span class="k">def</span> <span class="nf">save_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-    <span class="k">def</span> <span class="nf">load_llm_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-    <span class="k">def</span> <span class="nf">save_llm_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
-    <span class="k">def</span> <span class="nf">diff_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">added</span><span class="p">,</span> <span class="n">modified</span><span class="p">,</span> <span class="n">deleted</span><span class="p">,</span> <span class="n">unchanged</span><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">CacheManager</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_llm_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_llm_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">diff_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">added</span><span class="p">,</span> <span class="n">modified</span><span class="p">,</span> <span class="n">deleted</span><span class="p">,</span> <span class="n">unchanged</span><span class="p">]</span>
 </code></pre></div>
 <h3 id="_9">Вспомогательные функции</h3>
 <ul>
@@ -298,11 +298,11 @@
 <h2 id="llm-">LLM-клиент</h2>
 <p>Модуль <code>llm_client</code> предоставляет асинхронный интерфейс для работы с OpenAI-совместимыми API.</p>
 <h3 id="llmclient">Класс <code>LLMClient</code></h3>
-<div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">LLMClient</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">api_key</span><span class="p">,</span> <span class="n">base_url</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">max_tokens</span><span class="p">,</span> <span class="n">context_limit</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">chat</span><span class="p">(</span><span class="n">messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">cache</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
-    <span class="k">def</span> <span class="nf">_compute_read_timeout</span><span class="p">(</span><span class="n">input_tokens</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
-    <span class="k">def</span> <span class="nf">_cache_key</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LLMClient</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="n">api_key</span><span class="p">,</span> <span class="n">base_url</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">max_tokens</span><span class="p">,</span> <span class="n">context_limit</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">chat</span><span class="p">(</span><span class="n">messages</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">cache</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_read_timeout</span><span class="p">(</span><span class="n">input_tokens</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cache_key</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
 </code></pre></div>
 <ul>
 <li>Поддерживает кэширование, адаптивный таймаут, повторные попытки.</li>

@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from functools import partial
 from typing import Dict, List, Optional
 
 import httpx
@@ -28,6 +29,7 @@ class LLMClient:
         self.max_tokens = max_tokens
         self.context_limit = context_limit
         self._cache_lock = asyncio.Lock()
+        self._count_tokens = partial(count_tokens, model=self.model)
         http_client = httpx.AsyncClient(verify=False)
         client_kwargs = {"api_key": self.api_key, "timeout": 1200.0, "http_client": http_client}
         if self.base_url:
@@ -38,7 +40,7 @@ class LLMClient:
         total = 0
         for msg in messages:
             content = msg.get("content", "")
-            total += count_tokens(content, self.model)
+            total += self._count_tokens(content)
             total += 4
         return total
 

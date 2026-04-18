@@ -9,6 +9,7 @@ from .generator_shared import (
     DOMAIN_TITLES,
     collect_dependencies,
     collect_test_info,
+    get_cached_text,
     render_project_configs_index,
     render_testing_section,
     strip_duplicate_heading,
@@ -170,9 +171,9 @@ async def build_sections(
             continue
         summaries = []
         for m in domain_files:
-            summary_path = m.get("summary_path")
-            if summary_path:
-                summaries.append(read_text_file(Path(summary_path)))
+            summary_text = get_cached_text(m, "summary_path", "summary_text")
+            if summary_text:
+                summaries.append(summary_text)
         if summaries:
             domain_contexts[domain] = await build_hierarchical_context(
                 llm,
@@ -187,7 +188,7 @@ async def build_sections(
     test_paths, test_commands = collect_test_info(file_map)
 
     all_summaries = [
-        read_text_file(Path(m["summary_path"]))
+        get_cached_text(m, "summary_path", "summary_text")
         for m in file_map.values()
         if m.get("summary_path")
     ]
@@ -288,7 +289,7 @@ async def build_sections(
         module_rel = Path("modules") / Path(path)
         module_rel_str = module_rel.as_posix().replace(".", "__") + ".md"
         module_title = Path(path).with_suffix("").as_posix()
-        summary = read_text_file(Path(summary_path))
+        summary = get_cached_text(meta, "module_summary_path", "module_summary_text")
         module_pages[module_rel_str] = f"# {module_title}\n\n{summary}\n"
         module_nav_paths.append(module_rel_str)
         module_summaries.append(summary)
@@ -353,7 +354,7 @@ async def build_sections(
         config_rel = Path("configs/files") / Path(path)
         config_rel_str = config_rel.as_posix().replace(".", "__") + ".md"
         config_title = Path(path).as_posix()
-        summary = read_text_file(Path(summary_path))
+        summary = get_cached_text(meta, "config_summary_path", "config_summary_text")
         config_pages[config_rel_str] = f"# {config_title}\n\n{summary}\n"
         config_nav_paths.append(config_rel_str)
     if config_nav_paths:
@@ -414,7 +415,11 @@ async def build_sections(
         changes_context = await build_hierarchical_context(
             llm,
             llm_cache,
-            [read_text_file(Path(meta["summary_path"])) for meta in {**added, **modified}.values() if meta.get("summary_path")],
+            [
+                get_cached_text(meta, "summary_path", "summary_text")
+                for meta in {**added, **modified}.values()
+                if meta.get("summary_path")
+            ],
             input_budget,
             language,
             "changes",

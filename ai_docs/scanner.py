@@ -2,8 +2,9 @@ import os
 import shutil
 import subprocess
 import tempfile
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 import pathspec
 import yaml
@@ -42,6 +43,30 @@ DEFAULT_EXCLUDE_PATTERNS = {
     ".ai-docs.yaml", "**/.ai-docs.yaml",
     "ai_docs/assets/*", "ai_docs/assets/**", "**/ai_docs/assets/*", "**/ai_docs/assets/**",
 }
+
+PRUNABLE_DIR_NAMES = {
+    ".git",
+    ".venv",
+    "venv",
+    "node_modules",
+    "dist",
+    "build",
+    ".idea",
+    ".vscode",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ai_docs_cache",
+    "ai_docs_site",
+    ".ai-docs",
+    ".github",
+}
+
+PRUNABLE_DIR_PATHS = {
+    "ai_docs/assets",
+}
+
+PROCESS_POOL_THRESHOLD = 200
 
 
 class ScanResult:
@@ -129,6 +154,12 @@ def _build_default_include_patterns(extension_config: Dict[str, object]) -> Set[
     return {f"*{ext}" for ext in extensions} | FIXED_INCLUDE_PATTERNS
 
 
+def _compile_pathspec(patterns: Optional[Set[str]]) -> Optional[pathspec.PathSpec]:
+    if not patterns:
+        return None
+    return pathspec.PathSpec.from_lines("gitignore", sorted(patterns))
+
+
 def _load_ignore_specs(root: Path) -> List[pathspec.PathSpec]:
     specs: List[pathspec.PathSpec] = []
     for name in (".gitignore", ".build_ignore"):
@@ -140,69 +171,116 @@ def _load_ignore_specs(root: Path) -> List[pathspec.PathSpec]:
     return specs
 
 
-def _should_include(rel_path: str, include: Optional[Set[str]], exclude: Optional[Set[str]], ignore_specs: List[pathspec.PathSpec]) -> bool:
+def _matches_any_spec(rel_path: str, specs: Optional[pathspec.PathSpec]) -> bool:
+    return bool(specs and specs.match_file(rel_path))
+
+
+def _should_include(
+    rel_path: str,
+    include_spec: Optional[pathspec.PathSpec],
+    exclude_spec: Optional[pathspec.PathSpec],
+    ignore_specs: Sequence[pathspec.PathSpec],
+) -> bool:
     for spec in ignore_specs:
         if spec.match_file(rel_path):
             return False
-    if exclude:
-        for pattern in exclude:
-            if pathspec.PathSpec.from_lines("gitignore", [pattern]).match_file(rel_path):
-                return False
-    if not include:
+    if _matches_any_spec(rel_path, exclude_spec):
+        return False
+    if not include_spec:
         return True
-    for pattern in include:
-        if pathspec.PathSpec.from_lines("gitignore", [pattern]).match_file(rel_path):
+    return _matches_any_spec(rel_path, include_spec)
+
+
+def _should_prune_dir(
+    rel_dir: str,
+    exclude_spec: Optional[pathspec.PathSpec],
+    ignore_specs: Sequence[pathspec.PathSpec],
+) -> bool:
+    dir_name = rel_dir.rsplit("/", 1)[-1]
+    if dir_name in PRUNABLE_DIR_NAMES:
+        return True
+    if any(rel_dir == path or rel_dir.endswith(f"/{path}") for path in PRUNABLE_DIR_PATHS):
+        return True
+    if _matches_any_spec(rel_dir, exclude_spec):
+        return True
+    for spec in ignore_specs:
+        if spec.match_file(rel_dir):
             return True
     return False
 
 
-def _scan_directory(root: Path, include: Optional[Set[str]], exclude: Optional[Set[str]], max_size: int) -> List[Dict]:
+def _load_file_record(task: Tuple[str, str, int]) -> Optional[Dict]:
+    abs_path_str, rel_path_str, max_size = task
+    abs_path = Path(abs_path_str)
+
+    try:
+        if abs_path.is_symlink():
+            return None
+        size = abs_path.stat().st_size
+        if max_size and size > max_size:
+            return None
+        if is_binary_file(abs_path):
+            return None
+        content = read_text_file(abs_path)
+    except OSError:
+        return None
+
+    content_snippet = content[:4000]
+    file_type = classify_type(abs_path)
+    domains = detect_domains(abs_path, content_snippet)
+    if is_infra(domains):
+        file_type = "infra"
+
+    return {
+        "path": rel_path_str,
+        "abs_path": abs_path,
+        "size": size,
+        "content": content,
+        "type": file_type,
+        "domains": sorted(domains),
+    }
+
+
+def _scan_directory(
+    root: Path,
+    include_spec: Optional[pathspec.PathSpec],
+    exclude_spec: Optional[pathspec.PathSpec],
+    max_size: int,
+    workers: int,
+) -> List[Dict]:
     files: List[Dict] = []
     ignore_specs = _load_ignore_specs(root)
+    tasks: List[Tuple[str, str, int]] = []
 
     for dirpath, dirnames, filenames in os.walk(root):
-        # Avoid .git directory traversal
-        dirnames[:] = [d for d in dirnames if d != ".git"]
-        for filename in filenames:
-            abs_path = Path(dirpath) / filename.lower()
-            rel_path = abs_path.relative_to(root)
-            rel_path_str = to_posix(rel_path)
-
-            if not _should_include(rel_path_str, include, exclude, ignore_specs):
-                continue
-
-            if abs_path.is_symlink():
-                continue
-
-            try:
-                size = abs_path.stat().st_size
-            except OSError:
-                continue
-
-            if max_size and size > max_size:
-                continue
-
-            if is_binary_file(abs_path):
-                continue
-
-            content = read_text_file(abs_path)
-            content_snippet = content[:4000]
-            file_type = classify_type(abs_path)
-            domains = detect_domains(abs_path, content_snippet)
-            if is_infra(domains):
-                file_type = "infra"
-
-            files.append(
-                {
-                    "path": rel_path_str,
-                    "abs_path": abs_path,
-                    "size": size,
-                    "content": content,
-                    "type": file_type,
-                    "domains": sorted(domains),
-                }
+        current_dir = Path(dirpath)
+        dirnames[:] = [
+            dirname
+            for dirname in dirnames
+            if not _should_prune_dir(
+                to_posix((current_dir / dirname).relative_to(root)),
+                exclude_spec,
+                ignore_specs,
             )
+        ]
+        for filename in filenames:
+            abs_path = current_dir / filename
+            rel_path_str = to_posix(abs_path.relative_to(root))
+            if not _should_include(rel_path_str, include_spec, exclude_spec, ignore_specs):
+                continue
+            tasks.append((str(abs_path), rel_path_str, max_size))
 
+    if workers > 1 and len(tasks) >= PROCESS_POOL_THRESHOLD:
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            for record in executor.map(_load_file_record, tasks):
+                if record is not None:
+                    files.append(record)
+        return files
+
+    for task in tasks:
+        record = _load_file_record(task)
+        if record is not None:
+            files.append(record)
     return files
 
 
@@ -217,15 +295,23 @@ def _clone_repo(repo_url: str) -> Tuple[Path, str]:
     return tmpdir, repo_name
 
 
-def scan_source(source: str, include: Optional[Set[str]] = None, exclude: Optional[Set[str]] = None, max_size: int = 200_000) -> ScanResult:
-    exclude = exclude or DEFAULT_EXCLUDE_PATTERNS
+def scan_source(
+    source: str,
+    include: Optional[Set[str]] = None,
+    exclude: Optional[Set[str]] = None,
+    max_size: int = 200_000,
+    workers: int = 5,
+) -> ScanResult:
+    exclude = set(exclude or DEFAULT_EXCLUDE_PATTERNS)
 
     if is_url(source):
         root, repo_name = _clone_repo(source)
         extension_config = _load_extension_config(root)
         include = include or _build_default_include_patterns(extension_config)
         exclude = set(exclude) | set(extension_config.get("exclude", set()))
-        files = _scan_directory(root, include, exclude, max_size)
+        include_spec = _compile_pathspec(include)
+        exclude_spec = _compile_pathspec(exclude)
+        files = _scan_directory(root, include_spec, exclude_spec, max_size, workers)
         return ScanResult(root=root, files=files, source=source, repo_name=repo_name)
 
     root = Path(source).expanduser().resolve()
@@ -234,5 +320,7 @@ def scan_source(source: str, include: Optional[Set[str]] = None, exclude: Option
     extension_config = _load_extension_config(root)
     include = include or _build_default_include_patterns(extension_config)
     exclude = set(exclude) | set(extension_config.get("exclude", set()))
-    files = _scan_directory(root, include, exclude, max_size)
+    include_spec = _compile_pathspec(include)
+    exclude_spec = _compile_pathspec(exclude)
+    files = _scan_directory(root, include_spec, exclude_spec, max_size, workers)
     return ScanResult(root=root, files=files, source=str(root), repo_name=root.name)

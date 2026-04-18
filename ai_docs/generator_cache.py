@@ -48,8 +48,12 @@ def save_cache_snapshot(
     llm_cache: Dict[str, str],
     use_cache: bool,
 ) -> None:
+    transient_keys = {"content", "summary_text", "module_summary_text", "config_summary_text"}
     snapshot = {
-        "files": {path: {k: v for k, v in meta.items() if k != "content"} for path, meta in file_map.items()},
+        "files": {
+            path: {k: v for k, v in meta.items() if k not in transient_keys}
+            for path, meta in file_map.items()
+        },
         "sections": index_data.get("sections", {}),
     }
     cache.save_index(snapshot)
@@ -60,31 +64,33 @@ def save_cache_snapshot(
 def carry_unchanged_summaries(
     unchanged: Dict[str, Dict],
     prev_files: Dict[str, Dict],
-) -> Tuple[List[Tuple[str, Dict]], List[Tuple[str, Dict]], List[Tuple[str, Dict]]]:
-    missing_summaries: List[Tuple[str, Dict]] = []
-    missing_module_summaries: List[Tuple[str, Dict]] = []
-    missing_config_summaries: List[Tuple[str, Dict]] = []
+) -> List[Tuple[str, Dict]]:
+    missing_entries: List[Tuple[str, Dict]] = []
     for path, meta in unchanged.items():
         prev = prev_files.get(path, {})
+        is_missing = False
         summary_path = prev.get("summary_path")
         if summary_path and Path(summary_path).exists():
             meta["summary_path"] = summary_path
         else:
-            missing_summaries.append((path, meta))
+            is_missing = True
         module_summary_path = prev.get("module_summary_path")
         if meta.get("type") == "code" and not is_test_path(path):
             if module_summary_path and Path(module_summary_path).exists():
                 meta["module_summary_path"] = module_summary_path
             else:
-                missing_module_summaries.append((path, meta))
+                is_missing = True
         config_summary_path = prev.get("config_summary_path")
         if meta.get("type") == "config":
             if config_summary_path and Path(config_summary_path).exists():
                 meta["config_summary_path"] = config_summary_path
             else:
-                missing_config_summaries.append((path, meta))
+                is_missing = True
 
-    return missing_summaries, missing_module_summaries, missing_config_summaries
+        if is_missing:
+            missing_entries.append((path, meta))
+
+    return missing_entries
 
 
 def cleanup_orphan_summaries(

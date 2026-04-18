@@ -24,7 +24,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-size", type=int, default=200_000, help="Max file size in bytes")
     parser.add_argument("--cache-dir", default=".ai_docs_cache", help="Cache directory")
     parser.add_argument("--no-cache", action="store_true", help="Disable LLM cache")
-    parser.add_argument("--threads", type=int, default=None, help="Number of parallel LLM workers")
+    parser.add_argument(
+        "--threads",
+        type=int,
+        default=None,
+        help="Number of parallel workers for scanning and LLM summarization",
+    )
     parser.add_argument("--local-site", action="store_true", help="Generate MkDocs config for local run")
     parser.add_argument("--force", action="store_true", help="Overwrite README.md if it already exists")
     parser.add_argument(
@@ -53,8 +58,18 @@ def main() -> None:
         )
     include: Optional[Set[str]] = set(args.include) if args.include else None
     exclude: Optional[Set[str]] = set(args.exclude) if args.exclude else None
+    env_threads = int(os.getenv("AI_DOCS_THREADS", "5"))
+    env_local_site = os.getenv("AI_DOCS_LOCAL_SITE", "false").strip().lower() in {"1", "true", "yes", "y"}
+    threads = max(1, args.threads if args.threads is not None else env_threads)
+    local_site = args.local_site or env_local_site
 
-    scan_result = scan_source(args.source, include=include, exclude=exclude, max_size=args.max_size)
+    scan_result = scan_source(
+        args.source,
+        include=include,
+        exclude=exclude,
+        max_size=args.max_size,
+        workers=threads,
+    )
     root = scan_result.root
     repo_name = scan_result.repo_name
     print(f"[ai-docs] scan complete: {len(scan_result.files)} files")
@@ -64,11 +79,6 @@ def main() -> None:
 
     llm = from_env()
     print(f"[ai-docs] llm: model={llm.model} context={llm.context_limit} max_tokens={llm.max_tokens}")
-
-    env_threads = int(os.getenv("AI_DOCS_THREADS", "1"))
-    env_local_site = os.getenv("AI_DOCS_LOCAL_SITE", "false").strip().lower() in {"1", "true", "yes", "y"}
-    threads = args.threads if args.threads is not None else env_threads
-    local_site = args.local_site or env_local_site
 
     print(f"[ai-docs] generate: readme={args.readme or not args.mkdocs} mkdocs={args.mkdocs or not args.readme}")
     if args.regen:
@@ -82,7 +92,7 @@ def main() -> None:
         write_readme_flag=(args.readme or not args.mkdocs),
         write_mkdocs=(args.mkdocs or not args.readme),
         use_cache=not args.no_cache,
-        threads=max(1, threads),
+        threads=threads,
         local_site=local_site,
         force=args.force,
     )

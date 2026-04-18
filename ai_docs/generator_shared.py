@@ -140,6 +140,18 @@ def first_paragraph(text: str) -> str:
     return " ".join(lines).strip()
 
 
+def get_cached_text(meta: Dict[str, object], path_key: str, text_key: str) -> str:
+    text = meta.get(text_key)
+    if isinstance(text, str) and text:
+        return text
+    path = meta.get(path_key)
+    if not isinstance(path, str) or not path:
+        return ""
+    text = read_text_file(Path(path))
+    meta[text_key] = text
+    return text
+
+
 def build_docs_index(
     docs_dir: Path,
     docs_files: Dict[str, str],
@@ -170,7 +182,7 @@ def build_docs_index(
             continue
         module_rel = Path("modules") / Path(path).with_suffix("")
         module_rel_str = module_rel.as_posix() + ".md"
-        summary_text = read_text_file(Path(summary_path))
+        summary_text = get_cached_text(meta, "module_summary_path", "module_summary_text")
         modules.append(
             {
                 "name": Path(path).with_suffix("").as_posix(),
@@ -189,7 +201,7 @@ def build_docs_index(
             continue
         config_rel = Path("configs/files") / Path(path)
         config_rel_str = config_rel.as_posix().replace(".", "__") + ".md"
-        summary_text = read_text_file(Path(summary_path))
+        summary_text = get_cached_text(meta, "config_summary_path", "config_summary_text")
         configs.append(
             {
                 "name": Path(path).as_posix(),
