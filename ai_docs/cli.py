@@ -77,8 +77,11 @@ def main() -> None:
     output_root = resolve_output(args.source, args.output, repo_name)
     output_root.mkdir(parents=True, exist_ok=True)
 
-    llm = from_env()
-    print(f"[ai-docs] llm: model={llm.model} context={llm.context_limit} max_tokens={llm.max_tokens}")
+    llm = from_env(concurrency=threads)
+    print(
+        f"[ai-docs] llm: model={llm.model} context={llm.context_limit} "
+        f"max_tokens={llm.max_tokens} concurrency={llm.concurrency}"
+    )
 
     print(f"[ai-docs] generate: readme={args.readme or not args.mkdocs} mkdocs={args.mkdocs or not args.readme}")
     if args.regen:

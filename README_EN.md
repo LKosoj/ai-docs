@@ -11,7 +11,7 @@ Key features:
 - Automatic detection of infrastructure domains (Kubernetes, Helm, Terraform, Ansible, Docker, CI/CD, Observability, Service Mesh / Ingress, Data / Storage)
 - Incremental generation and caching
 - Respects `.gitignore` and filters files
-- Parallel scanning and LLM summarization (`--threads` / `AI_DOCS_THREADS`)
+- Parallel scanning and LLM summarization with a global cap on concurrent LLM requests (`--threads` / `AI_DOCS_THREADS`)
 - Change report in `docs/changes.md`
 
 ## Quick start
@@ -196,7 +196,7 @@ python -m pytest
 - `--language ru|en` — documentation language
 - `--include/--exclude` — filters
 - `--max-size` — max file size
-- `--threads` — number of parallel workers for scanning and LLM
+- `--threads` — number of parallel workers for scanning and a global cap on concurrent LLM requests (see “Concurrency” section)
 - `--cache-dir` — cache directory (default `.ai_docs_cache`)
 - `--no-cache` — disable LLM cache
 - `--local-site` — add `site_url` and `use_directory_urls` to `mkdocs.yml`
@@ -209,6 +209,34 @@ If the module count is below `AI_DOCS_REGEN_ALL_THRESHOLD` (default 50), all sec
 When running without parameters for sections, a hint is printed with a `--regen` example.
 If there are more than 100 modules, `modules/index.md` is paginated into pages of 100 items with ←/→ navigation.
 If there are more than 100 configs, `configs/index.md` is paginated into pages of 100 items with ←/→ navigation.
+
+## Concurrency and LLM request cap
+
+The `--threads N` flag (or the `AI_DOCS_THREADS=N` environment variable, default `5`)
+sets a **global upper bound on the number of concurrent LLM requests** across the whole pipeline.
+The cap is implemented as a shared `asyncio.Semaphore` inside `LLMClient` and is enforced on:
+
+- chunks of a single file during summarization (`_summarize_chunks`);
+- summarization of different files running in parallel;
+- parallel context preparation (`overview`, `architecture`, `runtime`, `conventions`,
+  domain contexts for Kubernetes/Helm/…, `index`, `modules`, `changes`);
+- parallel generation of final sections and README.
+
+Cache hits **do not consume** a semaphore slot — parallel repeat requests with the same
+payload are served from cache without waiting.
+
+The same `--threads` value is also used for the thread pool that scans files on disk.
+
+Tuning guidance:
+- On `429 Too Many Requests` errors from the provider, drop to `2`–`3`.
+- On a high-throughput paid endpoint without a strict rate limit, `10`–`20` is reasonable.
+- `--threads 1` serializes all LLM calls (handy for debugging and deterministic runs).
+
+The run prints an informational line of the form:
+```
+[ai-docs] llm: model=gpt-4o-mini context=8192 max_tokens=1200 concurrency=5
+```
+where `concurrency` is the actual global limit being enforced.
 
 ## MkDocs
 Build runs automatically at the end of generation:

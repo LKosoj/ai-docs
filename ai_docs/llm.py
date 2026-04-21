@@ -19,6 +19,7 @@ class LLMClient:
         temperature: float = 0.2,
         max_tokens: int = 1200,
         context_limit: int = 8192,
+        concurrency: int = 5,
     ):
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
@@ -26,7 +27,9 @@ class LLMClient:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.context_limit = context_limit
+        self.concurrency = max(1, int(concurrency))
         self._cache_lock = asyncio.Lock()
+        self._request_sem = asyncio.Semaphore(self.concurrency)
         http_client = httpx.AsyncClient(verify=False)
         client_kwargs = {"api_key": self.api_key, "timeout": 1200.0, "http_client": http_client}
         if self.base_url:
@@ -77,37 +80,40 @@ class LLMClient:
         backoff = 1.0
         last_exc: Exception | None = None
         timeout = httpx.Timeout(read=read_timeout, connect=7.0, write=30.0, pool=read_timeout)
-        for attempt in range(1, max_retries + 1):
-            try:
-                response = await self._client.chat.completions.create(**payload, timeout=timeout)
-                content = response.choices[0].message.content
-                break
-            except Exception as exc:
-                last_exc = exc
-                status = getattr(exc, "status_code", None)
-                if status is None:
-                    response = getattr(exc, "response", None)
-                    status = getattr(response, "status_code", None)
-                message = str(exc).lower()
-                is_timeout = isinstance(exc, httpx.TimeoutException) or "timeout" in message
-                retryable = status in {408, 429} or (status is not None and 500 <= status < 600) or is_timeout
-                if not retryable or attempt >= max_retries:
-                    raise RuntimeError(f"LLM request failed: {exc}") from exc
-                if status == 408 or is_timeout:
-                    read_timeout = min(read_timeout * 1.5, max_read_timeout)
-                    timeout = httpx.Timeout(read=read_timeout, connect=7.0, write=30.0, pool=read_timeout)
-                jitter = random.uniform(0, backoff * 0.1)
-                await asyncio.sleep(backoff + jitter)
-                backoff = min(backoff * 2, 60.0)
-        else:
-            raise RuntimeError(f"LLM request failed: {last_exc}") from last_exc
+        # Global LLM concurrency cap: at most self.concurrency in-flight
+        # requests across the whole process (including retry backoff).
+        async with self._request_sem:
+            for attempt in range(1, max_retries + 1):
+                try:
+                    response = await self._client.chat.completions.create(**payload, timeout=timeout)
+                    content = response.choices[0].message.content
+                    break
+                except Exception as exc:
+                    last_exc = exc
+                    status = getattr(exc, "status_code", None)
+                    if status is None:
+                        response = getattr(exc, "response", None)
+                        status = getattr(response, "status_code", None)
+                    message = str(exc).lower()
+                    is_timeout = isinstance(exc, httpx.TimeoutException) or "timeout" in message
+                    retryable = status in {408, 429} or (status is not None and 500 <= status < 600) or is_timeout
+                    if not retryable or attempt >= max_retries:
+                        raise RuntimeError(f"LLM request failed: {exc}") from exc
+                    if status == 408 or is_timeout:
+                        read_timeout = min(read_timeout * 1.5, max_read_timeout)
+                        timeout = httpx.Timeout(read=read_timeout, connect=7.0, write=30.0, pool=read_timeout)
+                    jitter = random.uniform(0, backoff * 0.1)
+                    await asyncio.sleep(backoff + jitter)
+                    backoff = min(backoff * 2, 60.0)
+            else:
+                raise RuntimeError(f"LLM request failed: {last_exc}") from last_exc
         if cache is not None:
             async with self._cache_lock:
                 cache[key] = content
         return content
 
 
-def from_env() -> LLMClient:
+def from_env(concurrency: Optional[int] = None) -> LLMClient:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY is not set")
@@ -116,6 +122,8 @@ def from_env() -> LLMClient:
     temperature = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
     max_tokens = int(os.getenv("OPENAI_MAX_TOKENS", "1200"))
     context_limit = int(os.getenv("OPENAI_CONTEXT_TOKENS", "8192"))
+    if concurrency is None:
+        concurrency = int(os.getenv("AI_DOCS_THREADS", "5"))
     return LLMClient(
         api_key=api_key,
         base_url=base_url,
@@ -123,4 +131,5 @@ def from_env() -> LLMClient:
         temperature=temperature,
         max_tokens=max_tokens,
         context_limit=context_limit,
+        concurrency=concurrency,
     )

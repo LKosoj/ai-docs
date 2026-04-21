@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "run_id": "run_20260421T231753Z_83ed854b",
+  "totals": {
+    "units": 1,
+    "duration_sec": 22.04479432106018,
+    "retries": 0,
+    "recovery_attempts": 0,
+    "tool_calls": 0,
+    "input_tokens": null,
+    "output_tokens": null,
+    "cost_usd": null,
+    "skill_selections": 1,
+    "skill_discoveries": 0,
+    "skill_installs": 0
+  },
+  "units": [
+    {
+      "unit_id": "cli:telegram_direct",
+      "phase": "execute",
+      "status": "ok",
+      "started_at": 1776813473.8709493,
+      "ended_at": 1776813495.9157534,
+      "duration_sec": 22.04479432106018,
+      "tool_calls": 0,
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null,
+      "retries": 0,
+      "recovery_attempts": 0,
+      "skill_selection_count": 1,
+      "skill_discovery_count": 0,
+      "skill_install_count": 0,
+      "totals_counted": true
+    }
+  ],
+  "phase_aggregates": [],
+  "runtime_progress": {
+    "events": 0,
+    "last_event": null
+  }
+}
