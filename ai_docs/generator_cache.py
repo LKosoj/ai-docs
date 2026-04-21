@@ -99,26 +99,37 @@ def cleanup_orphan_summaries(
     module_summaries_dir: Path,
     config_summaries_dir: Path,
 ) -> None:
-    referenced_summary_paths = set()
+    referenced_names: Dict[Path, set] = {
+        summaries_dir: set(),
+        module_summaries_dir: set(),
+        config_summaries_dir: set(),
+    }
+    key_to_dir = {
+        "summary_path": summaries_dir,
+        "module_summary_path": module_summaries_dir,
+        "config_summary_path": config_summaries_dir,
+    }
     for meta in file_map.values():
-        for key in ("summary_path", "module_summary_path", "config_summary_path"):
-            path = meta.get(key)
-            if path:
-                referenced_summary_paths.add(str(Path(path).resolve()))
+        for key, target_dir in key_to_dir.items():
+            raw = meta.get(key)
+            if raw:
+                referenced_names[target_dir].add(Path(raw).name)
 
     for summary_dir in (summaries_dir, module_summaries_dir, config_summaries_dir):
         if not summary_dir.exists():
             continue
-        to_remove: List[Path] = []
-        for summary_path in summary_dir.glob("*.md"):
-            if str(summary_path.resolve()) not in referenced_summary_paths:
-                to_remove.append(summary_path)
+        referenced = referenced_names[summary_dir]
+        to_remove: List[Path] = [
+            summary_path
+            for summary_path in summary_dir.glob("*.md")
+            if summary_path.name not in referenced
+        ]
         total = len(to_remove)
         if total:
             import time
             done = 0
             start = time.time()
-            log_every = 5
+            log_every = 50
             for summary_path in to_remove:
                 try:
                     summary_path.unlink()

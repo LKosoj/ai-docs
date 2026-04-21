@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from typing import Dict, List, TypedDict
 
@@ -273,10 +274,9 @@ async def _summarize_chunks(
     if not chunks:
         return ""
 
-    partials = [
-        await _request_summary(prompt, chunk, llm_client, llm_cache)
-        for chunk in chunks
-    ]
+    partials = await asyncio.gather(
+        *(_request_summary(prompt, chunk, llm_client, llm_cache) for chunk in chunks)
+    )
     partials = [item for item in partials if item]
     if not partials:
         return ""

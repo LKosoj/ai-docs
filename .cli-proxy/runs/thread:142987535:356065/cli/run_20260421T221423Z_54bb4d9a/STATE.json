@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "run_id": "run_20260421T221423Z_54bb4d9a",
+  "session_uid": "thread:142987535:356065",
+  "mode_id": "cli",
+  "status": "completed",
+  "phase": "execute",
+  "started_at": 1776809663.1930346,
+  "updated_at": 1776809805.8056142,
+  "finished_at": 1776809805.8056142,
+  "current_unit_id": null,
+  "current_step_id": null,
+  "checkpoint_index": 0,
+  "last_successful_phase": null,
+  "resume_token": null,
+  "source_prompt_hash": "sha256:08580f43ae5421894264a067aa63355b8f3fc779937d40c13731fb4d0dc00abd",
+  "mode_context": {
+    "source": "telegram_direct",
+    "task_bearing": true
+  },
+  "source": "telegram_direct",
+  "selected_skill_ids": [
+    "dev-experts",
+    "97-dev"
+  ],
+  "skill_cache_hit": false,
+  "skill_model_used": "llmgateway/light_model",
+  "selector_bypassed": false
+}

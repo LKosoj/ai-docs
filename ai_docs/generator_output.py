@@ -1,3 +1,5 @@
+import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Dict, List
 import time
@@ -49,7 +51,8 @@ def write_docs(
         for path in docs_dir.rglob("*"):
             if path.is_dir():
                 continue
-            if any(str(path).startswith(str(keep_dir)) for keep_dir in keep_dirs):
+            parents = set(path.parents)
+            if keep_dirs & parents:
                 continue
             if path in keep_files:
                 continue
@@ -116,19 +119,28 @@ def _postprocess_mermaid_html(site_dir: Path) -> None:
         return
     html_paths = list(site_dir.rglob("*.html"))
     total = len(html_paths)
+    marker = b'<div class="mermaid"'
+
+    def _process(html_path: Path) -> bool:
+        data = html_path.read_bytes()
+        if marker not in data:
+            return False
+        html_path.write_bytes(data.replace(b"&gt;", b">"))
+        return True
+
     done = 0
+    updated = 0
     start = time.time()
-    log_every = 5
-    for html_path in html_paths:
-        text = html_path.read_text(encoding="utf-8", errors="ignore")
-        if "<div class=\"mermaid\"" not in text:
-            continue
-        text = text.replace("&gt;", ">")
-        html_path.write_text(text, encoding="utf-8")
-        done += 1
-        if done % log_every == 0 or done == total:
-            elapsed = int(time.time() - start)
-            print(f"[ai-docs] mkdocs postprocess progress: {done}/{total} ({elapsed}s)")
+    log_every = 50
+    workers = min(16, max(1, (os.cpu_count() or 4)))
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        for result in executor.map(_process, html_paths):
+            done += 1
+            if result:
+                updated += 1
+            if done % log_every == 0 or done == total:
+                elapsed = int(time.time() - start)
+                print(f"[ai-docs] mkdocs postprocess progress: {done}/{total} updated={updated} ({elapsed}s)")
 
 
 def __serialize_index(index: Dict[str, object]) -> str:

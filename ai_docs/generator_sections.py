@@ -108,12 +108,11 @@ async def build_hierarchical_context(
             return joined
 
         chunks = chunk_text(joined, model=llm.model, max_tokens=max_tokens)
-        summaries: List[str] = []
-        for idx, chunk in enumerate(chunks, 1):
-            print(f"[ai-docs] summarize chunk {label}: {round_idx}.{idx}/{len(chunks)}")
-            summary = await summarize_chunk(llm, llm_cache, chunk, language, focus)
-            if summary:
-                summaries.append(summary)
+        print(f"[ai-docs] summarize chunks {label}: round {round_idx}, {len(chunks)} chunks")
+        results = await asyncio.gather(
+            *(summarize_chunk(llm, llm_cache, chunk, language, focus) for chunk in chunks)
+        )
+        summaries: List[str] = [s for s in results if s]
 
         if not summaries:
             return truncate_context(joined, llm.model, max_tokens)
@@ -164,18 +163,20 @@ async def build_sections(
     for path, meta in {**added, **modified, **deleted}.items():
         changed_domains.update(meta.get("domains", []))
 
-    domain_contexts: Dict[str, str] = {}
+    domain_summaries: Dict[str, List[str]] = {}
     for domain in DOMAIN_TITLES.keys():
-        domain_files = [m for m in file_map.values() if domain in m.get("domains", [])]
-        if not domain_files:
-            continue
-        summaries = []
-        for m in domain_files:
-            summary_text = get_cached_text(m, "summary_path", "summary_text")
-            if summary_text:
-                summaries.append(summary_text)
+        summaries = [
+            get_cached_text(m, "summary_path", "summary_text")
+            for m in file_map.values()
+            if domain in m.get("domains", [])
+        ]
+        summaries = [s for s in summaries if s]
         if summaries:
-            domain_contexts[domain] = await build_hierarchical_context(
+            domain_summaries[domain] = summaries
+
+    domain_context_items = await asyncio.gather(
+        *(
+            build_hierarchical_context(
                 llm,
                 llm_cache,
                 summaries,
@@ -184,6 +185,10 @@ async def build_sections(
                 f"domain:{domain}",
                 focus=DOMAIN_TITLES.get(domain, domain),
             )
+            for domain, summaries in domain_summaries.items()
+        )
+    )
+    domain_contexts: Dict[str, str] = dict(zip(domain_summaries.keys(), domain_context_items))
 
     test_paths, test_commands = collect_test_info(file_map)
 
@@ -219,21 +224,6 @@ async def build_sections(
             overview_context = overview_text.strip()
         docs_files["overview.md"] = overview_text if overview_text.endswith("\n") else overview_text + "\n"
 
-    section_contexts: Dict[str, str] = {}
-
-    async def get_section_context(section_key: str, section_title: str) -> str:
-        if section_key not in section_contexts:
-            section_contexts[section_key] = await build_hierarchical_context(
-                llm,
-                llm_cache,
-                all_summaries,
-                input_budget,
-                language,
-                f"section:{section_key}",
-                focus=section_title,
-            )
-        return section_contexts[section_key]
-
     regenerated_sections: List[str] = []
     module_pages: Dict[str, str] = {}
     configs_written: Dict[str, str] = {}
@@ -250,6 +240,7 @@ async def build_sections(
 
         section_tasks.append(asyncio.create_task(run_section()))
 
+    pending_sections: List[Tuple[str, str, str]] = []
     for key, title in SECTION_TITLES.items():
         section_path = docs_dir / f"{key}.md"
         forced = is_forced(key, title, f"section:{key}", f"section:{title}")
@@ -259,7 +250,24 @@ async def build_sections(
                 docs_files["testing.md"] = f"# {title}\n\n{render_testing_section(test_paths, test_commands)}\n"
                 regenerated_sections.append(title)
                 continue
-            submit_section(f"{key}.md", title, await get_section_context(key, title))
+            pending_sections.append((key, title, f"{key}.md"))
+
+    pending_contexts = await asyncio.gather(
+        *(
+            build_hierarchical_context(
+                llm,
+                llm_cache,
+                all_summaries,
+                input_budget,
+                language,
+                f"section:{key}",
+                focus=title,
+            )
+            for key, title, _ in pending_sections
+        )
+    )
+    for (key, title, out_path), ctx in zip(pending_sections, pending_contexts):
+        submit_section(out_path, title, ctx)
 
     for domain, title in DOMAIN_TITLES.items():
         if domain not in domain_contexts:
@@ -276,7 +284,16 @@ async def build_sections(
     index_path = docs_dir / "index.md"
     if is_forced("index", "docs", "documentation") or not index_path.exists():
         print(f"[ai-docs] regen section: {index_title}")
-        submit_section("index.md", index_title, await get_section_context("index", index_title))
+        index_context = await build_hierarchical_context(
+            llm,
+            llm_cache,
+            all_summaries,
+            input_budget,
+            language,
+            "section:index",
+            focus=index_title,
+        )
+        submit_section("index.md", index_title, index_context)
 
     module_summaries = []
     module_nav_paths: List[str] = []

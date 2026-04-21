@@ -2,7 +2,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Set, Tuple
 
@@ -66,7 +66,7 @@ PRUNABLE_DIR_PATHS = {
     "ai_docs/assets",
 }
 
-PROCESS_POOL_THRESHOLD = 200
+PARALLEL_LOAD_THRESHOLD = 32
 
 
 class ScanResult:
@@ -270,8 +270,8 @@ def _scan_directory(
                 continue
             tasks.append((str(abs_path), rel_path_str, max_size))
 
-    if workers > 1 and len(tasks) >= PROCESS_POOL_THRESHOLD:
-        with ProcessPoolExecutor(max_workers=workers) as executor:
+    if workers > 1 and len(tasks) >= PARALLEL_LOAD_THRESHOLD:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
             for record in executor.map(_load_file_record, tasks):
                 if record is not None:
                     files.append(record)

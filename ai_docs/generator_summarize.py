@@ -26,6 +26,10 @@ async def summarize_entries(
     done = 0
     start = time.time()
     log_every = 5
+    save_every = max(10, min(50, total // 10 or 1))
+    save_interval = 5.0
+    last_save = start
+    since_last_save = 0
     sem = asyncio.Semaphore(max(1, threads))
     lock = asyncio.Lock()
     output_dirs = {
@@ -35,7 +39,7 @@ async def summarize_entries(
     }
 
     async def run_one(path: str, meta: Dict) -> None:
-        nonlocal done
+        nonlocal done, last_save, since_last_save
         async with sem:
             try:
                 outputs = await summarize_file_outputs(
@@ -55,11 +59,16 @@ async def summarize_entries(
                     summary_path = write_summary(out_dir, path, content)
                     meta[path_key] = str(summary_path)
                     meta[text_key] = content
-                save_cb()
                 async with lock:
                     done += 1
+                    since_last_save += 1
+                    now = time.time()
+                    if since_last_save >= save_every or (now - last_save) >= save_interval or done == total:
+                        save_cb()
+                        since_last_save = 0
+                        last_save = now
                     if done % log_every == 0 or done == total:
-                        elapsed = int(time.time() - start)
+                        elapsed = int(now - start)
                         print(f"[ai-docs] {label}: {done}/{total} ({elapsed}s)")
             except Exception as exc:
                 errors.append(f"{label}: {path} -> {exc}")

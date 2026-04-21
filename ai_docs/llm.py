@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-from functools import partial
 from typing import Dict, List, Optional
 
 import httpx
@@ -9,7 +8,6 @@ import random
 from openai import AsyncOpenAI
 
 from .utils import sha256_text
-from .tokenizer import count_tokens
 
 
 class LLMClient:
@@ -29,7 +27,6 @@ class LLMClient:
         self.max_tokens = max_tokens
         self.context_limit = context_limit
         self._cache_lock = asyncio.Lock()
-        self._count_tokens = partial(count_tokens, model=self.model)
         http_client = httpx.AsyncClient(verify=False)
         client_kwargs = {"api_key": self.api_key, "timeout": 1200.0, "http_client": http_client}
         if self.base_url:
@@ -37,11 +34,12 @@ class LLMClient:
         self._client = AsyncOpenAI(**client_kwargs)
 
     def _estimate_input_tokens(self, messages: List[Dict[str, str]]) -> int:
+        # Approximation is sufficient for timeout scaling; exact tiktoken
+        # counting on every request is expensive for large payloads.
         total = 0
         for msg in messages:
             content = msg.get("content", "")
-            total += self._count_tokens(content)
-            total += 4
+            total += (len(content) // 4) + 4
         return total
 
     def _compute_read_timeout(self, input_tokens: int) -> float:
@@ -78,9 +76,9 @@ class LLMClient:
         max_retries = 5
         backoff = 1.0
         last_exc: Exception | None = None
+        timeout = httpx.Timeout(read=read_timeout, connect=7.0, write=30.0, pool=read_timeout)
         for attempt in range(1, max_retries + 1):
             try:
-                timeout = httpx.Timeout(read=read_timeout, connect=7.0, write=30.0, pool=read_timeout)
                 response = await self._client.chat.completions.create(**payload, timeout=timeout)
                 content = response.choices[0].message.content
                 break
@@ -97,6 +95,7 @@ class LLMClient:
                     raise RuntimeError(f"LLM request failed: {exc}") from exc
                 if status == 408 or is_timeout:
                     read_timeout = min(read_timeout * 1.5, max_read_timeout)
+                    timeout = httpx.Timeout(read=read_timeout, connect=7.0, write=30.0, pool=read_timeout)
                 jitter = random.uniform(0, backoff * 0.1)
                 await asyncio.sleep(backoff + jitter)
                 backoff = min(backoff * 2, 60.0)
