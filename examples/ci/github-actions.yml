@@ -1,0 +1,45 @@
+name: ai-docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ai-docs
+        run: pip install ai-docs-gen
+
+      - name: Lint docs (stale detection)
+        if: github.event_name == 'pull_request'
+        run: ai-docs lint --source .
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Generate docs (only on push to main)
+        if: github.event_name == 'push'
+        run: ai-docs gen --source . --mkdocs --threads 5
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Commit updated docs
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "ai-docs-bot"
+          git config user.email "ai-docs-bot@users.noreply.github.com"
+          git add .ai-docs/ .ai_docs_cache/ README.md mkdocs.yml ai_docs_site/ 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: regenerate via ai-docs [skip ci]"
+            git push
+          fi

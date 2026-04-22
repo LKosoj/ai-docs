@@ -1,0 +1,37 @@
+stages:
+  - lint
+  - docs
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+.python_base:
+  image: python:3.12-slim
+  before_script:
+    - pip install --quiet ai-docs-gen
+  cache:
+    paths:
+      - .cache/pip/
+      - .ai_docs_cache/
+
+ai-docs-lint:
+  extends: .python_base
+  stage: lint
+  script:
+    - ai-docs lint --source .
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+ai-docs-generate:
+  extends: .python_base
+  stage: docs
+  script:
+    - ai-docs gen --source . --mkdocs --threads 5
+    - |
+      git config user.name "ai-docs-bot"
+      git config user.email "ai-docs-bot@gitlab.local"
+      git add .ai-docs/ .ai_docs_cache/ README.md mkdocs.yml ai_docs_site/ || true
+      git diff --cached --quiet || git commit -m "docs: regenerate via ai-docs [skip ci]"
+      git push "https://ai-docs-bot:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" HEAD:$CI_COMMIT_BRANCH
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

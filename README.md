@@ -92,9 +92,35 @@ $env:AI_DOCS_THREADS="5"
 $env:AI_DOCS_LOCAL_SITE="false"
 ```
 
+## Подкоманды CLI
+
+`ai-docs` предоставляет несколько подкоманд:
+
+| Команда | Назначение |
+| --- | --- |
+| `gen` | Сгенерировать/обновить документацию (поведение по умолчанию) |
+| `lint` | Проверить, есть ли файлы с изменениями без обновления документации. Завершается с ненулевым кодом, если есть stale‑файлы |
+| `watch` | Следить за изменениями в исходниках и автоматически регенерировать документацию (требует пакет `watchdog`) |
+| `pr-diff` | Регенерировать документацию только для файлов, изменённых относительно базовой ветки (`--base`) |
+
+Примеры:
+```bash
+ai-docs gen --source . --mkdocs
+ai-docs lint --source .
+ai-docs watch --source . --mkdocs --debounce 3.0
+ai-docs pr-diff --source . --base main
+```
+
+Вызов `ai-docs --source .` (без явной подкоманды) сохраняет обратную совместимость и эквивалентен `ai-docs gen --source .`.
+
 ## Примеры использования
 
 Локальная папка:
+```bash
+python -m ai_docs /path/to/project
+```
+
+или явно:
 ```bash
 python -m ai_docs --source /path/to/project
 ```
@@ -125,14 +151,35 @@ python -m ai_docs --source . --mkdocs --local-site
 ```
 
 ## Интеграция в CI/CD
-Пример для GitHub Actions:
+
+Готовые шаблоны пайплайнов лежат в `examples/ci/`:
+- `examples/ci/github-actions.yml` — GitHub Actions: `lint` на PR, `gen` на push в `main`, автокоммит обновлённой документации.
+- `examples/ci/gitlab-ci.yml` — GitLab CI: отдельные stages `lint` и `docs`.
+
+Минимальный пример для GitHub Actions:
 ```yaml
 - name: Generate Docs
   run: |
     pip install ai-docs-gen
-    ai-docs --source . --mkdocs --readme --language en --force
+    ai-docs gen --source . --mkdocs --readme --language en --force
   env:
     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+```
+
+### Pre-commit hook
+
+В репозитории есть `.pre-commit-hooks.yaml` с двумя хуками:
+- `ai-docs-lint` — запускается на `pre-commit` и падает, если документация устарела.
+- `ai-docs-regen` — запускается на `pre-push` и перегенерирует документацию.
+
+Подключение в чужом проекте:
+```yaml
+repos:
+  - repo: https://github.com/<your>/ai-docs
+    rev: main
+    hooks:
+      - id: ai-docs-lint
+      - id: ai-docs-regen
 ```
 
 ## Что генерируется
@@ -175,6 +222,21 @@ config_extensions:
 exclude:
   - "temp/*"
   - "*.log"
+
+# Базовый URL для ссылок на исходники в сгенерированных страницах модулей/конфигов.
+# Если задан, в начале каждой страницы модуля появится строка вида
+# *Источник:* [`path/to/file.py`](<source_url>/path/to/file.py)
+source_url: https://github.com/your-org/your-repo/blob/main
+
+# Пользовательские промпты. Переопределяют встроенные шаблоны; неуказанные
+# ключи берутся из значений по умолчанию. Доступные ключи:
+#   summary, summary_combine,
+#   module_summary, module_summary_reformat,
+#   config_summary, config_summary_reformat
+prompts:
+  summary: |
+    Ты эксперт по технической документации. Сформируй краткое описание файла
+    в нашем корпоративном стиле. Одно‑два предложения, без заголовков и списков.
 ```
 
 ## CLI‑параметры
@@ -185,7 +247,12 @@ exclude:
 Тесты находятся в каталоге `tests/`:
 - `test_cache.py`
 - `test_changes.py`
+- `test_cli.py`
+- `test_performance.py`
+- `test_prompts.py`
 - `test_scanner.py`
+- `test_site_config.py`
+- `test_summary.py`
 
 Запуск (из корня проекта):
 ```bash

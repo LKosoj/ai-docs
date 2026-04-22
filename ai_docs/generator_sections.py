@@ -15,6 +15,7 @@ from .generator_shared import (
     strip_duplicate_heading,
     is_test_path,
 )
+from .site_config import active_source_url, format_citation
 from .tokenizer import count_tokens, chunk_text
 from .utils import read_text_file
 
@@ -303,7 +304,8 @@ async def build_sections(
         module_rel_str = module_rel.as_posix().replace(".", "__") + ".md"
         module_title = Path(path).with_suffix("").as_posix()
         summary = get_cached_text(meta, "module_summary_path", "module_summary_text")
-        module_pages[module_rel_str] = f"# {module_title}\n\n{summary}\n"
+        citation = format_citation(path, active_source_url())
+        module_pages[module_rel_str] = f"# {module_title}\n\n{citation}\n\n{summary}\n"
         module_nav_paths.append(module_rel_str)
         module_summaries.append(summary)
     if module_summaries:
@@ -372,7 +374,8 @@ async def build_sections(
         config_rel_str = config_rel.as_posix().replace(".", "__") + ".md"
         config_title = Path(path).as_posix()
         summary = get_cached_text(meta, "config_summary_path", "config_summary_text")
-        config_pages[config_rel_str] = f"# {config_title}\n\n{summary}\n"
+        citation = format_citation(path, active_source_url())
+        config_pages[config_rel_str] = f"# {config_title}\n\n{citation}\n\n{summary}\n"
         config_nav_paths.append(config_rel_str)
     if config_nav_paths:
         configs_title = "Конфигурация проекта"

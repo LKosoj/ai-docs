@@ -92,6 +92,27 @@ $env:AI_DOCS_THREADS="5"
 $env:AI_DOCS_LOCAL_SITE="false"
 ```
 
+## CLI subcommands
+
+`ai-docs` exposes several subcommands:
+
+| Command | Purpose |
+| --- | --- |
+| `gen` | Generate/update docs (default behavior) |
+| `lint` | Check whether any files changed since the last docs build. Exits with a non-zero code if there are stale files |
+| `watch` | Watch the source tree and regenerate docs on change (requires the `watchdog` package) |
+| `pr-diff` | Regenerate docs only for files changed vs a base branch (`--base`) |
+
+Examples:
+```bash
+ai-docs gen --source . --mkdocs
+ai-docs lint --source .
+ai-docs watch --source . --mkdocs --debounce 3.0
+ai-docs pr-diff --source . --base main
+```
+
+Running `ai-docs --source .` (without an explicit subcommand) is still supported for backward compatibility and is equivalent to `ai-docs gen --source .`.
+
 ## Usage examples
 
 Local folder:
@@ -125,14 +146,35 @@ python -m ai_docs --source . --mkdocs --local-site
 ```
 
 ## CI/CD integration
-Example for GitHub Actions:
+
+Ready-to-use pipeline templates live under `examples/ci/`:
+- `examples/ci/github-actions.yml` — GitHub Actions: `lint` on PR, `gen` on push to `main`, auto-commit regenerated docs.
+- `examples/ci/gitlab-ci.yml` — GitLab CI with separate `lint` and `docs` stages.
+
+Minimal GitHub Actions example:
 ```yaml
 - name: Generate Docs
   run: |
     pip install ai-docs-gen
-    ai-docs --source . --mkdocs --readme --language en --force
+    ai-docs gen --source . --mkdocs --readme --language en --force
   env:
     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+```
+
+### Pre-commit hook
+
+The repo ships a `.pre-commit-hooks.yaml` with two hooks:
+- `ai-docs-lint` — runs on `pre-commit` and fails if docs are stale.
+- `ai-docs-regen` — runs on `pre-push` and regenerates docs.
+
+Enable in a consumer project:
+```yaml
+repos:
+  - repo: https://github.com/<your>/ai-docs
+    rev: main
+    hooks:
+      - id: ai-docs-lint
+      - id: ai-docs-regen
 ```
 
 ## What gets generated
@@ -175,6 +217,21 @@ config_extensions:
 exclude:
   - "temp/*"
   - "*.log"
+
+# Base URL used to build a clickable "Source" citation at the top of every
+# generated module/config page. When set, each page will start with a line like
+# *Источник:* [`path/to/file.py`](<source_url>/path/to/file.py)
+source_url: https://github.com/your-org/your-repo/blob/main
+
+# Custom prompts. Overrides the built-in templates; keys that are not
+# specified fall back to defaults. Supported keys:
+#   summary, summary_combine,
+#   module_summary, module_summary_reformat,
+#   config_summary, config_summary_reformat
+prompts:
+  summary: |
+    You are a corporate tech writer. Produce a concise file description in
+    our internal style. One or two sentences, no headings or bullet lists.
 ```
 
 ## CLI parameters
@@ -185,7 +242,12 @@ exclude:
 Tests are in `tests/`:
 - `test_cache.py`
 - `test_changes.py`
+- `test_cli.py`
+- `test_performance.py`
+- `test_prompts.py`
 - `test_scanner.py`
+- `test_site_config.py`
+- `test_summary.py`
 
 Run (from repo root):
 ```bash

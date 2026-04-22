@@ -3,157 +3,9 @@ from pathlib import Path
 from typing import Dict, List, TypedDict
 
 from .generator_shared import first_paragraph
+from .prompts import CONFIG_TAG, MODULE_TAG, OVERVIEW_TAG, active as _prompts
 from .tokenizer import chunk_text
 from .utils import ensure_dir, sha256_text
-
-
-SUMMARY_PROMPT = """
-Ты эксперт по технической документации. Сформируй краткое, но информативное описание файла для включения в документацию.
-Укажи назначение, ключевые сущности и важные настройки. Если файл конфигурационный — перечисли ключевые параметры/секции.
-Ответ строго в Markdown, без заголовка. Не используй блоки кода и не оборачивай текст в ```markdown.
-""".strip()
-
-SUMMARY_COMBINE_PROMPT = """
-Собери единое краткое резюме для документации на основе частей ниже.
-Сохрани только важные сущности, назначение файла и существенные настройки.
-Ответ в Markdown, без заголовка и без блоков кода.
-""".strip()
-
-OVERVIEW_TAG = "overview_summary"
-MODULE_TAG = "module_summary"
-CONFIG_TAG = "config_summary"
-
-MODULE_SUMMARY_PROMPT = """
-Ты технический писатель. Сформируй документацию модуля в стиле Doxygen.
-Сначала дай краткое верхнеуровневое описание модуля (2–4 предложения).
-Затем, если есть важные структуры данных/типы, добавь блок:
-Ключевые структуры данных
-<имя> — <краткое описание>
-
-Далее перечисли функции/процедуры и классы строго в Doxygen‑формате.
-Для функций/процедур используй формат:
-
-<сигнатура>
-<краткое назначение одной строкой>
-Аргументы
-<имя> — <описание>
-Возвращает
-<описание>
-Исключения
-<описание>
-
-Для классов используй формат:
-class <имя>
-<краткое назначение одной строкой>
-Поля
-<имя> — <описание>
-Методы
-<сигнатура> — <краткое назначение>
-
-Если аргументов/возвращаемого значения/исключений/полей нет — соответствующий блок пропускай.
-Разделяй сущности строкой из трёх дефисов: `---`.
-Не используй заголовки Markdown, списки, подзаголовки вроде "Основные функции".
-Ответ строго в Markdown, без заголовка документа, сохраняя последовательность блоков.
-""".strip()
-
-MODULE_SUMMARY_BUNDLE_PROMPT = f"""
-Ты технический писатель. Верни ответ строго в формате:
-<{OVERVIEW_TAG}>
-Краткое резюме модуля для overview-разделов, 2–4 предложения.
-</{OVERVIEW_TAG}>
-<{MODULE_TAG}>
-{MODULE_SUMMARY_PROMPT}
-</{MODULE_TAG}>
-
-Не добавляй никакого текста вне этих тегов.
-""".strip()
-
-MODULE_SUMMARY_REFORMAT_PROMPT = """
-Переформатируй текст в строгий Doxygen‑стиль для модуля.
-Требования:
-- Без заголовков Markdown, без списков, без блоков кода.
-- Структура: краткое описание модуля; затем (если есть) "Ключевые структуры данных" с линиями "<имя> — <описание>".
-- Далее только сущности (функции/процедуры/классы) в формате:
-<сигнатура>
-<краткое назначение одной строкой>
-Аргументы
-<имя> — <описание>
-Возвращает
-<описание>
-Исключения
-<описание>
-Для классов:
-class <имя>
-<краткое назначение одной строкой>
-Поля
-<имя> — <описание>
-Методы
-<сигнатура> — <краткое назначение>
-
-Если блок пустой — не выводи его. Между сущностями ставь строку `---`.
-Ответ строго в Markdown без заголовка документа.
-""".strip()
-
-MODULE_SUMMARY_BUNDLE_COMBINE_PROMPT = f"""
-На основе частей ниже собери итоговый ответ строго в формате:
-<{OVERVIEW_TAG}>
-Краткое резюме модуля для overview-разделов, 2–4 предложения.
-</{OVERVIEW_TAG}>
-<{MODULE_TAG}>
-Итоговая документация модуля в строгом Doxygen‑стиле.
-</{MODULE_TAG}>
-
-Не добавляй никакого текста вне этих тегов.
-""".strip()
-
-CONFIG_SUMMARY_PROMPT = """
-Ты технический писатель. Сформируй описание конфигурационного файла в универсальном стиле.
-Сначала дай краткое описание файла (2–4 предложения).
-Затем блок:
-Секции и ключи
-<секция/ключ> — <описание>
-
-Далее (если есть важные параметры) добавь блок:
-Важные параметры
-<параметр> — <описание>
-
-Не используй заголовки Markdown, списки, нумерацию и блоки кода.
-Ответ строго в Markdown без заголовка документа, соблюдай указанные блоки.
-""".strip()
-
-CONFIG_SUMMARY_BUNDLE_PROMPT = f"""
-Ты технический писатель. Верни ответ строго в формате:
-<{OVERVIEW_TAG}>
-Краткое резюме конфигурационного файла для overview-разделов, 2–4 предложения.
-</{OVERVIEW_TAG}>
-<{CONFIG_TAG}>
-{CONFIG_SUMMARY_PROMPT}
-</{CONFIG_TAG}>
-
-Не добавляй никакого текста вне этих тегов.
-""".strip()
-
-CONFIG_SUMMARY_REFORMAT_PROMPT = """
-Переформатируй текст в универсальный конфиг-стиль.
-Требования:
-- Без заголовков Markdown, списков, нумерации и блоков кода.
-- Структура: краткое описание файла; затем блок "Секции и ключи" с линиями "<секция/ключ> — <описание>".
-- Далее (если есть) блок "Важные параметры" с линиями "<параметр> — <описание>".
-Если блок пустой — не выводи его.
-Ответ строго в Markdown без заголовка документа.
-""".strip()
-
-CONFIG_SUMMARY_BUNDLE_COMBINE_PROMPT = f"""
-На основе частей ниже собери итоговый ответ строго в формате:
-<{OVERVIEW_TAG}>
-Краткое резюме конфигурационного файла для overview-разделов, 2–4 предложения.
-</{OVERVIEW_TAG}>
-<{CONFIG_TAG}>
-Итоговое описание конфигурационного файла в универсальном стиле.
-</{CONFIG_TAG}>
-
-Не добавляй никакого текста вне этих тегов.
-""".strip()
 
 
 class SummaryOutputs(TypedDict, total=False):
@@ -189,7 +41,7 @@ async def _normalize_module_summary(summary: str, llm_client, llm_cache: Dict[st
     if not _needs_doxygen_fix(summary):
         return summary
     messages = [
-        {"role": "system", "content": MODULE_SUMMARY_REFORMAT_PROMPT},
+        {"role": "system", "content": _prompts().module_summary_reformat()},
         {"role": "user", "content": summary},
     ]
     return (await llm_client.chat(messages, cache=llm_cache)).strip()
@@ -199,7 +51,7 @@ async def _normalize_config_summary(summary: str, llm_client, llm_cache: Dict[st
     if not _needs_doxygen_fix(summary):
         return _format_config_blocks(summary)
     messages = [
-        {"role": "system", "content": CONFIG_SUMMARY_REFORMAT_PROMPT},
+        {"role": "system", "content": _prompts().config_summary_reformat()},
         {"role": "user", "content": summary},
     ]
     return _format_config_blocks((await llm_client.chat(messages, cache=llm_cache)).strip())
@@ -302,9 +154,10 @@ async def _summarize_structured_chunks(
 
 
 def _summary_prompt(file_type: str, domains: List[str]) -> str:
+    base = _prompts().summary()
     if file_type == "infra" or domains:
-        return SUMMARY_PROMPT + "\nФайл относится к инфраструктуре: " + ", ".join(domains)
-    return SUMMARY_PROMPT
+        return base + "\nФайл относится к инфраструктуре: " + ", ".join(domains)
+    return base
 
 
 async def summarize_file_outputs(
@@ -322,8 +175,8 @@ async def summarize_file_outputs(
     if include_config_summary and file_type == "config":
         overview_summary, config_summary = await _summarize_structured_chunks(
             content,
-            CONFIG_SUMMARY_BUNDLE_PROMPT,
-            CONFIG_SUMMARY_BUNDLE_COMBINE_PROMPT,
+            _prompts().config_summary_bundle(),
+            _prompts().config_summary_bundle_combine(),
             CONFIG_TAG,
             llm_client,
             llm_cache,
@@ -337,8 +190,8 @@ async def summarize_file_outputs(
     if include_module_summary:
         overview_summary, module_summary = await _summarize_structured_chunks(
             content,
-            MODULE_SUMMARY_BUNDLE_PROMPT,
-            MODULE_SUMMARY_BUNDLE_COMBINE_PROMPT,
+            _prompts().module_summary_bundle(),
+            _prompts().module_summary_bundle_combine(),
             MODULE_TAG,
             llm_client,
             llm_cache,
@@ -352,7 +205,7 @@ async def summarize_file_outputs(
     outputs["summary"] = await _summarize_chunks(
         content,
         _summary_prompt(file_type, domains),
-        SUMMARY_COMBINE_PROMPT,
+        _prompts().summary_combine(),
         llm_client,
         llm_cache,
         model,

@@ -1,0 +1,16 @@
+- id: ai-docs-lint
+  name: ai-docs lint (stale docs detection)
+  description: Fails if generated docs are out of sync with current code.
+  entry: ai-docs lint --source .
+  language: python
+  pass_filenames: false
+  stages: [pre-commit]
+
+- id: ai-docs-regen
+  name: ai-docs regen (regenerate docs for changed files)
+  description: Regenerates documentation for files staged in the commit.
+  entry: ai-docs gen --source .
+  language: python
+  pass_filenames: false
+  stages: [pre-push]
+  require_serial: true
