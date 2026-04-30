@@ -1,0 +1,7 @@
+include README.md
+include pyproject.toml
+recursive-include ai_docs *.py
+include ai_docs/assets/mermaid.min.js
+
+prune ai_docs_gen.egg-info
+prune tests

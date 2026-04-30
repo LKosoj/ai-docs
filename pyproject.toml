@@ -24,9 +24,13 @@ dependencies = [
 [project.scripts]
 ai-docs = "ai_docs.cli:main"
 
+[tool.setuptools]
+include-package-data = false
+
 [tool.setuptools.packages.find]
 include = ["ai_docs"]
 exclude = ["ai_docs.assets"]
+namespaces = false
 
 [tool.setuptools.package-data]
 ai_docs = ["assets/mermaid.min.js"]

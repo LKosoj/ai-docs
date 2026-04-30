@@ -1,9 +1,0 @@
-{
-  "version": 1,
-  "mode_id": "cli",
-  "plan_kind": "mode_run",
-  "task_family": "",
-  "units": [],
-  "boundary_map": [],
-  "validation_contracts": []
-}

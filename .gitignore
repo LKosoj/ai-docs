@@ -6,8 +6,13 @@ run.pid
 *.zip
 __pycache__
 *.pyc
+.ai-docs/
 .ai_docs_cache
+.cli-proxy/
+.pytest_cache/
+.ruff_cache/
 .venv
+ai_docs_site/
 AGENTS.md
 .DS_Store
 dist/

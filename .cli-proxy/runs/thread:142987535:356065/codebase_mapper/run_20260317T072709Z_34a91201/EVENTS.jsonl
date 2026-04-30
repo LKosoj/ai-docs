@@ -1,4 +1,0 @@
-{"version":1,"ts":1773732429.3474007,"event_type":"codebase_mapper_operation_start","operation":"init_full","usage":"auto","map_dir":"/srv/git_projects/ai-docs/.cli-proxy/.codebase_map","sync_agents":true}
-{"version":1,"ts":1773732429.352397,"event_type":"unit_start","unit_id":"mapper_init_full","phase":"operation","corr_id":null,"message":null,"observed_at":1773732429.3498907}
-{"version":1,"ts":1773733498.4502351,"event_type":"unit_end","unit_id":"mapper_init_full","phase":"operation","status":"failed","corr_id":null,"message":null,"duration_sec":null,"tool_calls":null,"input_tokens":null,"output_tokens":null,"cost_usd":null,"observed_at":1773733498.4465725}
-{"version":1,"ts":1773733498.4535058,"event_type":"codebase_mapper_operation_end","operation":"init_full","status":"failed","map_dir":"/srv/git_projects/ai-docs/.cli-proxy/.codebase_map","graph_state":"needs_review","graph_nodes":7,"updated_docs":[]}

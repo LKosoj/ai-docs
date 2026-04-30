@@ -1,5 +1,4 @@
 import hashlib
-import os
 from pathlib import Path
 
 
@@ -40,4 +39,3 @@ def is_url(value: str) -> bool:
 
 def to_posix(path: Path) -> str:
     return path.as_posix()
-

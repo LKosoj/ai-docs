@@ -59,7 +59,6 @@ CODE_EXTENSION_DESCRIPTIONS = {
     ".lisp": "Lisp",
     ".lsp": "Lisp",
     ".lspx": "Lisp (Script)",
-    ".lspx": "Lisp (Script)",
     ".lua": "Lua"
 }
 
