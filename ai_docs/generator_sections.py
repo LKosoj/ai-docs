@@ -1,4 +1,6 @@
 import asyncio
+import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -6,11 +8,14 @@ from .changes import format_changes_md
 from .generator_shared import (
     SECTION_TITLES,
     DOMAIN_TITLES,
+    NavItem,
     collect_dependencies,
     collect_test_info,
     get_cached_text,
     config_doc_path,
     module_doc_path,
+    nav_item_doc_path,
+    nav_item_label_path,
     render_project_configs_index,
     render_testing_section,
     strip_duplicate_heading,
@@ -19,6 +24,44 @@ from .generator_shared import (
 from .site_config import format_citation
 from .tokenizer import count_tokens, chunk_text
 from .utils import read_text_file
+
+
+DEPENDENCIES_HEADING = "## Выявленные зависимости"
+MERMAID_BLOCK_RE = re.compile(r"```mermaid\s*\n(.*?)```", re.DOTALL)
+
+
+@dataclass(frozen=True)
+class SectionSpec:
+    key: str
+    title: str
+    out_path: str
+
+
+def _section_specs() -> List[SectionSpec]:
+    return [
+        SectionSpec(key=key, title=title, out_path=f"{key}.md")
+        for key, title in SECTION_TITLES.items()
+    ]
+
+
+def _format_module_toc_line(item: NavItem) -> str:
+    href = nav_item_doc_path(item)
+    if href.startswith("modules/"):
+        href = href[len("modules/") :]
+    return f"- [{nav_item_label_path(item)}]({href})"
+
+
+def _extract_cached_intro(index_path: Path, list_heading: str) -> str:
+    if not index_path.exists():
+        return ""
+    content = read_text_file(index_path)
+    lines = content.splitlines()
+    if lines and lines[0].lstrip().startswith("#"):
+        content = "\n".join(lines[1:]).lstrip()
+    heading_idx = content.find(list_heading)
+    if heading_idx != -1:
+        content = content[:heading_idx]
+    return content.strip()
 
 
 async def generate_section(llm, llm_cache: Dict[str, str], title: str, context: str, language: str) -> str:
@@ -41,7 +84,16 @@ async def generate_section(llm, llm_cache: Dict[str, str], title: str, context: 
         {"role": "user", "content": context},
     ]
     content = (await llm.chat(messages, cache=llm_cache)).strip()
+    _validate_mermaid_blocks(content, title)
     return strip_duplicate_heading(content, title)
+
+
+def _validate_mermaid_blocks(content: str, title: str) -> None:
+    if title.lower() != "архитектура":
+        return
+    for block in MERMAID_BLOCK_RE.findall(content):
+        if "(" in block or ")" in block:
+            raise RuntimeError("Architecture Mermaid block contains parentheses")
 
 
 async def generate_readme(llm, llm_cache: Dict[str, str], project_name: str, overview_context: str, language: str) -> str:
@@ -64,6 +116,28 @@ def truncate_context(context: str, model: str, max_tokens: int) -> str:
     return chunks[0]
 
 
+def _render_dependencies_block(deps: List[str]) -> str:
+    deps_md = "\n".join([f"- {dep}" for dep in deps]) if deps else "- нет"
+    return f"{DEPENDENCIES_HEADING}\n\n{deps_md}\n"
+
+
+def _merge_dependencies_block(content: str, deps: List[str]) -> str:
+    block = _render_dependencies_block(deps)
+    if not content.strip():
+        return f"# {SECTION_TITLES['dependencies']}\n\n{block}"
+
+    heading_idx = content.find(DEPENDENCIES_HEADING)
+    if heading_idx == -1:
+        return f"{content.rstrip()}\n\n{block}"
+
+    next_heading_idx = content.find("\n## ", heading_idx + len(DEPENDENCIES_HEADING))
+    prefix = content[:heading_idx].rstrip()
+    if next_heading_idx == -1:
+        return f"{prefix}\n\n{block}"
+    suffix = content[next_heading_idx:].lstrip("\n")
+    return f"{prefix}\n\n{block}\n{suffix}"
+
+
 async def summarize_chunk(
     llm,
     llm_cache: Dict[str, str],
@@ -84,6 +158,23 @@ async def summarize_chunk(
         {"role": "user", "content": chunk},
     ]
     return (await llm.chat(messages, cache=llm_cache)).strip()
+
+
+async def _gather_or_cancel(awaitables, label: str):
+    tasks = [
+        item if isinstance(item, asyncio.Task) else asyncio.create_task(item)
+        for item in awaitables
+    ]
+    if not tasks:
+        return []
+    try:
+        return await asyncio.gather(*tasks)
+    except Exception as exc:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        raise RuntimeError(f"{label}: {exc}") from exc
 
 
 async def build_hierarchical_context(
@@ -111,8 +202,9 @@ async def build_hierarchical_context(
 
         chunks = chunk_text(joined, model=llm.model, max_tokens=max_tokens)
         print(f"[ai-docs] summarize chunks {label}: round {round_idx}, {len(chunks)} chunks")
-        results = await asyncio.gather(
-            *(summarize_chunk(llm, llm_cache, chunk, language, focus) for chunk in chunks)
+        results = await _gather_or_cancel(
+            [summarize_chunk(llm, llm_cache, chunk, language, focus) for chunk in chunks],
+            f"summarize chunks {label}",
         )
         summaries: List[str] = [s for s in results if s]
 
@@ -141,7 +233,7 @@ async def build_sections(
     force_sections: Optional[Set[str]] = None,
     source_url: Optional[str] = None,
     regen_all_threshold: int = 50,
-) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str], List[str], List[str], Dict[str, str], List[str], str]:
+) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str], List[NavItem], List[NavItem], Dict[str, str], List[str], str]:
     force_sections = {item.strip().lower() for item in (force_sections or set()) if item.strip()}
     module_count = sum(
         1
@@ -177,8 +269,8 @@ async def build_sections(
         if summaries:
             domain_summaries[domain] = summaries
 
-    domain_context_items = await asyncio.gather(
-        *(
+    domain_context_items = await _gather_or_cancel(
+        [
             build_hierarchical_context(
                 llm,
                 llm_cache,
@@ -189,7 +281,8 @@ async def build_sections(
                 focus=DOMAIN_TITLES.get(domain, domain),
             )
             for domain, summaries in domain_summaries.items()
-        )
+        ],
+        "domain contexts",
     )
     domain_contexts: Dict[str, str] = dict(zip(domain_summaries.keys(), domain_context_items))
 
@@ -222,17 +315,17 @@ async def build_sections(
 
         section_tasks.append(asyncio.create_task(run_section()))
 
-    pending_sections: List[Tuple[str, str, str]] = []
-    for key, title in SECTION_TITLES.items():
-        section_path = docs_dir / f"{key}.md"
-        forced = is_forced(key, title, f"section:{key}", f"section:{title}")
+    pending_sections: List[SectionSpec] = []
+    for spec in _section_specs():
+        section_path = docs_dir / spec.out_path
+        forced = is_forced(spec.key, spec.title, f"section:{spec.key}", f"section:{spec.title}")
         if forced or not section_path.exists():
-            if key == "testing":
-                print(f"[ai-docs] regen section: {title}")
-                docs_files["testing.md"] = f"# {title}\n\n{render_testing_section(test_paths, test_commands)}\n"
-                regenerated_sections.append(title)
+            if spec.key == "testing":
+                print(f"[ai-docs] regen section: {spec.title}")
+                docs_files[spec.out_path] = f"# {spec.title}\n\n{render_testing_section(test_paths, test_commands)}\n"
+                regenerated_sections.append(spec.title)
                 continue
-            pending_sections.append((key, title, f"{key}.md"))
+            pending_sections.append(spec)
 
     index_title = "Документация проекта"
     index_path = docs_dir / "index.md"
@@ -241,13 +334,13 @@ async def build_sections(
     context_specs: List[Tuple[str, List[str], str, str, str]] = []
     if should_regen_overview:
         context_specs.append(("overview", all_summaries, "overview", "Обзор проекта", ""))
-    for key, title, _ in pending_sections:
-        context_specs.append((f"section:{key}", all_summaries, f"section:{key}", title, ""))
+    for spec in pending_sections:
+        context_specs.append((f"section:{spec.key}", all_summaries, f"section:{spec.key}", spec.title, ""))
     if pending_index:
         context_specs.append(("index", all_summaries, "section:index", index_title, ""))
 
-    context_results = await asyncio.gather(
-        *(
+    context_results = await _gather_or_cancel(
+        [
             build_hierarchical_context(
                 llm,
                 llm_cache,
@@ -258,7 +351,8 @@ async def build_sections(
                 focus=focus,
             )
             for _, summaries, label, focus, _ in context_specs
-        )
+        ],
+        "section contexts",
     )
     contexts: Dict[str, str] = {key: ctx for (key, _, _, _, _), ctx in zip(context_specs, context_results)}
 
@@ -276,8 +370,8 @@ async def build_sections(
             overview_context = overview_text.strip()
         docs_files["overview.md"] = overview_text if overview_text.endswith("\n") else overview_text + "\n"
 
-    for key, title, out_path in pending_sections:
-        submit_section(out_path, title, contexts[f"section:{key}"])
+    for spec in pending_sections:
+        submit_section(spec.out_path, spec.title, contexts[f"section:{spec.key}"])
 
     for domain, title in DOMAIN_TITLES.items():
         if domain not in domain_contexts:
@@ -295,7 +389,7 @@ async def build_sections(
         submit_section("index.md", index_title, contexts["index"])
 
     module_summaries = []
-    module_nav_paths: List[str] = []
+    module_nav_paths: List[NavItem] = []
     for path, meta in file_map.items():
         if is_test_path(path):
             continue
@@ -307,17 +401,19 @@ async def build_sections(
         summary = get_cached_text(meta, "module_summary_path", "module_summary_text")
         citation = format_citation(path, source_url)
         module_pages[module_rel_str] = f"# {module_title}\n\n{citation}\n\n{summary}\n"
-        module_nav_paths.append(module_rel_str)
+        module_nav_paths.append((module_rel_str, path))
         module_summaries.append(summary)
     if module_summaries:
         modules_title = "Модули"
-        sorted_modules = sorted(module_nav_paths)
+        sorted_modules = sorted(module_nav_paths, key=lambda item: nav_item_label_path(item).lower())
         per_page = 100
         total = len(sorted_modules)
         pages = [sorted_modules[i : i + per_page] for i in range(0, total, per_page)]
         modules_index_path = docs_dir / "modules" / "index.md"
-        if is_forced("modules") or not modules_index_path.exists():
-            async def build_modules_pages() -> None:
+        modules_intro_forced = is_forced("modules") or not modules_index_path.exists()
+
+        async def build_modules_pages() -> None:
+            if modules_intro_forced:
                 print(f"[ai-docs] regen section: {modules_title}")
                 modules_context = await build_hierarchical_context(
                     llm,
@@ -330,41 +426,43 @@ async def build_sections(
                 )
                 async with section_sem:
                     intro = await generate_section(llm, llm_cache, modules_title, modules_context, language)
-                for page_idx, page_items in enumerate(pages, start=1):
-                    toc_lines = "\n".join(
-                        [
-                            f"- [{Path(p).with_suffix('').as_posix()}]({Path(p).as_posix()[len('modules/'):] if p.startswith('modules/') else p})"
-                            for p in page_items
-                        ]
-                    )
-                    nav_links: List[str] = []
-                    if page_idx > 1:
-                        prev_name = "index.md" if page_idx == 2 else f"page-{page_idx - 1}.md"
-                        nav_links.append(f"[← Предыдущая]({prev_name})")
-                    if page_idx < len(pages):
-                        next_name = f"page-{page_idx + 1}.md"
-                        nav_links.append(f"[Следующая →]({next_name})")
-                    nav_md = " · ".join(nav_links)
-                    header = f"# {modules_title}\n"
-                    if page_idx > 1:
-                        header = f"# {modules_title} (страница {page_idx})\n"
-                    body_parts = []
-                    if page_idx == 1:
-                        body_parts.append(intro)
-                    body_parts.append("## Список модулей")
-                    body_parts.append(toc_lines)
-                    if nav_md:
-                        body_parts.append(f"\n{nav_md}\n")
-                    content = "\n\n".join(body_parts) + "\n"
-                    out_name = "modules/index.md" if page_idx == 1 else f"modules/page-{page_idx}.md"
-                    docs_files[out_name] = f"{header}\n{content}"
                 regenerated_sections.append(modules_title)
+            else:
+                intro = _extract_cached_intro(modules_index_path, "## Список модулей")
+            for page_idx, page_items in enumerate(pages, start=1):
+                toc_lines = "\n".join(
+                    [
+                        _format_module_toc_line(item)
+                        for item in page_items
+                    ]
+                )
+                nav_links: List[str] = []
+                if page_idx > 1:
+                    prev_name = "index.md" if page_idx == 2 else f"page-{page_idx - 1}.md"
+                    nav_links.append(f"[← Предыдущая]({prev_name})")
+                if page_idx < len(pages):
+                    next_name = f"page-{page_idx + 1}.md"
+                    nav_links.append(f"[Следующая →]({next_name})")
+                nav_md = " · ".join(nav_links)
+                header = f"# {modules_title}\n"
+                if page_idx > 1:
+                    header = f"# {modules_title} (страница {page_idx})\n"
+                body_parts = []
+                if page_idx == 1 and intro:
+                    body_parts.append(intro)
+                body_parts.append("## Список модулей")
+                body_parts.append(toc_lines)
+                if nav_md:
+                    body_parts.append(f"\n{nav_md}\n")
+                content = "\n\n".join(body_parts) + "\n"
+                out_name = "modules/index.md" if page_idx == 1 else f"modules/page-{page_idx}.md"
+                docs_files[out_name] = f"{header}\n{content}"
 
-            section_tasks.append(asyncio.create_task(build_modules_pages()))
+        section_tasks.append(asyncio.create_task(build_modules_pages()))
         docs_files.update(module_pages)
 
     config_pages: Dict[str, str] = {}
-    config_nav_paths: List[str] = []
+    config_nav_paths: List[NavItem] = []
     for path, meta in file_map.items():
         if meta.get("type") != "config":
             continue
@@ -376,42 +474,43 @@ async def build_sections(
         summary = get_cached_text(meta, "config_summary_path", "config_summary_text")
         citation = format_citation(path, source_url)
         config_pages[config_rel_str] = f"# {config_title}\n\n{citation}\n\n{summary}\n"
-        config_nav_paths.append(config_rel_str)
+        config_nav_paths.append((config_rel_str, path))
     if config_nav_paths:
         configs_title = "Конфигурация проекта"
         configs_index_path = docs_dir / "configs" / "index.md"
         if is_forced("configs") or not configs_index_path.exists():
             print(f"[ai-docs] regen section: {configs_title}")
-            page_size = 100
-            if len(config_nav_paths) > page_size:
-                pages = [config_nav_paths[i:i + page_size] for i in range(0, len(config_nav_paths), page_size)]
-                total_pages = len(pages)
-                for page_idx, page_items in enumerate(pages, start=1):
-                    nav_links = []
-                    if page_idx > 1:
-                        prev_name = "index.md" if page_idx == 2 else f"page-{page_idx - 1}.md"
-                        nav_links.append(f"[← Предыдущая]({prev_name})")
-                    if page_idx < total_pages:
-                        nav_links.append(f"[Следующая →](page-{page_idx + 1}.md)")
-                    nav_md = " · ".join(nav_links)
-                    header = f"# {configs_title}\n"
-                    if page_idx > 1:
-                        header = f"# {configs_title} (страница {page_idx})\n"
-                    body_parts = [
-                        "## Список конфигов",
-                        render_project_configs_index(page_items),
-                    ]
-                    if nav_md:
-                        body_parts.append(f"\n{nav_md}\n")
-                    content = "\n\n".join(body_parts) + "\n"
-                    out_name = "configs/index.md" if page_idx == 1 else f"configs/page-{page_idx}.md"
-                    docs_files[out_name] = f"{header}\n{content}"
-            else:
-                docs_files["configs/index.md"] = f"# {configs_title}\n\n{render_project_configs_index(config_nav_paths)}"
             regenerated_sections.append(configs_title)
+        page_size = 100
+        sorted_configs = sorted(config_nav_paths, key=lambda item: nav_item_label_path(item).lower())
+        if len(sorted_configs) > page_size:
+            pages = [sorted_configs[i:i + page_size] for i in range(0, len(sorted_configs), page_size)]
+            total_pages = len(pages)
+            for page_idx, page_items in enumerate(pages, start=1):
+                nav_links = []
+                if page_idx > 1:
+                    prev_name = "index.md" if page_idx == 2 else f"page-{page_idx - 1}.md"
+                    nav_links.append(f"[← Предыдущая]({prev_name})")
+                if page_idx < total_pages:
+                    nav_links.append(f"[Следующая →](page-{page_idx + 1}.md)")
+                nav_md = " · ".join(nav_links)
+                header = f"# {configs_title}\n"
+                if page_idx > 1:
+                    header = f"# {configs_title} (страница {page_idx})\n"
+                body_parts = [
+                    "## Список конфигов",
+                    render_project_configs_index(page_items),
+                ]
+                if nav_md:
+                    body_parts.append(f"\n{nav_md}\n")
+                content = "\n\n".join(body_parts) + "\n"
+                out_name = "configs/index.md" if page_idx == 1 else f"configs/page-{page_idx}.md"
+                docs_files[out_name] = f"{header}\n{content}"
+        else:
+            docs_files["configs/index.md"] = f"# {configs_title}\n\n{render_project_configs_index(config_nav_paths)}"
         docs_files.update(config_pages)
 
-    changes_summary_holder: Dict[str, str] = {}
+    changes_summary_task: Optional[asyncio.Task] = None
     if added or modified or deleted:
         changes_inputs = [
             get_cached_text(meta, "summary_path", "summary_text")
@@ -419,7 +518,7 @@ async def build_sections(
             if meta.get("summary_path")
         ]
 
-        async def build_changes_summary() -> None:
+        async def build_changes_summary() -> str:
             changes_context = await build_hierarchical_context(
                 llm,
                 llm_cache,
@@ -430,16 +529,19 @@ async def build_sections(
                 focus="Краткое резюме изменений",
             )
             async with section_sem:
-                changes_summary_holder["value"] = await generate_section(
+                return await generate_section(
                     llm, llm_cache, "Краткое резюме изменений", changes_context, language
                 )
 
-        section_tasks.append(asyncio.create_task(build_changes_summary()))
+        changes_summary_task = asyncio.create_task(build_changes_summary())
+        section_tasks.append(changes_summary_task)
     else:
-        changes_summary_holder["value"] = "Изменений нет."
+        changes_summary = "Изменений нет."
 
     if section_tasks:
-        await asyncio.gather(*section_tasks)
+        await _gather_or_cancel(section_tasks, "section tasks")
+    if changes_summary_task is not None:
+        changes_summary = changes_summary_task.result()
 
     configs_dir = docs_dir / "configs"
     if configs_dir.exists():
@@ -450,15 +552,21 @@ async def build_sections(
                     stale_path.unlink()
 
     deps = collect_dependencies(file_map)
-    if deps:
-        deps_md = "\n".join([f"- {d}" for d in deps])
-        docs_files["dependencies.md"] = docs_files.get("dependencies.md", f"# {SECTION_TITLES['dependencies']}\n\n") + f"\n## Выявленные зависимости\n\n{deps_md}\n"
+    dependencies_content = docs_files.get("dependencies.md")
+    dependencies_path = docs_dir / "dependencies.md"
+    if dependencies_content is not None or dependencies_path.exists() or deps:
+        if dependencies_content is None:
+            if dependencies_path.exists():
+                dependencies_content = read_text_file(dependencies_path)
+            else:
+                dependencies_content = f"# {SECTION_TITLES['dependencies']}\n\n"
+        docs_files["dependencies.md"] = _merge_dependencies_block(dependencies_content, deps)
 
     if "glossary.md" not in docs_files and not (docs_dir / "glossary.md").exists():
         docs_files["glossary.md"] = "# Глоссарий\n\n- TBD\n"
         regenerated_sections.append("Глоссарий")
 
-    changes_md = format_changes_md(added, modified, deleted, regenerated_sections, changes_summary_holder["value"])
+    changes_md = format_changes_md(added, modified, deleted, regenerated_sections, changes_summary)
     docs_files["changes.md"] = changes_md
 
     return (

@@ -69,17 +69,11 @@ class PackagingTests(unittest.TestCase):
         self.assertEqual(requirements, project_deps)
         self.assertIn("watchdog", pyproject["project"]["optional-dependencies"]["watch"])
 
-    def test_runtime_code_avoids_python39_builtin_generics(self):
+    def test_python_requires_matches_supported_runtime(self):
         root = Path(__file__).resolve().parents[1]
-        forbidden = ("tuple[", "list[", "dict[", "set[")
-        offenders = []
-        for path in (root / "ai_docs").glob("*.py"):
-            text = path.read_text(encoding="utf-8")
-            for marker in forbidden:
-                if marker in text:
-                    offenders.append(f"{path.relative_to(root)}: {marker}")
+        pyproject = tomli.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
 
-        self.assertEqual(offenders, [])
+        self.assertEqual(pyproject["project"]["requires-python"], ">=3.10")
 
     def test_readme_does_not_claim_config_is_auto_created(self):
         root = Path(__file__).resolve().parents[1]

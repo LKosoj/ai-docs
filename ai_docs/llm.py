@@ -3,13 +3,24 @@ import inspect
 import json
 import os
 import random
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Protocol
 
 import httpx
 from openai import AsyncOpenAI
 
 from .config import ConfigError, parse_bool_env, parse_float_env, parse_int_env
+from .logging_utils import get_logger
 from .utils import sha256_text
+
+
+class LLMProtocol(Protocol):
+    model: str
+    max_tokens: int
+    context_limit: int
+    concurrency: int
+
+    async def chat(self, messages: List[Dict[str, str]], cache: Optional[Dict[str, str]] = None) -> str:
+        ...
 
 
 class LLMClient:
@@ -78,6 +89,20 @@ class LLMClient:
     def _cache_key(self, payload: Dict) -> str:
         return sha256_text(json.dumps(payload, sort_keys=True))
 
+    def _validate_content(self, response) -> str:
+        choices = getattr(response, "choices", None)
+        if not choices:
+            raise RuntimeError("LLM response is missing choices")
+        choice = choices[0]
+        finish_reason = getattr(choice, "finish_reason", None)
+        if finish_reason not in (None, "stop"):
+            raise RuntimeError(f"LLM response finish_reason is {finish_reason!r}")
+        message = getattr(choice, "message", None)
+        content = getattr(message, "content", None)
+        if not isinstance(content, str) or not content.strip():
+            raise RuntimeError("LLM response has empty content")
+        return content
+
     async def chat(self, messages: List[Dict[str, str]], cache: Optional[Dict[str, str]] = None) -> str:
         payload = {
             "model": self.model,
@@ -89,14 +114,17 @@ class LLMClient:
         if cache is not None:
             async with self._cache_lock:
                 if key in cache:
-                    return cache[key]
+                    cached = cache[key]
+                    if not isinstance(cached, str) or not cached.strip():
+                        raise RuntimeError(f"Invalid cached LLM response for key {key}")
+                    return cached
 
         input_tokens = self._estimate_input_tokens(messages)
         read_timeout = self._compute_read_timeout(input_tokens)
         max_read_timeout = 1200.0
         max_retries = 5
         backoff = 1.0
-        last_exc: Optional[Exception] = None
+        content: Optional[str] = None
         timeout = httpx.Timeout(read=read_timeout, connect=7.0, write=30.0, pool=read_timeout)
         # Global LLM concurrency cap: at most self.concurrency in-flight
         # requests across the whole process (including retry backoff).
@@ -104,10 +132,9 @@ class LLMClient:
             for attempt in range(1, max_retries + 1):
                 try:
                     response = await self._client.chat.completions.create(**payload, timeout=timeout)
-                    content = response.choices[0].message.content
+                    content = self._validate_content(response)
                     break
                 except Exception as exc:
-                    last_exc = exc
                     status = getattr(exc, "status_code", None)
                     if status is None:
                         response = getattr(exc, "response", None)
@@ -123,8 +150,8 @@ class LLMClient:
                     jitter = random.uniform(0, backoff * 0.1)
                     await asyncio.sleep(backoff + jitter)
                     backoff = min(backoff * 2, 60.0)
-            else:
-                raise RuntimeError(f"LLM request failed: {last_exc}") from last_exc
+        if content is None:
+            raise RuntimeError("LLM request failed: empty response")
         if cache is not None:
             async with self._cache_lock:
                 cache[key] = content
@@ -144,7 +171,7 @@ def from_env(concurrency: Optional[int] = None) -> LLMClient:
         concurrency = parse_int_env("AI_DOCS_THREADS", 5)
     insecure_ssl = parse_bool_env("AI_DOCS_INSECURE_SSL", default=False)
     if insecure_ssl:
-        print("[ai-docs] warning: AI_DOCS_INSECURE_SSL=true disables TLS certificate verification")
+        get_logger().warning("AI_DOCS_INSECURE_SSL=true disables TLS certificate verification")
     return LLMClient(
         api_key=api_key,
         base_url=base_url,

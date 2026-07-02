@@ -6,6 +6,7 @@
 `ai_docs` — CLI‑инструмент для генерации технической документации по коду и конфигурациям.
 Поддерживает локальные папки, локальные git‑проекты и удалённые git‑репозитории.
 Генерирует `README.md` и MkDocs‑сайт (с автоматической сборкой).
+Требуется Python 3.10 или новее.
 
 Ключевые возможности:
 - Автоопределение доменов инфраструктуры (Kubernetes, Helm, Terraform, Ansible, Docker, CI/CD, Observability, Service Mesh / Ingress, Data / Storage)
@@ -276,10 +277,11 @@ python -m pytest
 - `--readme` — генерировать только README
 - `--mkdocs` — генерировать только MkDocs
 - `--language ru|en` — язык документации
-- `--include/--exclude` — фильтры
+- `--include/--exclude` — фильтры; пользовательский `--exclude` дополняет встроенные исключения (`mkdocs.yml`, `.ai-docs/`, `.ai_docs_cache/`, `ai_docs_site/` и т.д.)
 - `--max-size` — максимальный размер файла
 - `--threads` — число параллельных воркеров для сканирования и глобальный лимит одновременных запросов к LLM (см. раздел «Параллельность»)
 - `--cache-dir` — директория кэша (по умолчанию `.ai_docs_cache`)
+- `--quiet` / `--verbose` — `--quiet` подавляет stdout‑прогресс, `--verbose` включает подробные logging‑сообщения
 - `--no-cache` — отключить LLM‑кэш
 - `--local-site` — добавить `site_url` и `use_directory_urls` в `mkdocs.yml`
 - `--force` — перезаписать `README.md`, если он уже существует

@@ -106,15 +106,14 @@ class LLMClientTlsTests(unittest.TestCase):
         }
 
         with patch.dict(os.environ, env, clear=True), \
-             patch("builtins.print") as print_mock, \
+             patch("ai_docs.llm.get_logger") as get_logger, \
              http_patch, openai_patch:
             client = from_env()
 
         self.assertFalse(client.verify)
         self.assertFalse(instances[0].kwargs["verify"])
-        self.assertTrue(
-            any("AI_DOCS_INSECURE_SSL" in str(call.args[0]) for call in print_mock.call_args_list)
-        )
+        get_logger.return_value.warning.assert_called_once()
+        self.assertIn("AI_DOCS_INSECURE_SSL", get_logger.return_value.warning.call_args.args[0])
         asyncio.run(client.aclose())
 
     def test_async_context_manager_closes_http_client(self):
@@ -130,6 +129,94 @@ class LLMClientTlsTests(unittest.TestCase):
             asyncio.run(scenario())
 
         self.assertTrue(instances[0].closed)
+
+
+class LLMClientResponseValidationTests(unittest.TestCase):
+    def _client_with_response(self, response):
+        client = LLMClient(api_key="key", base_url="", model="model")
+
+        class FakeCompletions:
+            async def create(self, **kwargs):
+                return response
+
+        class FakeChat:
+            completions = FakeCompletions()
+
+        class FakeClient:
+            chat = FakeChat()
+
+        client._client = FakeClient()
+        return client
+
+    def _response(self, content, finish_reason="stop"):
+        class _Msg:
+            pass
+
+        class _Choice:
+            pass
+
+        class _Resp:
+            pass
+
+        message = _Msg()
+        message.content = content
+        choice = _Choice()
+        choice.message = message
+        choice.finish_reason = finish_reason
+        resp = _Resp()
+        resp.choices = [choice]
+        return resp
+
+    def test_none_content_is_not_cached(self):
+        client = self._client_with_response(self._response(None))
+        cache = {}
+
+        async def scenario():
+            with self.assertRaises(RuntimeError) as raised:
+                await client.chat([{"role": "user", "content": "hello"}], cache=cache)
+            self.assertIn("empty content", str(raised.exception))
+
+        try:
+            asyncio.run(scenario())
+            self.assertEqual(cache, {})
+        finally:
+            asyncio.run(client.aclose())
+
+    def test_length_finish_reason_is_not_cached(self):
+        client = self._client_with_response(self._response("partial", finish_reason="length"))
+        cache = {}
+
+        async def scenario():
+            with self.assertRaises(RuntimeError) as raised:
+                await client.chat([{"role": "user", "content": "hello"}], cache=cache)
+            self.assertIn("finish_reason", str(raised.exception))
+
+        try:
+            asyncio.run(scenario())
+            self.assertEqual(cache, {})
+        finally:
+            asyncio.run(client.aclose())
+
+    def test_invalid_cache_hit_fails_explicitly(self):
+        client = LLMClient(api_key="key", base_url="", model="model")
+        messages = [{"role": "user", "content": "hello"}]
+        payload = {
+            "model": client.model,
+            "messages": messages,
+            "temperature": client.temperature,
+            "max_tokens": client.max_tokens,
+        }
+        cache = {client._cache_key(payload): None}
+
+        async def scenario():
+            with self.assertRaises(RuntimeError) as raised:
+                await client.chat(messages, cache=cache)
+            self.assertIn("Invalid cached LLM response", str(raised.exception))
+
+        try:
+            asyncio.run(scenario())
+        finally:
+            asyncio.run(client.aclose())
 
 
 if __name__ == "__main__":

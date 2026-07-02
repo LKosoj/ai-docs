@@ -8,10 +8,34 @@ from .tokenizer import chunk_text
 from .utils import ensure_dir, sha256_text
 
 
+SUMMARY_CHUNK_TOKEN_LIMIT = 1800
+MIN_SUMMARY_CHUNK_TOKENS = 256
+
+
 class SummaryOutputs(TypedDict, total=False):
     summary: str
     module_summary: str
     config_summary: str
+
+
+def _empty_file_outputs(
+    file_type: str,
+    include_module_summary: bool,
+    include_config_summary: bool,
+) -> SummaryOutputs:
+    outputs: SummaryOutputs = {}
+    if include_config_summary and file_type == "config":
+        config_summary = "Файл пустой: секции, ключи и параметры не определены."
+        outputs["config_summary"] = config_summary
+        outputs["summary"] = "Пустой конфигурационный файл без заданных параметров."
+        return outputs
+    if include_module_summary:
+        module_summary = "Файл пустой: публичные функции, классы и модульная логика не определены."
+        outputs["module_summary"] = module_summary
+        outputs["summary"] = "Пустой файл без исполняемого содержимого."
+        return outputs
+    outputs["summary"] = "Пустой файл без содержимого."
+    return outputs
 
 
 def _needs_doxygen_fix(text: str) -> bool:
@@ -23,7 +47,8 @@ def _needs_doxygen_fix(text: str) -> bool:
             return True
         if stripped.startswith(("-", "*", "•")):
             return True
-        if stripped[:2].isdigit() and stripped[1] == ".":
+        dot_idx = stripped.find(".")
+        if dot_idx > 0 and stripped[:dot_idx].isdigit():
             return True
     lowered = text.lower()
     noisy_markers = [
@@ -115,6 +140,13 @@ def _extract_tagged_block(text: str, tag: str) -> str:
     return text[start_idx:end_idx].strip()
 
 
+def _require_tagged_block(text: str, tag: str) -> str:
+    value = _extract_tagged_block(text, tag)
+    if not value:
+        raise RuntimeError(f"LLM response missing required <{tag}> block")
+    return value
+
+
 async def _request_summary(
     prompt: str,
     content: str,
@@ -135,8 +167,9 @@ async def _summarize_chunks(
     llm_client,
     llm_cache: Dict[str, str],
     model: str,
+    max_tokens: int,
 ) -> str:
-    chunks = chunk_text(content, model=model, max_tokens=1800)
+    chunks = chunk_text(content, model=model, max_tokens=max_tokens)
     if not chunks:
         return ""
 
@@ -152,6 +185,13 @@ async def _summarize_chunks(
     return await _request_summary(combine_prompt, combined, llm_client, llm_cache)
 
 
+def _summary_chunk_tokens(llm_client) -> int:
+    context_limit = int(getattr(llm_client, "context_limit", 8192))
+    max_response_tokens = int(getattr(llm_client, "max_tokens", 1200))
+    budget = context_limit - max_response_tokens - 200
+    return max(MIN_SUMMARY_CHUNK_TOKENS, min(SUMMARY_CHUNK_TOKEN_LIMIT, budget))
+
+
 async def _summarize_structured_chunks(
     content: str,
     prompt: str,
@@ -161,9 +201,17 @@ async def _summarize_structured_chunks(
     llm_cache: Dict[str, str],
     model: str,
 ) -> Tuple[str, str]:
-    response = await _summarize_chunks(content, prompt, combine_prompt, llm_client, llm_cache, model)
-    overview_summary = _extract_tagged_block(response, OVERVIEW_TAG)
-    detailed_summary = _extract_tagged_block(response, detail_tag)
+    response = await _summarize_chunks(
+        content,
+        prompt,
+        combine_prompt,
+        llm_client,
+        llm_cache,
+        model,
+        _summary_chunk_tokens(llm_client),
+    )
+    overview_summary = _require_tagged_block(response, OVERVIEW_TAG)
+    detailed_summary = _require_tagged_block(response, detail_tag)
     return overview_summary, detailed_summary
 
 
@@ -186,6 +234,9 @@ async def summarize_file_outputs(
     prompt_store: Optional[PromptStore] = None,
 ) -> SummaryOutputs:
     outputs: SummaryOutputs = {}
+
+    if not content.strip():
+        return _empty_file_outputs(file_type, include_module_summary, include_config_summary)
 
     if include_config_summary and file_type == "config":
         overview_summary, config_summary = await _summarize_structured_chunks(
@@ -234,6 +285,7 @@ async def summarize_file_outputs(
         llm_client,
         llm_cache,
         model,
+        _summary_chunk_tokens(llm_client),
     )
     return outputs
 

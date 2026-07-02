@@ -1,7 +1,10 @@
 from pathlib import Path
+import time
 from typing import Dict, List, Optional
 
 import yaml
+
+from .generator_shared import DOMAIN_TITLES, NavItem, nav_item_doc_path, nav_item_label_path
 
 
 class _YamlPythonName(str):
@@ -25,8 +28,8 @@ def build_mkdocs_yaml(
     configs: Dict[str, str],
     local_site: bool = False,
     has_modules: bool = False,
-    module_nav_paths: Optional[List[str]] = None,
-    project_config_nav_paths: Optional[List[str]] = None,
+    module_nav_paths: Optional[List[NavItem]] = None,
+    project_config_nav_paths: Optional[List[NavItem]] = None,
 ) -> str:
     nav = [
         {"Главная": "index.md"},
@@ -48,14 +51,7 @@ def build_mkdocs_yaml(
     if configs:
         cfg_nav: List[Dict[str, str]] = []
         for key, filename in configs.items():
-            title = {
-                "kubernetes": "Kubernetes",
-                "helm": "Helm",
-                "terraform": "Terraform",
-                "ansible": "Ansible",
-                "docker": "Docker",
-                "ci": "CI/CD",
-            }.get(key, key)
+            title = DOMAIN_TITLES.get(key, key)
             cfg_nav.append({title: f"configs/{filename}"})
         nav.append({"Конфиги": cfg_nav})
 
@@ -108,24 +104,12 @@ def build_mkdocs_yaml(
     return yaml.dump(data, allow_unicode=True, sort_keys=False, Dumper=_YamlSafeDumper)
 
 
-def _build_tree_nav(paths: List[str], strip_prefix: str) -> List[Dict[str, object]]:
+def _build_tree_nav(paths: List[NavItem], strip_prefix: str) -> List[Dict[str, object]]:
     tree: Dict[str, object] = {}
 
-    for rel_path in paths:
-        rel = Path(rel_path).as_posix()
-        if rel.startswith(strip_prefix):
-            rel = rel[len(strip_prefix) :]
-        parts = rel.split("/")
-        if parts:
-            last = Path(parts[-1]).with_suffix("").name
-            sep = last.rfind("__")
-            if sep != -1 and sep + 2 < len(last):
-                base = last[:sep]
-                ext = last[sep + 2 :]
-                parts[-1] = f"{base}.{ext}"
-            else:
-                parts[-1] = last
-        _insert_nav_node(tree, parts, rel_path)
+    for item in paths:
+        parts = nav_item_label_path(item, strip_prefix=strip_prefix).split("/")
+        _insert_nav_node(tree, parts, nav_item_doc_path(item))
 
     return _tree_to_nav(tree)
 
@@ -166,7 +150,6 @@ def write_docs_files(docs_dir: Path, files: Dict[str, str]) -> None:
         out_path.write_text(content, encoding="utf-8")
         if total:
             if start is None:
-                import time
                 start = time.time()
             done += 1
             if done % log_every == 0 or done == total:

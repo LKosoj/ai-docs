@@ -12,6 +12,7 @@ from typing import List, Optional, Set
 from .cache import CacheManager
 from .generator_cache import build_file_map
 from .scanner import scan_source
+from .utils import is_url
 
 
 def _collect_stale(cache_dir: Path, files: list) -> List[str]:
@@ -23,6 +24,10 @@ def _collect_stale(cache_dir: Path, files: list) -> List[str]:
 
 
 def run_lint(args: argparse.Namespace) -> int:
+    if is_url(args.source):
+        print("[ai-docs lint] URL sources are not supported")
+        return 2
+
     include: Optional[Set[str]] = set(args.include) if args.include else None
     exclude: Optional[Set[str]] = set(args.exclude) if args.exclude else None
 

@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set, Tuple, Union
 
 import tomli
 
-from .utils import read_text_file
+from .utils import read_text_file, sha256_text
 
 
 SECTION_TITLES = {
@@ -28,6 +28,8 @@ DOMAIN_TITLES = {
     "data_storage": "Data / Storage",
 }
 
+NavItem = Union[str, Tuple[str, str]]
+
 
 def is_test_path(path: str) -> bool:
     parts = Path(path).parts
@@ -37,12 +39,65 @@ def is_test_path(path: str) -> bool:
     return name.startswith("test_") or name.endswith("_test.py")
 
 
+def _doc_path(base_dir: Path, source_path: str) -> str:
+    source = Path(source_path)
+    parent_parts = [
+        f"__dot__{part[1:].replace('.', '__')}" if part.startswith(".") else part
+        for part in source.parts[:-1]
+    ]
+    encoded_name = source.name.replace(".", "__")
+    suffix = sha256_text(source_path)[:12]
+    return (base_dir.joinpath(*parent_parts) / f"{encoded_name}_{suffix}.md").as_posix()
+
+
 def module_doc_path(source_path: str) -> str:
-    return (Path("modules") / Path(source_path)).as_posix().replace(".", "__") + ".md"
+    return _doc_path(Path("modules"), source_path)
 
 
 def config_doc_path(source_path: str) -> str:
-    return (Path("configs/files") / Path(source_path)).as_posix().replace(".", "__") + ".md"
+    return _doc_path(Path("configs/files"), source_path)
+
+
+def nav_item_doc_path(item: NavItem) -> str:
+    if isinstance(item, tuple):
+        return item[0]
+    return item
+
+
+def _strip_hash_suffix(name: str) -> str:
+    marker_at = len(name) - 13
+    if marker_at <= 0 or name[marker_at] != "_":
+        return name
+    suffix = name[marker_at + 1 :]
+    if len(suffix) == 12 and all(c in "0123456789abcdef" for c in suffix):
+        return name[:marker_at]
+    return name
+
+
+def _decode_generated_segment(segment: str) -> str:
+    if segment.startswith("__dot__"):
+        return "." + segment[len("__dot__") :].replace("__", ".")
+    return segment
+
+
+def nav_item_label_path(item: NavItem, strip_prefix: str = "") -> str:
+    if isinstance(item, tuple):
+        return Path(item[1]).as_posix()
+    rel = Path(item).as_posix()
+    if strip_prefix and rel.startswith(strip_prefix):
+        rel = rel[len(strip_prefix) :]
+    parts = [_decode_generated_segment(part) for part in rel.split("/")]
+    if not parts:
+        return rel
+    last = _strip_hash_suffix(Path(parts[-1]).with_suffix("").name)
+    sep = last.rfind("__")
+    if sep != -1 and sep + 2 < len(last):
+        base = last[:sep]
+        ext = last[sep + 2 :]
+        parts[-1] = f"{base}.{ext}"
+    else:
+        parts[-1] = last
+    return "/".join(parts)
 
 
 def collect_dependencies(files: Dict[str, Dict]) -> List[str]:
@@ -116,16 +171,22 @@ def render_testing_section(test_paths: List[str], commands: List[str]) -> str:
     )
 
 
-def render_project_configs_index(config_nav_paths: List[str]) -> str:
+def render_project_configs_index(config_nav_paths: List[NavItem]) -> str:
     if not config_nav_paths:
         return "Конфигурационные файлы не обнаружены."
-    toc_lines = "\n".join(
-        [
-            f"- [{Path(p).with_suffix('').as_posix()}]({Path(p).as_posix()[len('configs/'):] if p.startswith('configs/') else p})"
-            for p in sorted(config_nav_paths)
-        ]
-    )
+    toc_lines = "\n".join(_format_config_toc_line(item) for item in _sort_nav_items(config_nav_paths))
     return f"## Файлы конфигурации\n\n{toc_lines}\n"
+
+
+def _format_config_toc_line(item: NavItem) -> str:
+    href = nav_item_doc_path(item)
+    if href.startswith("configs/"):
+        href = href[len("configs/") :]
+    return f"- [{nav_item_label_path(item)}]({href})"
+
+
+def _sort_nav_items(items: List[NavItem]) -> List[NavItem]:
+    return sorted(items, key=lambda value: nav_item_label_path(value).lower())
 
 
 def strip_duplicate_heading(content: str, title: str) -> str:

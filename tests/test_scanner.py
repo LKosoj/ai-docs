@@ -6,7 +6,7 @@ from unittest.mock import patch
 import ai_docs.scanner as scanner_module
 from ai_docs.domain_rules import FIXED_INCLUDE_PATTERNS
 from ai_docs.generator_cache import build_file_map
-from ai_docs.scanner import scan_source
+from ai_docs.scanner import build_scan_scope, path_in_scan_scope, scan_source
 
 
 class ScannerTests(unittest.TestCase):
@@ -86,6 +86,62 @@ class ScannerTests(unittest.TestCase):
             self.assertEqual(records[".github/workflows/build.yml"]["type"], "ci")
             self.assertIn("ci", records[".github/workflows/build.yml"]["domains"])
 
+    def test_scan_keeps_application_code_with_ambiguous_infra_markers_as_code(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            files = {
+                "app/tasks/worker.py": "def run():\n    return None\n",
+                "app/gateway/api.py": "def handler():\n    return None\n",
+                "src/s3util/helper.py": "def build_key():\n    return 'key'\n",
+            }
+            for rel_path, content in files.items():
+                path = root / rel_path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(content, encoding="utf-8")
+
+            result = scan_source(str(root), workers=1)
+            records = {f["path"]: f for f in result.files}
+
+            self.assertEqual(records["app/tasks/worker.py"]["type"], "code")
+            self.assertNotIn("ansible", records["app/tasks/worker.py"]["domains"])
+            self.assertEqual(records["app/gateway/api.py"]["type"], "code")
+            self.assertNotIn("service_mesh", records["app/gateway/api.py"]["domains"])
+            self.assertEqual(records["src/s3util/helper.py"]["type"], "code")
+            self.assertNotIn("data_storage", records["src/s3util/helper.py"]["domains"])
+
+    def test_scan_preserves_real_infra_and_ci_classification(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            workflow = root / ".github" / "workflows" / "build.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text("name: ci\non: [push]\njobs: {}\n", encoding="utf-8")
+            k8s = root / "deploy" / "k8s" / "deployment.yaml"
+            k8s.parent.mkdir(parents=True)
+            k8s.write_text("apiVersion: apps/v1\nkind: Deployment\n", encoding="utf-8")
+            ansible = root / "roles" / "web" / "tasks" / "main.yml"
+            ansible.parent.mkdir(parents=True)
+            ansible.write_text("- name: install\n  apt:\n    name: nginx\n", encoding="utf-8")
+            ansible_defaults = root / "roles" / "web" / "defaults" / "main.yml"
+            ansible_defaults.parent.mkdir(parents=True)
+            ansible_defaults.write_text("nginx_port: 80\n", encoding="utf-8")
+            storage = root / "infra" / "s3" / "bucket.yaml"
+            storage.parent.mkdir(parents=True)
+            storage.write_text("bucket: docs\n", encoding="utf-8")
+
+            result = scan_source(str(root), workers=1)
+            records = {f["path"]: f for f in result.files}
+
+            self.assertEqual(records[".github/workflows/build.yml"]["type"], "ci")
+            self.assertIn("ci", records[".github/workflows/build.yml"]["domains"])
+            self.assertEqual(records["deploy/k8s/deployment.yaml"]["type"], "infra")
+            self.assertIn("kubernetes", records["deploy/k8s/deployment.yaml"]["domains"])
+            self.assertEqual(records["roles/web/tasks/main.yml"]["type"], "infra")
+            self.assertIn("ansible", records["roles/web/tasks/main.yml"]["domains"])
+            self.assertEqual(records["roles/web/defaults/main.yml"]["type"], "infra")
+            self.assertIn("ansible", records["roles/web/defaults/main.yml"]["domains"])
+            self.assertEqual(records["infra/s3/bucket.yaml"]["type"], "infra")
+            self.assertIn("data_storage", records["infra/s3/bucket.yaml"]["domains"])
+
     def test_scan_hash_uses_original_bytes(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -105,6 +161,46 @@ class ScannerTests(unittest.TestCase):
     def test_scanner_uses_shared_fixed_include_patterns(self):
         self.assertIs(scanner_module.FIXED_INCLUDE_PATTERNS, FIXED_INCLUDE_PATTERNS)
         self.assertIn(".gitlab-ci.yml", scanner_module.FIXED_INCLUDE_PATTERNS)
+
+    def test_custom_exclude_extends_default_excludes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "app.py").write_text("print('hi')", encoding="utf-8")
+            (root / "mkdocs.yml").write_text("site_name: demo\n", encoding="utf-8")
+            (root / "debug.log").write_text("noise\n", encoding="utf-8")
+
+            result = scan_source(str(root), exclude={"*.log"}, workers=1)
+            paths = {f["path"] for f in result.files}
+
+            self.assertIn("app.py", paths)
+            self.assertNotIn("mkdocs.yml", paths)
+            self.assertNotIn("debug.log", paths)
+            self.assertTrue(path_in_scan_scope(root, "app.py", exclude={"*.log"}))
+            self.assertFalse(path_in_scan_scope(root, "mkdocs.yml", exclude={"*.log"}))
+            self.assertFalse(path_in_scan_scope(root, "debug.log", exclude={"*.log"}))
+
+    def test_url_scan_cleans_tempdir_when_scan_fails(self):
+        tmp_root = Path(tempfile.mkdtemp())
+        (tmp_root / "app.py").write_text("print('hi')", encoding="utf-8")
+
+        with patch("ai_docs.scanner._clone_repo", return_value=(tmp_root, "repo")), \
+             patch("ai_docs.scanner._scan_directory", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                scan_source("https://example.com/repo.git", workers=1)
+
+        self.assertFalse(tmp_root.exists())
+
+    def test_build_scan_scope_reuses_loaded_ignore_specs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".gitignore").write_text("ignored.py\n", encoding="utf-8")
+
+            with patch("ai_docs.scanner._load_ignore_specs", wraps=scanner_module._load_ignore_specs) as load_ignore:
+                scope = build_scan_scope(root)
+                self.assertTrue(scope.includes("app.py"))
+                self.assertFalse(scope.includes("ignored.py"))
+
+            load_ignore.assert_called_once_with(root)
 
 
 if __name__ == "__main__":

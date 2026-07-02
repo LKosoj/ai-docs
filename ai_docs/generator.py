@@ -18,6 +18,7 @@ from .generator_output import build_mkdocs, write_docs, write_readme
 from .generator_sections import build_sections, generate_readme
 from .generator_shared import DOMAIN_TITLES, SECTION_TITLES
 from .generator_summarize import summarize_entries
+from .llm import LLMProtocol
 from .prompts import PromptStore
 
 
@@ -59,7 +60,7 @@ async def generate_docs_async(
     files: List[Dict],
     output_root: Path,
     cache_dir: Path,
-    llm,
+    llm: LLMProtocol,
     language: str,
     write_readme_flag: bool,
     write_mkdocs: bool,
@@ -160,30 +161,35 @@ async def generate_docs_async(
     input_budget = max(512, llm.context_limit - llm.max_tokens - 200)
 
     docs_dir = output_root / ".ai-docs"
-    (
-        docs_files,
-        module_pages,
-        config_pages,
-        module_nav_paths,
-        config_nav_paths,
-        configs_written,
-        regenerated_sections,
-        overview_context,
-    ) = await build_sections(
-        file_map,
-        added,
-        modified,
-        deleted,
-        docs_dir,
-        llm,
-        llm_cache,
-        language,
-        threads,
-        input_budget,
-        force_sections=config.force_sections or None,
-        source_url=config.source_url,
-        regen_all_threshold=config.regen_all_threshold,
-    )
+    try:
+        (
+            docs_files,
+            module_pages,
+            config_pages,
+            module_nav_paths,
+            config_nav_paths,
+            configs_written,
+            regenerated_sections,
+            overview_context,
+        ) = await build_sections(
+            file_map,
+            added,
+            modified,
+            deleted,
+            docs_dir,
+            llm,
+            llm_cache,
+            language,
+            threads,
+            input_budget,
+            force_sections=config.force_sections or None,
+            source_url=config.source_url,
+            regen_all_threshold=config.regen_all_threshold,
+        )
+    except GenerationError:
+        raise
+    except Exception as exc:
+        raise GenerationError([f"sections: {exc}"]) from exc
 
     has_changes = bool(added or modified or deleted)
     write_docs(output_root, docs_dir, docs_files, file_map, module_pages, config_pages, has_changes)
@@ -213,7 +219,7 @@ def generate_docs(
     files: List[Dict],
     output_root: Path,
     cache_dir: Path,
-    llm,
+    llm: LLMProtocol,
     language: str,
     write_readme_flag: bool,
     write_mkdocs: bool,

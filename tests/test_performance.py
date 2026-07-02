@@ -7,6 +7,7 @@ from unittest.mock import patch
 from ai_docs.generator_cache import cleanup_orphan_summaries
 from ai_docs.generator_summarize import summarize_entries
 from ai_docs.summary import write_summary
+from ai_docs import tokenizer
 
 
 class ParallelChunkLLM:
@@ -24,7 +25,10 @@ class ParallelChunkLLM:
         self.call_count += 1
         try:
             await asyncio.sleep(0.02)
-            return "chunk summary"
+            return (
+                "<overview_summary>chunk summary</overview_summary>"
+                "<module_summary>module summary</module_summary>"
+            )
         finally:
             self.active -= 1
 
@@ -43,6 +47,7 @@ class SummarizeChunkParallelism(unittest.TestCase):
                     llm,
                     {},
                     llm.model,
+                    1800,
                 )
             )
         self.assertTrue(result)
@@ -50,6 +55,23 @@ class SummarizeChunkParallelism(unittest.TestCase):
         self.assertEqual(llm.call_count, 5)
         # all 4 per-chunk requests should overlap
         self.assertGreaterEqual(llm.max_active, 4)
+
+
+class TokenizerCacheMemoryTests(unittest.TestCase):
+    def test_count_tokens_and_chunk_text_are_correct_without_full_text_cache(self):
+        text = "alpha beta gamma delta epsilon"
+        model = "gpt-4o-mini"
+        enc = tokenizer.get_encoding(model)
+
+        self.assertEqual(tokenizer.count_tokens(text, model), len(enc.encode(text)))
+        self.assertEqual("".join(tokenizer.chunk_text(text, model, 3)), text)
+
+    def test_tokenizer_exposes_no_full_text_cache_helpers_or_cache_info(self):
+        self.assertTrue(hasattr(tokenizer.get_encoding, "cache_info"))
+        self.assertFalse(hasattr(tokenizer.count_tokens, "cache_info"))
+        self.assertFalse(hasattr(tokenizer.chunk_text, "cache_info"))
+        self.assertFalse(hasattr(tokenizer, "_encode_tokens"))
+        self.assertFalse(hasattr(tokenizer, "_chunk_text_cached"))
 
 
 class DebouncedSaveCb(unittest.TestCase):
@@ -346,7 +368,7 @@ class MermaidPostprocessFast(unittest.TestCase):
             plain.write_text("<html>no diagram &gt; here</html>", encoding="utf-8")
             mermaid_page = site / "arch.html"
             mermaid_page.write_text(
-                '<html><div class="mermaid">A --&gt; B</div></html>',
+                '<html><p>plain &gt; text</p><div class="mermaid">A --&gt; B</div></html>',
                 encoding="utf-8",
             )
             _postprocess_mermaid_html(site)
@@ -354,7 +376,9 @@ class MermaidPostprocessFast(unittest.TestCase):
             # plain files must not be touched
             self.assertEqual(plain.read_text(encoding="utf-8"), "<html>no diagram &gt; here</html>")
             # mermaid files get &gt; -> >
-            self.assertIn("A --> B", mermaid_page.read_text(encoding="utf-8"))
+            html = mermaid_page.read_text(encoding="utf-8")
+            self.assertIn("A --> B", html)
+            self.assertIn("plain &gt; text", html)
 
 
 if __name__ == "__main__":

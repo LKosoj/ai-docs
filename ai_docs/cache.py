@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Dict, Tuple
 
+from .config import ConfigError, parse_int_env
 from .utils import ensure_dir
 
 
@@ -23,10 +24,35 @@ class CacheManager:
         self._write_json_atomic(self.index_path, data)
 
     def load_llm_cache(self) -> Dict[str, str]:
-        return self._read_json(self.llm_cache_path, {})
+        data = self._read_json(self.llm_cache_path, {})
+        invalid_keys = [
+            key
+            for key, value in data.items()
+            if not isinstance(value, str) or not value.strip()
+        ]
+        if invalid_keys:
+            key = invalid_keys[0]
+            raise CacheError(f"Invalid LLM cache file: {self.llm_cache_path}: invalid value for key {key}")
+        return data
 
     def save_llm_cache(self, data: Dict[str, str]) -> None:
-        self._write_json_atomic(self.llm_cache_path, dict(data))
+        invalid_keys = [
+            key
+            for key, value in data.items()
+            if not isinstance(value, str) or not value.strip()
+        ]
+        if invalid_keys:
+            key = invalid_keys[0]
+            raise CacheError(f"Invalid LLM cache value for key {key}")
+        self._write_json_atomic(self.llm_cache_path, self._prune_llm_cache(data))
+
+    def _prune_llm_cache(self, data: Dict[str, str]) -> Dict[str, str]:
+        max_entries = parse_int_env("AI_DOCS_LLM_CACHE_MAX_ENTRIES", 5000)
+        if max_entries < 1:
+            raise ConfigError("Invalid environment variable AI_DOCS_LLM_CACHE_MAX_ENTRIES: expected positive integer")
+        if len(data) <= max_entries:
+            return dict(data)
+        return dict(list(data.items())[-max_entries:])
 
     def _read_json(self, path: Path, default: Dict) -> Dict:
         if not path.exists():

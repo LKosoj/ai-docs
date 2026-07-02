@@ -8,27 +8,22 @@ the full snapshot with regeneration limited to changed paths.
 from __future__ import annotations
 
 import argparse
-import asyncio
-import os
 import shutil
 import subprocess
 from pathlib import Path
 from typing import Optional, Set, Tuple
 
-from .config import parse_bool_env, parse_int_env
-from .generation_config import GenerationConfig, parse_section_list
+from .cli_common import (
+    build_generation_config,
+    close_llm,
+    create_llm,
+    resolve_local_site,
+    resolve_output,
+    resolve_threads,
+)
 from .generator import generate_docs
-from .llm import from_env
-from .prompts import PromptStore, load_prompt_overrides
-from .scanner import path_in_scan_scope, scan_source
-from .site_config import load_source_url
+from .scanner import build_scan_scope, scan_source
 from .utils import is_url
-
-
-def _close_llm(llm) -> None:
-    aclose = getattr(llm, "aclose", None)
-    if aclose is not None:
-        asyncio.run(aclose())
 
 
 def _changed_file_masks(root: Path, base: str) -> Tuple[Set[str], Set[str]]:
@@ -94,10 +89,8 @@ def run_prdiff(args: argparse.Namespace) -> int:
 
     include: Optional[Set[str]] = set(args.include) if args.include else None
     exclude: Optional[Set[str]] = set(args.exclude) if args.exclude else None
-    env_local_site = parse_bool_env("AI_DOCS_LOCAL_SITE", False)
-    threads = max(1, args.threads or parse_int_env("AI_DOCS_THREADS", 5))
-    local_site = args.local_site or env_local_site
-
+    threads = resolve_threads(args.threads)
+    local_site = resolve_local_site(args.local_site)
     scan_result = scan_source(
         args.source,
         include=include,
@@ -107,11 +100,8 @@ def run_prdiff(args: argparse.Namespace) -> int:
     )
     scanned_paths = {item["path"] for item in scan_result.files}
     changed &= scanned_paths
-    deleted = {
-        path
-        for path in deleted
-        if path_in_scan_scope(scan_result.root, path, include=include, exclude=exclude)
-    }
+    scan_scope = build_scan_scope(scan_result.root, include=include, exclude=exclude)
+    deleted = {path for path in deleted if scan_scope.includes(path)}
     print(f"[ai-docs pr-diff] scan: {len(scan_result.files)} file(s) in current snapshot")
     if not scan_result.files and not deleted:
         print("[ai-docs pr-diff] nothing to regenerate")
@@ -120,19 +110,10 @@ def run_prdiff(args: argparse.Namespace) -> int:
         print("[ai-docs pr-diff] changed files are outside the scan scope")
         return 0
 
-    prompt_overrides = load_prompt_overrides(scan_result.root)
-    source_url = load_source_url(scan_result.root)
-    generation_config = GenerationConfig(
-        prompt_store=PromptStore(prompt_overrides),
-        source_url=source_url,
-        force_sections=parse_section_list(os.getenv("AI_DOCS_REGEN", "")),
-        regen_all_threshold=parse_int_env("AI_DOCS_REGEN_ALL_THRESHOLD", 50),
-    )
-
-    output_root = Path(args.output).expanduser().resolve() if args.output else scan_result.root
+    generation_config = build_generation_config(scan_result.root)
+    output_root = resolve_output(args.source, args.output, scan_result.repo_name)
     output_root.mkdir(parents=True, exist_ok=True)
-
-    llm = from_env(concurrency=threads)
+    llm = create_llm(threads)
     try:
         generate_docs(
             files=scan_result.files,
@@ -151,7 +132,7 @@ def run_prdiff(args: argparse.Namespace) -> int:
             generation_config=generation_config,
         )
     finally:
-        _close_llm(llm)
+        close_llm(llm)
         if is_url(args.source):
             shutil.rmtree(scan_result.root, ignore_errors=True)
     return 0

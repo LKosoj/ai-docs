@@ -1,10 +1,11 @@
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Dict, List
 import time
 
-from .generator_shared import DOMAIN_TITLES, SECTION_TITLES, build_docs_index
+from .generator_shared import DOMAIN_TITLES, SECTION_TITLES, NavItem, build_docs_index
 from .mkdocs import build_mkdocs_yaml, write_docs_files
 
 
@@ -29,22 +30,16 @@ def write_docs(
     add_mermaid_asset(docs_files)
     write_docs_files(docs_dir, docs_files)
 
-    if docs_dir.exists() and docs_files and has_changes:
+    if docs_dir.exists() and docs_files:
         print("[ai-docs] cleanup docs: removing orphan files")
         keep_files = {docs_dir / rel for rel in docs_files.keys()}
         keep_files.add(docs_dir / "index.md")
         keep_files.add(docs_dir / "overview.md")
         keep_files.add(docs_dir / "changes.md")
-        keep_files.add(docs_dir / "modules" / "index.md")
-        keep_files.add(docs_dir / "configs" / "index.md")
         for key in SECTION_TITLES.keys():
             keep_files.add(docs_dir / f"{key}.md")
         for domain in DOMAIN_TITLES.keys():
             keep_files.add(docs_dir / "configs" / f"{domain}.md")
-        for path in (docs_dir / "modules").glob("page-*.md"):
-            keep_files.add(path)
-        for path in (docs_dir / "configs").glob("page-*.md"):
-            keep_files.add(path)
         keep_dirs = {docs_dir / "plans"}
         to_remove: List[Path] = []
         for path in docs_dir.rglob("*"):
@@ -68,10 +63,10 @@ def write_docs(
                     elapsed = int(time.time() - start)
                     print(f"[ai-docs] cleanup docs progress: {done}/{total} ({elapsed}s)")
     elif docs_dir.exists():
-        print("[ai-docs] cleanup docs: skipped (no source changes)")
+        print("[ai-docs] cleanup docs: skipped (no docs files)")
 
     docs_index = build_docs_index(docs_dir, index_source_files, file_map, SECTION_TITLES)
-    docs_files["_index.json"] = __serialize_index(docs_index)
+    docs_files["_index.json"] = _serialize_index(docs_index)
     write_docs_files(docs_dir, {"_index.json": docs_files["_index.json"]})
 
 
@@ -85,8 +80,8 @@ def write_readme(output_root: Path, readme: str, force: bool) -> None:
 
 def build_mkdocs(
     output_root: Path,
-    module_nav_paths: List[str],
-    config_nav_paths: List[str],
+    module_nav_paths: List[NavItem],
+    config_nav_paths: List[NavItem],
     configs_written: Dict[str, str],
     write_mkdocs: bool,
     local_site: bool,
@@ -123,12 +118,19 @@ def _postprocess_mermaid_html(site_dir: Path) -> None:
     html_paths = list(site_dir.rglob("*.html"))
     total = len(html_paths)
     marker = b'<div class="mermaid"'
+    mermaid_re = re.compile(br'(<div class="mermaid"[^>]*>)(.*?)(</div>)', re.DOTALL)
 
     def _process(html_path: Path) -> bool:
         data = html_path.read_bytes()
         if marker not in data:
             return False
-        html_path.write_bytes(data.replace(b"&gt;", b">"))
+        updated = mermaid_re.sub(
+            lambda match: match.group(1) + match.group(2).replace(b"&gt;", b">") + match.group(3),
+            data,
+        )
+        if updated == data:
+            return False
+        html_path.write_bytes(updated)
         return True
 
     done = 0
@@ -146,7 +148,7 @@ def _postprocess_mermaid_html(site_dir: Path) -> None:
                 print(f"[ai-docs] mkdocs postprocess progress: {done}/{total} updated={updated} ({elapsed}s)")
 
 
-def __serialize_index(index: Dict[str, object]) -> str:
+def _serialize_index(index: Dict[str, object]) -> str:
     import json
     from datetime import datetime, timezone
 

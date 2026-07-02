@@ -82,6 +82,45 @@ class GenerateDocsApiTests(unittest.TestCase):
         write_docs.assert_called_once()
         build_mkdocs.assert_called_once()
 
+    def test_generate_docs_async_preserves_legacy_config_kwargs(self):
+        build_sections = AsyncMock(
+            return_value=(
+                {"index.md": "# Index\n"},
+                {},
+                {},
+                [],
+                [],
+                {},
+                [],
+                "overview",
+            )
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with patch("ai_docs.generator.build_sections", build_sections), \
+                 patch("ai_docs.generator.write_docs"), \
+                 patch("ai_docs.generator.build_mkdocs"):
+                asyncio.run(
+                    generate_docs_async(
+                        files=[],
+                        output_root=root,
+                        cache_dir=root / ".cache",
+                        llm=FakeLLM(),
+                        language="ru",
+                        write_readme_flag=False,
+                        write_mkdocs=False,
+                        source_url="https://example.com/src/",
+                        force_sections={"configs"},
+                        regen_all_threshold=0,
+                    )
+                )
+
+        build_kwargs = build_sections.call_args.kwargs
+        self.assertEqual(build_kwargs["force_sections"], {"configs"})
+        self.assertEqual(build_kwargs["source_url"], "https://example.com/src/")
+        self.assertEqual(build_kwargs["regen_all_threshold"], 0)
+
     def test_generate_docs_is_sync_wrapper_for_async_api(self):
         async_generate = AsyncMock(return_value=None)
 
@@ -125,6 +164,33 @@ class GenerateDocsApiTests(unittest.TestCase):
         self.assertIn("boom", str(raised.exception))
         build_sections.assert_not_called()
         write_docs.assert_not_called()
+        build_mkdocs.assert_not_called()
+
+    def test_section_error_is_generation_error_before_docs_are_written(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with patch("ai_docs.generator.write_docs") as write_docs, \
+                 patch("ai_docs.generator.write_readme") as write_readme, \
+                 patch("ai_docs.generator.build_mkdocs") as build_mkdocs:
+                with self.assertRaises(GenerationError) as raised:
+                    asyncio.run(
+                        generate_docs_async(
+                            files=[],
+                            output_root=root,
+                            cache_dir=root / ".cache",
+                            llm=FailingLLM(),
+                            language="ru",
+                            write_readme_flag=False,
+                            write_mkdocs=True,
+                            use_cache=False,
+                            threads=2,
+                        )
+                    )
+
+        self.assertIn("sections", str(raised.exception))
+        self.assertIn("boom", str(raised.exception))
+        write_docs.assert_not_called()
+        write_readme.assert_not_called()
         build_mkdocs.assert_not_called()
 
 

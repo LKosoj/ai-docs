@@ -1,3 +1,4 @@
+import io
 import subprocess
 import sys
 import tempfile
@@ -5,7 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from ai_docs.cli import parse_args
+from ai_docs.cli import main, parse_args
+from ai_docs.generator import GenerationError
 
 
 class ParseArgsTests(unittest.TestCase):
@@ -43,6 +45,55 @@ class ParseArgsTests(unittest.TestCase):
         self.assertEqual(args.command, "watch")
         self.assertAlmostEqual(args.debounce, 2.0)
 
+    def test_common_logging_flags(self):
+        args = parse_args(["gen", "--source", ".", "--quiet", "--verbose"])
+        self.assertTrue(args.quiet)
+        self.assertTrue(args.verbose)
+
+    def test_quiet_suppresses_non_lint_stdout(self):
+        with patch("ai_docs.cli._run_gen", side_effect=lambda args: print("noise") or 0), \
+             patch("sys.stdout", new_callable=io.StringIO) as stdout:
+            rc = main(["gen", "--source", ".", "--quiet"])
+
+        self.assertEqual(rc, 0)
+        self.assertEqual(stdout.getvalue(), "")
+
+    def test_quiet_preserves_watch_errors_on_stderr(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = Path(tmp) / "missing"
+            with patch("sys.stdout", new_callable=io.StringIO) as stdout, \
+                 patch("sys.stderr", new_callable=io.StringIO) as stderr:
+                rc = main(["watch", "--source", str(missing), "--quiet"])
+
+        self.assertEqual(rc, 2)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertIn("[ai-docs watch]", stderr.getvalue())
+
+    def test_quiet_preserves_prdiff_errors_on_stderr(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch("sys.stdout", new_callable=io.StringIO) as stdout, \
+                 patch("sys.stderr", new_callable=io.StringIO) as stderr:
+                rc = main(["pr-diff", "--source", tmp, "--quiet"])
+
+        self.assertEqual(rc, 2)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertIn("[ai-docs pr-diff]", stderr.getvalue())
+
+    def test_quiet_preserves_progress_before_generation_error(self):
+        def fail_after_progress(args):
+            print("progress before failure")
+            raise GenerationError(["boom"])
+
+        with patch("ai_docs.cli._run_gen", side_effect=fail_after_progress), \
+             patch("sys.stdout", new_callable=io.StringIO) as stdout, \
+             patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            rc = main(["gen", "--source", ".", "--quiet"])
+
+        self.assertEqual(rc, 1)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertIn("progress before failure", stderr.getvalue())
+        self.assertIn("[ai-docs] generation failed", stderr.getvalue())
+
     def test_module_entrypoint_preserves_lint_exit_code(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -58,6 +109,19 @@ class ParseArgsTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 2)
         self.assertIn("index not found", result.stdout)
+
+    def test_help_subcommand_returns_success(self):
+        result = subprocess.run(
+            [sys.executable, "-m", "ai_docs", "help"],
+            cwd=Path(__file__).resolve().parents[1],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("usage: ai-docs", result.stdout)
+        self.assertNotIn("invalid choice", result.stderr)
 
 
 class LintCommandTests(unittest.TestCase):
@@ -116,6 +180,26 @@ class LintCommandTests(unittest.TestCase):
             (root / "a.py").write_text("print(2)\n", encoding="utf-8")
             rc = run_lint(self._make_args(root))
             self.assertEqual(rc, 1)
+
+    def test_url_source_returns_rc_2_without_scanning(self):
+        from ai_docs.cli_lint import run_lint
+        import argparse
+
+        ns = argparse.Namespace(
+            source="https://example.com/repo.git",
+            include=None,
+            exclude=None,
+            max_size=200_000,
+            threads=1,
+            cache_dir=".ai_docs_cache",
+            quiet=False,
+        )
+
+        with patch("ai_docs.cli_lint.scan_source") as scan:
+            rc = run_lint(ns)
+
+        self.assertEqual(rc, 2)
+        scan.assert_not_called()
 
 
 class PrDiffCommandTests(unittest.TestCase):
@@ -188,7 +272,7 @@ class PrDiffCommandTests(unittest.TestCase):
             git(root, "add", "a.py")
             git(root, "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-m", "change a")
 
-            with patch("ai_docs.cli_prdiff.from_env", return_value=object()), \
+            with patch("ai_docs.cli_common.from_env", return_value=object()), \
                  patch("ai_docs.cli_prdiff.generate_docs") as generate:
                 rc = run_prdiff(self._make_args(root))
 
@@ -224,7 +308,7 @@ class PrDiffCommandTests(unittest.TestCase):
             git(root, "add", "-A")
             git(root, "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-m", "change")
 
-            with patch("ai_docs.cli_prdiff.from_env", return_value=object()), \
+            with patch("ai_docs.cli_common.from_env", return_value=object()), \
                  patch("ai_docs.cli_prdiff.generate_docs") as generate:
                 rc = run_prdiff(self._make_args(root, include=["*.py"]))
 
@@ -232,6 +316,37 @@ class PrDiffCommandTests(unittest.TestCase):
         kwargs = generate.call_args.kwargs
         self.assertEqual(kwargs["changed_paths"], {"a.py"})
         self.assertEqual(kwargs["deleted_paths"], set())
+
+    def test_prdiff_noop_after_scan_scope_filter_does_not_create_llm(self):
+        from ai_docs.cli_prdiff import run_prdiff
+
+        def git(root: Path, *args: str) -> None:
+            subprocess.run(
+                ["git", "-C", str(root), *args],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            git(root, "init")
+            git(root, "checkout", "-b", "main")
+            (root / "docs.md").write_text("old\n", encoding="utf-8")
+            git(root, "add", ".")
+            git(root, "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-m", "init")
+            git(root, "checkout", "-b", "feature")
+            (root / "docs.md").write_text("new\n", encoding="utf-8")
+            git(root, "add", "docs.md")
+            git(root, "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-m", "docs")
+
+            with patch("ai_docs.cli_prdiff.create_llm") as create_llm, \
+                 patch("ai_docs.cli_prdiff.generate_docs") as generate:
+                rc = run_prdiff(self._make_args(root, include=["*.py"]))
+
+        self.assertEqual(rc, 0)
+        create_llm.assert_not_called()
+        generate.assert_not_called()
 
 
 if __name__ == "__main__":

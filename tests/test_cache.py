@@ -1,6 +1,9 @@
+import json
+import os
 import tempfile
-from pathlib import Path
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
 from ai_docs.cache import CacheError, CacheManager
 from ai_docs.generator_cache import build_masked_snapshot
@@ -78,6 +81,21 @@ class CacheManagerTests(unittest.TestCase):
             with self.assertRaises(CacheError):
                 cache.load_llm_cache()
 
+    def test_invalid_llm_cache_values_raise_cache_error(self):
+        cases = [
+            {"key": None},
+            {"key": ""},
+            {"key": "   "},
+        ]
+        for payload in cases:
+            with self.subTest(payload=payload):
+                with tempfile.TemporaryDirectory() as tmp:
+                    cache = CacheManager(Path(tmp))
+                    cache.llm_cache_path.write_text(json.dumps(payload), encoding="utf-8")
+
+                    with self.assertRaises(CacheError):
+                        cache.load_llm_cache()
+
     def test_invalid_utf8_cache_raises_cache_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             cache = CacheManager(Path(tmp))
@@ -103,6 +121,16 @@ class CacheManagerTests(unittest.TestCase):
             self.assertTrue(cache.index_path.exists())
             self.assertFalse((Path(tmp) / ".index.json.tmp").exists())
             self.assertEqual(cache.load_index()["files"]["a.py"]["hash"], "1")
+
+    def test_save_llm_cache_prunes_to_configured_max_entries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cache = CacheManager(Path(tmp))
+            env = {**os.environ, "AI_DOCS_LLM_CACHE_MAX_ENTRIES": "2"}
+
+            with patch.dict(os.environ, env, clear=True):
+                cache.save_llm_cache({"a": "one", "b": "two", "c": "three"})
+
+            self.assertEqual(cache.load_llm_cache(), {"b": "two", "c": "three"})
 
 
 if __name__ == "__main__":

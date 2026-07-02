@@ -23,7 +23,7 @@ from .domain_rules import (
     PRUNABLE_DIR_NAMES,
     PRUNABLE_DIR_PATHS,
 )
-from .utils import is_binary_file, is_url, sha256_bytes, to_posix
+from .utils import is_url, sha256_bytes, to_posix
 
 
 PARALLEL_LOAD_THRESHOLD = 32
@@ -35,6 +35,21 @@ class ScanResult:
         self.files = files
         self.source = source
         self.repo_name = repo_name
+
+
+class ScanScope:
+    def __init__(
+        self,
+        include_spec: Optional[pathspec.PathSpec],
+        exclude_spec: Optional[pathspec.PathSpec],
+        ignore_specs: Sequence[pathspec.PathSpec],
+    ):
+        self.include_spec = include_spec
+        self.exclude_spec = exclude_spec
+        self.ignore_specs = ignore_specs
+
+    def includes(self, rel_path: str) -> bool:
+        return _should_include(rel_path, self.include_spec, self.exclude_spec, self.ignore_specs)
 
 
 def _load_extension_config(root: Path) -> Dict[str, object]:
@@ -51,6 +66,17 @@ def _build_default_include_patterns(extension_config: Dict[str, object]) -> Set[
     for key in ("code_extensions", "doc_extensions", "config_extensions"):
         extensions.update(extension_config.get(key, {}).keys())
     return {f"*{ext}" for ext in extensions} | FIXED_INCLUDE_PATTERNS
+
+
+def _build_effective_exclude_patterns(
+    exclude: Optional[Set[str]],
+    extension_config: Dict[str, object],
+) -> Set[str]:
+    effective_exclude = set(DEFAULT_EXCLUDE_PATTERNS)
+    if exclude:
+        effective_exclude |= set(exclude)
+    effective_exclude |= set(extension_config.get("exclude", set()))
+    return effective_exclude
 
 
 def _compile_pathspec(patterns: Optional[Set[str]]) -> Optional[pathspec.PathSpec]:
@@ -118,9 +144,9 @@ def _load_file_record(task: Tuple[str, str, int]) -> Optional[Dict]:
         size = abs_path.stat().st_size
         if max_size and size > max_size:
             return None
-        if is_binary_file(abs_path):
-            return None
         raw = abs_path.read_bytes()
+        if b"\x00" in raw[:2048]:
+            return None
         decode_error = None
         try:
             content = raw.decode("utf-8")
@@ -131,9 +157,10 @@ def _load_file_record(task: Tuple[str, str, int]) -> Optional[Dict]:
         return None
 
     content_snippet = content[:4000]
-    file_type = classify_type(abs_path)
-    domains = detect_domains(abs_path, content_snippet)
-    if file_type != "ci" and is_infra(domains):
+    rel_path = Path(rel_path_str)
+    file_type = classify_type(rel_path)
+    domains = detect_domains(rel_path, content_snippet)
+    if file_type not in {"ci", "code"} and is_infra(domains):
         file_type = "infra"
 
     record = {
@@ -193,20 +220,27 @@ def _scan_directory(
     return files
 
 
+def build_scan_scope(
+    root: Path,
+    include: Optional[Set[str]] = None,
+    exclude: Optional[Set[str]] = None,
+) -> ScanScope:
+    extension_config = _load_extension_config(root)
+    effective_include = include or _build_default_include_patterns(extension_config)
+    effective_exclude = _build_effective_exclude_patterns(exclude, extension_config)
+    include_spec = _compile_pathspec(effective_include)
+    exclude_spec = _compile_pathspec(effective_exclude)
+    ignore_specs = _load_ignore_specs(root)
+    return ScanScope(include_spec, exclude_spec, ignore_specs)
+
+
 def path_in_scan_scope(
     root: Path,
     rel_path: str,
     include: Optional[Set[str]] = None,
     exclude: Optional[Set[str]] = None,
 ) -> bool:
-    extension_config = _load_extension_config(root)
-    effective_include = include or _build_default_include_patterns(extension_config)
-    effective_exclude = set(exclude or DEFAULT_EXCLUDE_PATTERNS)
-    effective_exclude |= set(extension_config.get("exclude", set()))
-    include_spec = _compile_pathspec(effective_include)
-    exclude_spec = _compile_pathspec(effective_exclude)
-    ignore_specs = _load_ignore_specs(root)
-    return _should_include(rel_path, include_spec, exclude_spec, ignore_specs)
+    return build_scan_scope(root, include=include, exclude=exclude).includes(rel_path)
 
 
 def _clone_repo(repo_url: str) -> Tuple[Path, str]:
@@ -227,25 +261,27 @@ def scan_source(
     max_size: int = 200_000,
     workers: int = 5,
 ) -> ScanResult:
-    exclude = set(exclude or DEFAULT_EXCLUDE_PATTERNS)
-
     if is_url(source):
         root, repo_name = _clone_repo(source)
-        extension_config = _load_extension_config(root)
-        include = include or _build_default_include_patterns(extension_config)
-        exclude = set(exclude) | set(extension_config.get("exclude", set()))
-        include_spec = _compile_pathspec(include)
-        exclude_spec = _compile_pathspec(exclude)
-        files = _scan_directory(root, include_spec, exclude_spec, max_size, workers)
+        try:
+            extension_config = _load_extension_config(root)
+            effective_include = include or _build_default_include_patterns(extension_config)
+            effective_exclude = _build_effective_exclude_patterns(exclude, extension_config)
+            include_spec = _compile_pathspec(effective_include)
+            exclude_spec = _compile_pathspec(effective_exclude)
+            files = _scan_directory(root, include_spec, exclude_spec, max_size, workers)
+        except Exception:
+            shutil.rmtree(root, ignore_errors=True)
+            raise
         return ScanResult(root=root, files=files, source=source, repo_name=repo_name)
 
     root = Path(source).expanduser().resolve()
     if not root.exists():
         raise FileNotFoundError(f"Source path not found: {root}")
     extension_config = _load_extension_config(root)
-    include = include or _build_default_include_patterns(extension_config)
-    exclude = set(exclude) | set(extension_config.get("exclude", set()))
-    include_spec = _compile_pathspec(include)
-    exclude_spec = _compile_pathspec(exclude)
+    effective_include = include or _build_default_include_patterns(extension_config)
+    effective_exclude = _build_effective_exclude_patterns(exclude, extension_config)
+    include_spec = _compile_pathspec(effective_include)
+    exclude_spec = _compile_pathspec(effective_exclude)
     files = _scan_directory(root, include_spec, exclude_spec, max_size, workers)
     return ScanResult(root=root, files=files, source=str(root), repo_name=root.name)

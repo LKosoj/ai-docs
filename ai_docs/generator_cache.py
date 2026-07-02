@@ -1,4 +1,5 @@
 from pathlib import Path
+import time
 from typing import Dict, List, Optional, Set, Tuple
 
 from .cache import CacheManager
@@ -154,7 +155,6 @@ def cleanup_orphan_summaries(
         ]
         total = len(to_remove)
         if total:
-            import time
             done = 0
             start = time.time()
             log_every = 50
@@ -172,7 +172,6 @@ def cleanup_orphan_summaries(
 def cleanup_deleted_summaries(deleted: Dict[str, Dict]) -> None:
     total = len(deleted)
     if total:
-        import time
         done = 0
         start = time.time()
         log_every = 5
