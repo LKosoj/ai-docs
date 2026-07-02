@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import yaml
 
@@ -25,8 +25,8 @@ def build_mkdocs_yaml(
     configs: Dict[str, str],
     local_site: bool = False,
     has_modules: bool = False,
-    module_nav_paths: List[str] | None = None,
-    project_config_nav_paths: List[str] | None = None,
+    module_nav_paths: Optional[List[str]] = None,
+    project_config_nav_paths: Optional[List[str]] = None,
 ) -> str:
     nav = [
         {"Главная": "index.md"},

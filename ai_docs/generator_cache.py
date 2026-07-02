@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from .cache import CacheManager
 from .generator_shared import is_test_path
@@ -17,13 +17,16 @@ def init_cache(cache_dir: Path, use_cache: bool):
 def build_file_map(files: List[Dict]) -> Dict[str, Dict]:
     file_map: Dict[str, Dict] = {}
     for f in files:
-        file_map[f["path"]] = {
-            "hash": sha256_text(f["content"]),
+        meta = {
+            "hash": f.get("hash") or sha256_text(f["content"]),
             "size": f["size"],
             "type": f["type"],
             "domains": f["domains"],
             "content": f["content"],
         }
+        if f.get("decode_error"):
+            meta["decode_error"] = f["decode_error"]
+        file_map[f["path"]] = meta
     return file_map
 
 
@@ -47,18 +50,43 @@ def save_cache_snapshot(
     index_data: Dict,
     llm_cache: Dict[str, str],
     use_cache: bool,
+    snapshot_files: Optional[Dict[str, Dict]] = None,
 ) -> None:
     transient_keys = {"content", "summary_text", "module_summary_text", "config_summary_text"}
+    files_for_snapshot = snapshot_files if snapshot_files is not None else file_map
     snapshot = {
         "files": {
             path: {k: v for k, v in meta.items() if k not in transient_keys}
-            for path, meta in file_map.items()
+            for path, meta in files_for_snapshot.items()
         },
         "sections": index_data.get("sections", {}),
     }
     cache.save_index(snapshot)
     if use_cache and llm_cache is not None:
         cache.save_llm_cache(llm_cache)
+
+
+def build_masked_snapshot(
+    file_map: Dict[str, Dict],
+    prev_files: Dict[str, Dict],
+    changed_paths: Optional[Set[str]],
+    deleted_paths: Optional[Set[str]],
+) -> Optional[Dict[str, Dict]]:
+    if changed_paths is None and deleted_paths is None:
+        return None
+    changed = set(changed_paths or set())
+    deleted = set(deleted_paths or set())
+    snapshot = {
+        path: dict(meta)
+        for path, meta in prev_files.items()
+        if path not in deleted
+    }
+    for path in changed:
+        if path in file_map:
+            snapshot[path] = file_map[path]
+        else:
+            snapshot.pop(path, None)
+    return snapshot
 
 
 def carry_unchanged_summaries(

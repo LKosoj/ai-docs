@@ -10,7 +10,7 @@
 Ключевые возможности:
 - Автоопределение доменов инфраструктуры (Kubernetes, Helm, Terraform, Ansible, Docker, CI/CD, Observability, Service Mesh / Ingress, Data / Storage)
 - Инкрементальная генерация и кэширование
-- Учет `.gitignore` и фильтрация файлов
+- Учет `.gitignore` и фильтрация файлов без записи служебных файлов во время сканирования
 - Параллельное сканирование и LLM‑суммаризация с глобальным лимитом одновременных запросов к LLM (`--threads` / `AI_DOCS_THREADS`)
 - Отчёт об изменениях в `docs/changes.md`
 
@@ -37,6 +37,11 @@ python3 -m venv .venv
 pip install -e .
 ```
 
+Для команды `watch` установите optional extra:
+```bash
+pip install -e ".[watch]"
+```
+
 2) Настройка переменных окружения (пример — `.env.example`):
 ```env
 OPENAI_API_KEY=your_api_key_here
@@ -47,6 +52,7 @@ OPENAI_CONTEXT_TOKENS=8192
 OPENAI_TEMPERATURE=0.2
 AI_DOCS_THREADS=5
 AI_DOCS_LOCAL_SITE=false
+AI_DOCS_INSECURE_SSL=false
 ```
 
 Если инструмент установлен как пакет, можно задать переменные окружения так:
@@ -59,6 +65,7 @@ export OPENAI_CONTEXT_TOKENS="8192"
 export OPENAI_TEMPERATURE="0.2"
 export AI_DOCS_THREADS="5"
 export AI_DOCS_LOCAL_SITE="false"
+export AI_DOCS_INSECURE_SSL="false"
 ```
 
 3) Генерация README и MkDocs:
@@ -90,6 +97,7 @@ $env:OPENAI_CONTEXT_TOKENS="8192"
 $env:OPENAI_TEMPERATURE="0.2"
 $env:AI_DOCS_THREADS="5"
 $env:AI_DOCS_LOCAL_SITE="false"
+$env:AI_DOCS_INSECURE_SSL="false"
 ```
 
 ## Подкоманды CLI
@@ -206,7 +214,7 @@ repos:
 
 ## .ai-docs.yaml (расширения)
 Если в проекте есть файл `.ai-docs.yaml`, он задаёт приоритетный список расширений для сканирования.
-Если файла нет, он создаётся автоматически на основе текущих `*_EXTENSIONS`.
+Если файла нет, используются встроенные правила из `ai_docs/domain_rules.py`; сканирование не создаёт `.ai-docs.yaml` автоматически.
 
 Формат (поддерживаются map и list для расширений):
 ```yaml
@@ -248,11 +256,18 @@ prompts:
 - `test_cache.py`
 - `test_changes.py`
 - `test_cli.py`
+- `test_config.py`
+- `test_generated_docs.py`
+- `test_generator.py`
+- `test_generator_shared.py`
+- `test_llm.py`
+- `test_packaging.py`
 - `test_performance.py`
 - `test_prompts.py`
 - `test_scanner.py`
 - `test_site_config.py`
 - `test_summary.py`
+- `test_watch.py`
 
 Запуск (из корня проекта):
 ```bash
@@ -276,6 +291,30 @@ python -m pytest
 При запуске без параметров для разделов выводится подсказка с примером `--regen`.
 Если модулей больше 100, `modules/index.md` автоматически разбивается на страницы по 100 элементов с навигацией «←/→».
 Если конфигов больше 100, `configs/index.md` также разбивается на страницы по 100 элементов с навигацией «←/→».
+
+Ошибки конфигурации, повреждённого кэша и LLM‑суммаризации завершают команду ненулевым кодом. При ошибках суммаризации финальные артефакты не перезаписываются как успешный результат.
+
+`pr-diff` выполняет полный scan текущего дерева, но повторно суммаризирует только файлы из `git diff --name-status <base>...HEAD`; неизменённые файлы не считаются удалёнными из-за частичного diff.
+
+## Python API
+
+Для embedded‑сценариев доступен публичный async API:
+```python
+from ai_docs.generation_config import GenerationConfig
+from ai_docs.generator import generate_docs_async
+
+await generate_docs_async(..., generation_config=GenerationConfig(source_url="https://example.com/repo/"))
+```
+
+Синхронный `generate_docs(...)` остаётся тонкой обёрткой для CLI и обычных скриптов.
+
+## TLS
+
+Проверка TLS включена по умолчанию для всех запросов к OpenAI‑совместимому endpoint. Для self-signed окружений можно явно отключить проверку:
+```bash
+AI_DOCS_INSECURE_SSL=true
+```
+При таком запуске CLI печатает предупреждение.
 
 ## Параллельность и лимит LLM‑запросов
 
@@ -314,6 +353,7 @@ mkdocs build -f mkdocs.yml
 ## Исключения
 Сканер учитывает `.gitignore`, `.build_ignore` и дефолтные исключения:
 `.venv`, `node_modules`, `ai_docs_site`, `.ai-docs`, `.ai_docs_cache`, `dist`, `build`, т.д.
+GitHub Actions workflow-файлы в `.github/workflows/*.yml` и `.github/workflows/*.yaml` включаются в scan и классифицируются как CI.
 
 ## Разработка и вклад
 - Установите зависимости (см. «Быстрый старт»)

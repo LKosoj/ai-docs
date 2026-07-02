@@ -1,21 +1,31 @@
 import argparse
+import asyncio
 import os
+import shutil
 import sys
 from pathlib import Path
 from typing import List, Optional, Sequence, Set
 
-import shutil
-
-from .generator import generate_docs
-from .llm import from_env
-from .prompts import configure as configure_prompts, load_prompt_overrides
-from .scanner import scan_source
-from .site_config import configure_source_url, load_source_url
-from .utils import is_url
 from dotenv import load_dotenv
+
+from .cache import CacheError
+from .config import ConfigError, parse_bool_env, parse_int_env
+from .generation_config import GenerationConfig, parse_section_list
+from .generator import GenerationError, generate_docs
+from .llm import from_env
+from .prompts import PromptStore, load_prompt_overrides
+from .scanner import scan_source
+from .site_config import load_source_url
+from .utils import is_url
 
 
 KNOWN_COMMANDS = {"gen", "lint", "watch", "pr-diff", "help"}
+
+
+def _close_llm(llm) -> None:
+    aclose = getattr(llm, "aclose", None)
+    if aclose is not None:
+        asyncio.run(aclose())
 
 
 def _add_common_scan_args(parser: argparse.ArgumentParser) -> None:
@@ -134,8 +144,26 @@ def resolve_output(source: str, output: Optional[str], repo_name: str) -> Path:
 
 
 def _resolve_threads(arg_threads: Optional[int]) -> int:
-    env_threads = int(os.getenv("AI_DOCS_THREADS", "5"))
+    env_threads = parse_int_env("AI_DOCS_THREADS", 5)
     return max(1, arg_threads if arg_threads is not None else env_threads)
+
+
+def _build_generation_config(root: Path, regen_arg: Optional[str]) -> GenerationConfig:
+    prompt_overrides = load_prompt_overrides(root)
+    if prompt_overrides:
+        print(f"[ai-docs] custom prompts: {sorted(prompt_overrides.keys())}")
+
+    source_url = load_source_url(root)
+    if source_url:
+        print(f"[ai-docs] source_url: {source_url}")
+
+    regen_raw = regen_arg if regen_arg is not None else os.getenv("AI_DOCS_REGEN", "")
+    return GenerationConfig(
+        prompt_store=PromptStore(prompt_overrides),
+        source_url=source_url,
+        force_sections=parse_section_list(regen_raw),
+        regen_all_threshold=parse_int_env("AI_DOCS_REGEN_ALL_THRESHOLD", 50),
+    )
 
 
 def _run_gen(args: argparse.Namespace) -> int:
@@ -146,7 +174,7 @@ def _run_gen(args: argparse.Namespace) -> int:
         )
     include: Optional[Set[str]] = set(args.include) if args.include else None
     exclude: Optional[Set[str]] = set(args.exclude) if args.exclude else None
-    env_local_site = os.getenv("AI_DOCS_LOCAL_SITE", "false").strip().lower() in {"1", "true", "yes", "y"}
+    env_local_site = parse_bool_env("AI_DOCS_LOCAL_SITE", False)
     threads = _resolve_threads(args.threads)
     local_site = args.local_site or env_local_site
 
@@ -161,15 +189,7 @@ def _run_gen(args: argparse.Namespace) -> int:
     repo_name = scan_result.repo_name
     print(f"[ai-docs] scan complete: {len(scan_result.files)} files")
 
-    prompt_overrides = load_prompt_overrides(root)
-    configure_prompts(prompt_overrides)
-    if prompt_overrides:
-        print(f"[ai-docs] custom prompts: {sorted(prompt_overrides.keys())}")
-
-    source_url = load_source_url(root)
-    configure_source_url(source_url)
-    if source_url:
-        print(f"[ai-docs] source_url: {source_url}")
+    generation_config = _build_generation_config(root, args.regen)
 
     output_root = resolve_output(args.source, args.output, repo_name)
     output_root.mkdir(parents=True, exist_ok=True)
@@ -180,25 +200,26 @@ def _run_gen(args: argparse.Namespace) -> int:
         f"max_tokens={llm.max_tokens} concurrency={llm.concurrency}"
     )
 
-    print(f"[ai-docs] generate: readme={args.readme or not args.mkdocs} mkdocs={args.mkdocs or not args.readme}")
-    if args.regen:
-        os.environ["AI_DOCS_REGEN"] = args.regen
-    generate_docs(
-        files=scan_result.files,
-        output_root=output_root,
-        cache_dir=output_root / args.cache_dir,
-        llm=llm,
-        language=args.language,
-        write_readme_flag=(args.readme or not args.mkdocs),
-        write_mkdocs=(args.mkdocs or not args.readme),
-        use_cache=not args.no_cache,
-        threads=threads,
-        local_site=local_site,
-        force=args.force,
-    )
-
-    if is_url(args.source):
-        shutil.rmtree(scan_result.root, ignore_errors=True)
+    try:
+        print(f"[ai-docs] generate: readme={args.readme or not args.mkdocs} mkdocs={args.mkdocs or not args.readme}")
+        generate_docs(
+            files=scan_result.files,
+            output_root=output_root,
+            cache_dir=output_root / args.cache_dir,
+            llm=llm,
+            language=args.language,
+            write_readme_flag=(args.readme or not args.mkdocs),
+            write_mkdocs=(args.mkdocs or not args.readme),
+            use_cache=not args.no_cache,
+            threads=threads,
+            local_site=local_site,
+            force=args.force,
+            generation_config=generation_config,
+        )
+    finally:
+        _close_llm(llm)
+        if is_url(args.source):
+            shutil.rmtree(scan_result.root, ignore_errors=True)
     return 0
 
 
@@ -219,18 +240,25 @@ def _run_prdiff(args: argparse.Namespace) -> int:
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     load_dotenv()
-    args = parse_args(argv)
-    handlers = {
-        "gen": _run_gen,
-        "lint": _run_lint,
-        "watch": _run_watch,
-        "pr-diff": _run_prdiff,
-    }
-    handler = handlers[args.command]
-    rc = handler(args)
-    if rc is None:
-        rc = 0
-    return rc
+    try:
+        args = parse_args(argv)
+        handlers = {
+            "gen": _run_gen,
+            "lint": _run_lint,
+            "watch": _run_watch,
+            "pr-diff": _run_prdiff,
+        }
+        handler = handlers[args.command]
+        rc = handler(args)
+        if rc is None:
+            rc = 0
+        return rc
+    except GenerationError as exc:
+        print(f"[ai-docs] generation failed: {exc}", file=sys.stderr)
+        return 1
+    except (ConfigError, CacheError) as exc:
+        print(f"[ai-docs] configuration error: {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

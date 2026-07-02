@@ -1,6 +1,9 @@
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from ai_docs.cli import parse_args
 
@@ -39,6 +42,22 @@ class ParseArgsTests(unittest.TestCase):
         args = parse_args(["watch", "--source", "."])
         self.assertEqual(args.command, "watch")
         self.assertAlmostEqual(args.debounce, 2.0)
+
+    def test_module_entrypoint_preserves_lint_exit_code(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "a.py").write_text("print(1)\n", encoding="utf-8")
+
+            result = subprocess.run(
+                [sys.executable, "-m", "ai_docs", "lint", "--source", str(root)],
+                cwd=Path(__file__).resolve().parents[1],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("index not found", result.stdout)
 
 
 class LintCommandTests(unittest.TestCase):
@@ -100,12 +119,12 @@ class LintCommandTests(unittest.TestCase):
 
 
 class PrDiffCommandTests(unittest.TestCase):
-    def _make_args(self, source: Path, base: str = "main") -> object:
+    def _make_args(self, source: Path, base: str = "main", include=None, exclude=None) -> object:
         import argparse
         return argparse.Namespace(
             source=str(source),
-            include=None,
-            exclude=None,
+            include=include,
+            exclude=exclude,
             max_size=200_000,
             threads=1,
             cache_dir=".ai_docs_cache",
@@ -144,6 +163,75 @@ class PrDiffCommandTests(unittest.TestCase):
         )
         rc = run_prdiff(ns)
         self.assertEqual(rc, 2)
+
+    def test_prdiff_uses_full_scan_and_changed_mask(self):
+        from ai_docs.cli_prdiff import run_prdiff
+
+        def git(root: Path, *args: str) -> None:
+            subprocess.run(
+                ["git", "-C", str(root), *args],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            git(root, "init")
+            git(root, "checkout", "-b", "main")
+            (root / "a.py").write_text("print(1)\n", encoding="utf-8")
+            (root / "b.py").write_text("print(2)\n", encoding="utf-8")
+            git(root, "add", ".")
+            git(root, "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-m", "init")
+            git(root, "checkout", "-b", "feature")
+            (root / "a.py").write_text("print(3)\n", encoding="utf-8")
+            git(root, "add", "a.py")
+            git(root, "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-m", "change a")
+
+            with patch("ai_docs.cli_prdiff.from_env", return_value=object()), \
+                 patch("ai_docs.cli_prdiff.generate_docs") as generate:
+                rc = run_prdiff(self._make_args(root))
+
+        self.assertEqual(rc, 0)
+        kwargs = generate.call_args.kwargs
+        self.assertEqual({item["path"] for item in kwargs["files"]}, {"a.py", "b.py"})
+        self.assertEqual(kwargs["changed_paths"], {"a.py"})
+        self.assertEqual(kwargs["deleted_paths"], set())
+
+    def test_prdiff_filters_deleted_paths_outside_scan_scope(self):
+        from ai_docs.cli_prdiff import run_prdiff
+
+        def git(root: Path, *args: str) -> None:
+            subprocess.run(
+                ["git", "-C", str(root), *args],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            git(root, "init")
+            git(root, "checkout", "-b", "main")
+            (root / "a.py").write_text("print(1)\n", encoding="utf-8")
+            (root / "docs").mkdir()
+            (root / "docs" / "old.md").write_text("old\n", encoding="utf-8")
+            git(root, "add", ".")
+            git(root, "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-m", "init")
+            git(root, "checkout", "-b", "feature")
+            (root / "a.py").write_text("print(2)\n", encoding="utf-8")
+            (root / "docs" / "old.md").unlink()
+            git(root, "add", "-A")
+            git(root, "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "-m", "change")
+
+            with patch("ai_docs.cli_prdiff.from_env", return_value=object()), \
+                 patch("ai_docs.cli_prdiff.generate_docs") as generate:
+                rc = run_prdiff(self._make_args(root, include=["*.py"]))
+
+        self.assertEqual(rc, 0)
+        kwargs = generate.call_args.kwargs
+        self.assertEqual(kwargs["changed_paths"], {"a.py"})
+        self.assertEqual(kwargs["deleted_paths"], set())
 
 
 if __name__ == "__main__":

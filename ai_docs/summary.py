@@ -1,9 +1,9 @@
 import asyncio
 from pathlib import Path
-from typing import Dict, List, TypedDict
+from typing import Dict, List, Optional, Tuple, TypedDict
 
 from .generator_shared import first_paragraph
-from .prompts import CONFIG_TAG, MODULE_TAG, OVERVIEW_TAG, active as _prompts
+from .prompts import CONFIG_TAG, MODULE_TAG, OVERVIEW_TAG, PromptStore, active as _prompts
 from .tokenizer import chunk_text
 from .utils import ensure_dir, sha256_text
 
@@ -37,21 +37,35 @@ def _needs_doxygen_fix(text: str) -> bool:
     return any(marker in lowered for marker in noisy_markers)
 
 
-async def _normalize_module_summary(summary: str, llm_client, llm_cache: Dict[str, str]) -> str:
+def _prompt_store(prompt_store: Optional[PromptStore]) -> PromptStore:
+    return prompt_store or _prompts()
+
+
+async def _normalize_module_summary(
+    summary: str,
+    llm_client,
+    llm_cache: Dict[str, str],
+    prompt_store: Optional[PromptStore] = None,
+) -> str:
     if not _needs_doxygen_fix(summary):
         return summary
     messages = [
-        {"role": "system", "content": _prompts().module_summary_reformat()},
+        {"role": "system", "content": _prompt_store(prompt_store).module_summary_reformat()},
         {"role": "user", "content": summary},
     ]
     return (await llm_client.chat(messages, cache=llm_cache)).strip()
 
 
-async def _normalize_config_summary(summary: str, llm_client, llm_cache: Dict[str, str]) -> str:
+async def _normalize_config_summary(
+    summary: str,
+    llm_client,
+    llm_cache: Dict[str, str],
+    prompt_store: Optional[PromptStore] = None,
+) -> str:
     if not _needs_doxygen_fix(summary):
         return _format_config_blocks(summary)
     messages = [
-        {"role": "system", "content": _prompts().config_summary_reformat()},
+        {"role": "system", "content": _prompt_store(prompt_store).config_summary_reformat()},
         {"role": "user", "content": summary},
     ]
     return _format_config_blocks((await llm_client.chat(messages, cache=llm_cache)).strip())
@@ -146,15 +160,15 @@ async def _summarize_structured_chunks(
     llm_client,
     llm_cache: Dict[str, str],
     model: str,
-) -> tuple[str, str]:
+) -> Tuple[str, str]:
     response = await _summarize_chunks(content, prompt, combine_prompt, llm_client, llm_cache, model)
     overview_summary = _extract_tagged_block(response, OVERVIEW_TAG)
     detailed_summary = _extract_tagged_block(response, detail_tag)
     return overview_summary, detailed_summary
 
 
-def _summary_prompt(file_type: str, domains: List[str]) -> str:
-    base = _prompts().summary()
+def _summary_prompt(file_type: str, domains: List[str], prompt_store: Optional[PromptStore]) -> str:
+    base = _prompt_store(prompt_store).summary()
     if file_type == "infra" or domains:
         return base + "\nФайл относится к инфраструктуре: " + ", ".join(domains)
     return base
@@ -169,20 +183,26 @@ async def summarize_file_outputs(
     model: str,
     include_module_summary: bool = False,
     include_config_summary: bool = False,
+    prompt_store: Optional[PromptStore] = None,
 ) -> SummaryOutputs:
     outputs: SummaryOutputs = {}
 
     if include_config_summary and file_type == "config":
         overview_summary, config_summary = await _summarize_structured_chunks(
             content,
-            _prompts().config_summary_bundle(),
-            _prompts().config_summary_bundle_combine(),
+            _prompt_store(prompt_store).config_summary_bundle(),
+            _prompt_store(prompt_store).config_summary_bundle_combine(),
             CONFIG_TAG,
             llm_client,
             llm_cache,
             model,
         )
-        config_summary = await _normalize_config_summary(config_summary, llm_client, llm_cache)
+        config_summary = await _normalize_config_summary(
+            config_summary,
+            llm_client,
+            llm_cache,
+            prompt_store,
+        )
         outputs["config_summary"] = config_summary
         outputs["summary"] = overview_summary or first_paragraph(config_summary) or config_summary
         return outputs
@@ -190,22 +210,27 @@ async def summarize_file_outputs(
     if include_module_summary:
         overview_summary, module_summary = await _summarize_structured_chunks(
             content,
-            _prompts().module_summary_bundle(),
-            _prompts().module_summary_bundle_combine(),
+            _prompt_store(prompt_store).module_summary_bundle(),
+            _prompt_store(prompt_store).module_summary_bundle_combine(),
             MODULE_TAG,
             llm_client,
             llm_cache,
             model,
         )
-        module_summary = await _normalize_module_summary(module_summary, llm_client, llm_cache)
+        module_summary = await _normalize_module_summary(
+            module_summary,
+            llm_client,
+            llm_cache,
+            prompt_store,
+        )
         outputs["module_summary"] = module_summary
         outputs["summary"] = overview_summary or first_paragraph(module_summary) or module_summary
         return outputs
 
     outputs["summary"] = await _summarize_chunks(
         content,
-        _summary_prompt(file_type, domains),
-        _prompts().summary_combine(),
+        _summary_prompt(file_type, domains, prompt_store),
+        _prompt_store(prompt_store).summary_combine(),
         llm_client,
         llm_cache,
         model,
@@ -221,6 +246,7 @@ async def summarize_file(
     llm_cache: Dict[str, str],
     model: str,
     detailed: bool = False,
+    prompt_store: Optional[PromptStore] = None,
 ) -> str:
     outputs = await summarize_file_outputs(
         content,
@@ -231,6 +257,7 @@ async def summarize_file(
         model,
         include_module_summary=detailed and file_type != "config",
         include_config_summary=detailed and file_type == "config",
+        prompt_store=prompt_store,
     )
     if detailed and file_type == "config":
         return outputs.get("config_summary", "")

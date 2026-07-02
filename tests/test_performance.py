@@ -168,6 +168,7 @@ class LLMClientGlobalConcurrency(unittest.TestCase):
             )
 
         asyncio.run(run_many())
+        asyncio.run(client.aclose())
         self.assertLessEqual(peak, 3)
         self.assertGreaterEqual(peak, 1)
 
@@ -222,6 +223,7 @@ class LLMClientGlobalConcurrency(unittest.TestCase):
         from typing import Dict  # local import to avoid polluting module scope
 
         first, second, third, count = asyncio.run(scenario())
+        asyncio.run(client.aclose())
         self.assertEqual(first, "first")
         self.assertEqual(second, "first")
         self.assertEqual(third, "first")
@@ -276,40 +278,43 @@ class BuildSectionsParallelism(unittest.TestCase):
         )
         llm._client = FakeClient()
 
-        with tempfile.TemporaryDirectory() as tmp:
-            docs_dir = Path(tmp) / ".ai-docs"
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                docs_dir = Path(tmp) / ".ai-docs"
 
-            file_map = {}
-            for i in range(3):
-                summary = write_summary(Path(tmp) / "sums", f"src/mod_{i}.py", f"summary {i}")
-                module_summary = write_summary(Path(tmp) / "mods", f"src/mod_{i}.py", f"mod {i}")
-                file_map[f"src/mod_{i}.py"] = {
-                    "type": "code",
-                    "domains": [],
-                    "summary_path": str(summary),
-                    "module_summary_path": str(module_summary),
-                }
+                file_map = {}
+                for i in range(3):
+                    summary = write_summary(Path(tmp) / "sums", f"src/mod_{i}.py", f"summary {i}")
+                    module_summary = write_summary(Path(tmp) / "mods", f"src/mod_{i}.py", f"mod {i}")
+                    file_map[f"src/mod_{i}.py"] = {
+                        "type": "code",
+                        "domains": [],
+                        "summary_path": str(summary),
+                        "module_summary_path": str(module_summary),
+                    }
 
-            added = {"src/mod_0.py": file_map["src/mod_0.py"]}
+                added = {"src/mod_0.py": file_map["src/mod_0.py"]}
 
-            with patch("ai_docs.generator_sections.count_tokens", return_value=100000), \
-                 patch("ai_docs.generator_sections.chunk_text",
-                       side_effect=lambda text, model, max_tokens: [text]):
-                asyncio.run(
-                    build_sections(
-                        file_map,
-                        added,
-                        {},
-                        {},
-                        docs_dir,
-                        llm,
-                        {},
-                        "ru",
-                        threads=threads,
-                        input_budget=2000,
-                        force_sections={"all"},
+                with patch("ai_docs.generator_sections.count_tokens", return_value=100000), \
+                     patch("ai_docs.generator_sections.chunk_text",
+                           side_effect=lambda text, model, max_tokens: [text]):
+                    asyncio.run(
+                        build_sections(
+                            file_map,
+                            added,
+                            {},
+                            {},
+                            docs_dir,
+                            llm,
+                            {},
+                            "ru",
+                            threads=threads,
+                            input_budget=2000,
+                            force_sections={"all"},
+                        )
                     )
-                )
+        finally:
+            asyncio.run(llm.aclose())
 
         return call_count, max_active
 

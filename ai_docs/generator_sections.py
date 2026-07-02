@@ -1,5 +1,4 @@
 import asyncio
-import os
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -10,12 +9,14 @@ from .generator_shared import (
     collect_dependencies,
     collect_test_info,
     get_cached_text,
+    config_doc_path,
+    module_doc_path,
     render_project_configs_index,
     render_testing_section,
     strip_duplicate_heading,
     is_test_path,
 )
-from .site_config import active_source_url, format_citation
+from .site_config import format_citation
 from .tokenizer import count_tokens, chunk_text
 from .utils import read_text_file
 
@@ -138,9 +139,10 @@ async def build_sections(
     threads: int,
     input_budget: int,
     force_sections: Optional[Set[str]] = None,
+    source_url: Optional[str] = None,
+    regen_all_threshold: int = 50,
 ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str], List[str], List[str], Dict[str, str], List[str], str]:
     force_sections = {item.strip().lower() for item in (force_sections or set()) if item.strip()}
-    regen_all_threshold = int(os.getenv("AI_DOCS_REGEN_ALL_THRESHOLD", "50"))
     module_count = sum(
         1
         for path, meta in file_map.items()
@@ -300,11 +302,10 @@ async def build_sections(
         summary_path = meta.get("module_summary_path")
         if not summary_path:
             continue
-        module_rel = Path("modules") / Path(path)
-        module_rel_str = module_rel.as_posix().replace(".", "__") + ".md"
+        module_rel_str = module_doc_path(path)
         module_title = Path(path).with_suffix("").as_posix()
         summary = get_cached_text(meta, "module_summary_path", "module_summary_text")
-        citation = format_citation(path, active_source_url())
+        citation = format_citation(path, source_url)
         module_pages[module_rel_str] = f"# {module_title}\n\n{citation}\n\n{summary}\n"
         module_nav_paths.append(module_rel_str)
         module_summaries.append(summary)
@@ -370,11 +371,10 @@ async def build_sections(
         summary_path = meta.get("config_summary_path")
         if not summary_path:
             continue
-        config_rel = Path("configs/files") / Path(path)
-        config_rel_str = config_rel.as_posix().replace(".", "__") + ".md"
+        config_rel_str = config_doc_path(path)
         config_title = Path(path).as_posix()
         summary = get_cached_text(meta, "config_summary_path", "config_summary_text")
-        citation = format_citation(path, active_source_url())
+        citation = format_citation(path, source_url)
         config_pages[config_rel_str] = f"# {config_title}\n\n{citation}\n\n{summary}\n"
         config_nav_paths.append(config_rel_str)
     if config_nav_paths:

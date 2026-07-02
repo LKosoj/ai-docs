@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from ai_docs.config import ConfigError
 from ai_docs.prompts import (
     PromptStore,
     active,
@@ -52,19 +53,19 @@ class LoadPromptOverridesTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(load_prompt_overrides(Path(tmp)), {})
 
-    def test_invalid_yaml_returns_empty(self):
+    def test_invalid_yaml_raises(self):
         with tempfile.TemporaryDirectory() as tmp:
             cfg = Path(tmp) / ".ai-docs.yaml"
-            cfg.write_text(":::not yaml:::", encoding="utf-8")
-            self.assertEqual(load_prompt_overrides(Path(tmp)), {})
+            cfg.write_text("prompts: [", encoding="utf-8")
+            with self.assertRaises(ConfigError):
+                load_prompt_overrides(Path(tmp))
 
-    def test_ignores_non_string_values(self):
+    def test_rejects_non_string_prompt_values(self):
         with tempfile.TemporaryDirectory() as tmp:
             cfg = Path(tmp) / ".ai-docs.yaml"
             cfg.write_text("prompts:\n  summary: 42\n  module_summary: \"ok\"\n", encoding="utf-8")
-            result = load_prompt_overrides(Path(tmp))
-            self.assertNotIn("summary", result)
-            self.assertEqual(result["module_summary"], "ok")
+            with self.assertRaises(ConfigError):
+                load_prompt_overrides(Path(tmp))
 
 
 class FakeLLM:

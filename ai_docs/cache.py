@@ -5,6 +5,10 @@ from typing import Dict, Tuple
 from .utils import ensure_dir
 
 
+class CacheError(RuntimeError):
+    pass
+
+
 class CacheManager:
     def __init__(self, cache_dir: Path):
         self.cache_dir = cache_dir
@@ -13,32 +17,39 @@ class CacheManager:
         self.llm_cache_path = self.cache_dir / "llm_cache.json"
 
     def load_index(self) -> Dict:
-        if not self.index_path.exists():
-            return {"files": {}, "sections": {}}
-        return json.loads(self.index_path.read_text(encoding="utf-8", errors="ignore"))
+        return self._read_json(self.index_path, {"files": {}, "sections": {}})
 
     def save_index(self, data: Dict) -> None:
-        self.index_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._write_json_atomic(self.index_path, data)
 
     def load_llm_cache(self) -> Dict[str, str]:
-        if not self.llm_cache_path.exists():
-            return {}
-        raw = self.llm_cache_path.read_text(encoding="utf-8", errors="ignore")
-        if not raw.strip():
-            return {}
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError:
-            bad_path = self.llm_cache_path.with_suffix(".json.bad")
-            try:
-                bad_path.write_text(raw, encoding="utf-8")
-            except OSError:
-                pass
-            return {}
+        return self._read_json(self.llm_cache_path, {})
 
     def save_llm_cache(self, data: Dict[str, str]) -> None:
-        snapshot = dict(data)
-        self.llm_cache_path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._write_json_atomic(self.llm_cache_path, dict(data))
+
+    def _read_json(self, path: Path, default: Dict) -> Dict:
+        if not path.exists():
+            return default
+        try:
+            raw = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc:
+            raise CacheError(f"Invalid UTF-8 cache file: {path}") from exc
+        if not raw.strip():
+            raise CacheError(f"Invalid JSON cache file: {path}: empty file")
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise CacheError(f"Invalid JSON cache file: {path}") from exc
+        if not isinstance(data, dict):
+            raise CacheError(f"Invalid JSON cache file: {path}: expected object")
+        return data
+
+    def _write_json_atomic(self, path: Path, data: Dict) -> None:
+        ensure_dir(path.parent)
+        tmp_path = path.with_name(f".{path.name}.tmp")
+        tmp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp_path.replace(path)
 
     def diff_files(self, current_files: Dict[str, Dict]) -> Tuple[Dict, Dict, Dict, Dict]:
         prev = self.load_index().get("files", {})

@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import List
+from typing import List, Tuple
 
 import tiktoken
 
@@ -24,13 +24,13 @@ def get_encoding(model: str):
 
 
 @lru_cache(maxsize=2048)
-def _encode_tokens(text: str, model: str) -> tuple[int, ...]:
+def _encode_tokens(text: str, model: str) -> Tuple[int, ...]:
     enc = get_encoding(model)
     return tuple(enc.encode(text))
 
 
 @lru_cache(maxsize=512)
-def _chunk_text_cached(text: str, model: str, max_tokens: int) -> tuple[str, ...]:
+def _chunk_text_cached(text: str, model: str, max_tokens: int) -> Tuple[str, ...]:
     enc = get_encoding(model)
     tokens = _encode_tokens(text, model)
     chunks = []

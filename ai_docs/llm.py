@@ -1,12 +1,14 @@
 import asyncio
+import inspect
 import json
 import os
+import random
 from typing import Dict, List, Optional
 
 import httpx
-import random
 from openai import AsyncOpenAI
 
+from .config import ConfigError, parse_bool_env, parse_float_env, parse_int_env
 from .utils import sha256_text
 
 
@@ -20,6 +22,7 @@ class LLMClient:
         max_tokens: int = 1200,
         context_limit: int = 8192,
         concurrency: int = 5,
+        verify: bool = True,
     ):
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
@@ -28,13 +31,28 @@ class LLMClient:
         self.max_tokens = max_tokens
         self.context_limit = context_limit
         self.concurrency = max(1, int(concurrency))
+        self.verify = verify
         self._cache_lock = asyncio.Lock()
         self._request_sem = asyncio.Semaphore(self.concurrency)
-        http_client = httpx.AsyncClient(verify=False)
-        client_kwargs = {"api_key": self.api_key, "timeout": 1200.0, "http_client": http_client}
+        self._http_client = httpx.AsyncClient(verify=verify)
+        client_kwargs = {"api_key": self.api_key, "timeout": 1200.0, "http_client": self._http_client}
         if self.base_url:
             client_kwargs["base_url"] = self.base_url
         self._client = AsyncOpenAI(**client_kwargs)
+
+    async def __aenter__(self) -> "LLMClient":
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        await self.aclose()
+
+    async def aclose(self) -> None:
+        close_client = getattr(self._client, "aclose", None) or getattr(self._client, "close", None)
+        if callable(close_client):
+            result = close_client()
+            if inspect.isawaitable(result):
+                await result
+        await self._http_client.aclose()
 
     def _estimate_input_tokens(self, messages: List[Dict[str, str]]) -> int:
         # Approximation is sufficient for timeout scaling; exact tiktoken
@@ -78,7 +96,7 @@ class LLMClient:
         max_read_timeout = 1200.0
         max_retries = 5
         backoff = 1.0
-        last_exc: Exception | None = None
+        last_exc: Optional[Exception] = None
         timeout = httpx.Timeout(read=read_timeout, connect=7.0, write=30.0, pool=read_timeout)
         # Global LLM concurrency cap: at most self.concurrency in-flight
         # requests across the whole process (including retry backoff).
@@ -116,14 +134,17 @@ class LLMClient:
 def from_env(concurrency: Optional[int] = None) -> LLMClient:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set")
+        raise ConfigError("OPENAI_API_KEY is not set")
     base_url = os.getenv("OPENAI_BASE_URL", "").strip()
     model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-    temperature = float(os.getenv("OPENAI_TEMPERATURE", "0.2"))
-    max_tokens = int(os.getenv("OPENAI_MAX_TOKENS", "1200"))
-    context_limit = int(os.getenv("OPENAI_CONTEXT_TOKENS", "8192"))
+    temperature = parse_float_env("OPENAI_TEMPERATURE", 0.2)
+    max_tokens = parse_int_env("OPENAI_MAX_TOKENS", 1200)
+    context_limit = parse_int_env("OPENAI_CONTEXT_TOKENS", 8192)
     if concurrency is None:
-        concurrency = int(os.getenv("AI_DOCS_THREADS", "5"))
+        concurrency = parse_int_env("AI_DOCS_THREADS", 5)
+    insecure_ssl = parse_bool_env("AI_DOCS_INSECURE_SSL", default=False)
+    if insecure_ssl:
+        print("[ai-docs] warning: AI_DOCS_INSECURE_SSL=true disables TLS certificate verification")
     return LLMClient(
         api_key=api_key,
         base_url=base_url,
@@ -132,4 +153,5 @@ def from_env(concurrency: Optional[int] = None) -> LLMClient:
         max_tokens=max_tokens,
         context_limit=context_limit,
         concurrency=concurrency,
+        verify=not insecure_ssl,
     )

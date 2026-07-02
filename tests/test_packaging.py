@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from setuptools.build_meta import build_sdist
+import tomli
 
 
 class PackagingTests(unittest.TestCase):
@@ -54,6 +55,43 @@ class PackagingTests(unittest.TestCase):
             path for path in payload if path.startswith("ai_docs_gen.egg-info/")
         }
         self.assertLessEqual(egg_info_paths, {"ai_docs_gen.egg-info/SOURCES.txt"})
+
+    def test_runtime_requirements_match_pyproject_dependencies(self):
+        root = Path(__file__).resolve().parents[1]
+        pyproject = tomli.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+        project_deps = set(pyproject["project"]["dependencies"])
+        requirements = {
+            line.strip()
+            for line in (root / "requirements.txt").read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        }
+
+        self.assertEqual(requirements, project_deps)
+        self.assertIn("watchdog", pyproject["project"]["optional-dependencies"]["watch"])
+
+    def test_runtime_code_avoids_python39_builtin_generics(self):
+        root = Path(__file__).resolve().parents[1]
+        forbidden = ("tuple[", "list[", "dict[", "set[")
+        offenders = []
+        for path in (root / "ai_docs").glob("*.py"):
+            text = path.read_text(encoding="utf-8")
+            for marker in forbidden:
+                if marker in text:
+                    offenders.append(f"{path.relative_to(root)}: {marker}")
+
+        self.assertEqual(offenders, [])
+
+    def test_readme_does_not_claim_config_is_auto_created(self):
+        root = Path(__file__).resolve().parents[1]
+        forbidden_phrases = (
+            "создаётся автоматически",
+            "generated automatically from current",
+        )
+        for name in ("README.md", "README_EN.md"):
+            with self.subTest(name=name):
+                text = (root / name).read_text(encoding="utf-8")
+                for phrase in forbidden_phrases:
+                    self.assertNotIn(phrase, text)
 
 
 if __name__ == "__main__":

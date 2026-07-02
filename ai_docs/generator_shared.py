@@ -37,27 +37,38 @@ def is_test_path(path: str) -> bool:
     return name.startswith("test_") or name.endswith("_test.py")
 
 
+def module_doc_path(source_path: str) -> str:
+    return (Path("modules") / Path(source_path)).as_posix().replace(".", "__") + ".md"
+
+
+def config_doc_path(source_path: str) -> str:
+    return (Path("configs/files") / Path(source_path)).as_posix().replace(".", "__") + ".md"
+
+
 def collect_dependencies(files: Dict[str, Dict]) -> List[str]:
     deps: List[str] = []
     for path, meta in files.items():
         if path.endswith("pyproject.toml"):
-            try:
-                data = tomli.loads(meta["content"])
-                deps_map = data.get("tool", {}).get("poetry", {}).get("dependencies", {})
+            data = tomli.loads(meta["content"])
+            project_deps = data.get("project", {}).get("dependencies", [])
+            if isinstance(project_deps, list):
+                deps.extend(str(dep) for dep in project_deps)
+            optional_deps = data.get("project", {}).get("optional-dependencies", {})
+            if isinstance(optional_deps, dict):
+                for extra, values in optional_deps.items():
+                    if isinstance(values, list):
+                        deps.extend(f"{dep} [{extra}]" for dep in values)
+            deps_map = data.get("tool", {}).get("poetry", {}).get("dependencies", {})
+            if isinstance(deps_map, dict):
                 deps.extend([f"{k} {v}" for k, v in deps_map.items()])
-            except Exception:
-                continue
         if path.endswith("requirements.txt"):
             lines = [line.strip() for line in meta["content"].splitlines() if line.strip() and not line.strip().startswith("#")]
             deps.extend(lines)
         if path.endswith("package.json"):
-            try:
-                data = json.loads(meta["content"])
-                for section in ("dependencies", "devDependencies"):
-                    for k, v in data.get(section, {}).items():
-                        deps.append(f"{k} {v}")
-            except Exception:
-                continue
+            data = json.loads(meta["content"])
+            for section in ("dependencies", "devDependencies"):
+                for k, v in data.get(section, {}).items():
+                    deps.append(f"{k} {v}")
     return sorted(set(deps))
 
 
@@ -66,25 +77,28 @@ def collect_test_info(files: Dict[str, Dict]) -> Tuple[List[str], List[str]]:
     commands: List[str] = []
     for path, meta in files.items():
         if path.endswith("pyproject.toml"):
-            try:
-                data = tomli.loads(meta["content"])
-                scripts = data.get("tool", {}).get("poetry", {}).get("scripts", {})
-                if scripts:
-                    commands.append("poetry run pytest")
-            except Exception:
-                continue
+            data = tomli.loads(meta["content"])
+            scripts = data.get("tool", {}).get("poetry", {}).get("scripts", {})
+            if scripts:
+                commands.append("poetry run pytest")
+            project_deps = data.get("project", {}).get("dependencies", [])
+            optional_deps = data.get("project", {}).get("optional-dependencies", {})
+            all_deps = [str(dep).lower() for dep in project_deps if isinstance(dep, str)]
+            if isinstance(optional_deps, dict):
+                for values in optional_deps.values():
+                    if isinstance(values, list):
+                        all_deps.extend(str(dep).lower() for dep in values if isinstance(dep, str))
+            if test_paths and any(dep == "pytest" or dep.startswith("pytest") for dep in all_deps):
+                commands.append("pytest -q")
         if path.endswith("setup.cfg"):
             commands.append("pytest")
         if path.endswith("tox.ini"):
             commands.append("tox")
         if path.endswith("package.json"):
-            try:
-                data = json.loads(meta.get("content", ""))
-                scripts = data.get("scripts", {})
-                if "test" in scripts:
-                    commands.append("npm test")
-            except Exception:
-                continue
+            data = json.loads(meta.get("content", ""))
+            scripts = data.get("scripts", {})
+            if "test" in scripts:
+                commands.append("npm test")
 
     return test_paths, sorted(set(commands))
 
@@ -180,8 +194,9 @@ def build_docs_index(
         summary_path = meta.get("module_summary_path")
         if not summary_path:
             continue
-        module_rel = Path("modules") / Path(path).with_suffix("")
-        module_rel_str = module_rel.as_posix() + ".md"
+        module_rel_str = module_doc_path(path)
+        if module_rel_str not in docs_files and module_rel_str not in existing_files:
+            continue
         summary_text = get_cached_text(meta, "module_summary_path", "module_summary_text")
         modules.append(
             {
@@ -199,8 +214,9 @@ def build_docs_index(
         summary_path = meta.get("config_summary_path")
         if not summary_path:
             continue
-        config_rel = Path("configs/files") / Path(path)
-        config_rel_str = config_rel.as_posix().replace(".", "__") + ".md"
+        config_rel_str = config_doc_path(path)
+        if config_rel_str not in docs_files and config_rel_str not in existing_files:
+            continue
         summary_text = get_cached_text(meta, "config_summary_path", "config_summary_text")
         configs.append(
             {

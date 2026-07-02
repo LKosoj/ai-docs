@@ -25,8 +25,7 @@ def write_docs(
     config_pages: Dict[str, str],
     has_changes: bool,
 ) -> None:
-    docs_index = build_docs_index(docs_dir, docs_files, file_map, SECTION_TITLES)
-    docs_files["_index.json"] = __serialize_index(docs_index)
+    index_source_files = dict(docs_files)
     add_mermaid_asset(docs_files)
     write_docs_files(docs_dir, docs_files)
 
@@ -70,6 +69,10 @@ def write_docs(
                     print(f"[ai-docs] cleanup docs progress: {done}/{total} ({elapsed}s)")
     elif docs_dir.exists():
         print("[ai-docs] cleanup docs: skipped (no source changes)")
+
+    docs_index = build_docs_index(docs_dir, index_source_files, file_map, SECTION_TITLES)
+    docs_files["_index.json"] = __serialize_index(docs_index)
+    write_docs_files(docs_dir, {"_index.json": docs_files["_index.json"]})
 
 
 def write_readme(output_root: Path, readme: str, force: bool) -> None:
@@ -145,11 +148,13 @@ def _postprocess_mermaid_html(site_dir: Path) -> None:
 
 def __serialize_index(index: Dict[str, object]) -> str:
     import json
-    from datetime import datetime
+    from datetime import datetime, timezone
+
+    generated_at = datetime.now(timezone.utc).replace(tzinfo=None).isoformat() + "Z"
 
     payload = {
         **index,
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": generated_at,
         "docs_dir": ".ai-docs",
         "rules": {
             "priority": [

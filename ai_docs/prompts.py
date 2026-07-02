@@ -17,7 +17,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Dict, Optional
 
-import yaml
+from .config import load_prompt_overrides as _load_prompt_overrides
 
 
 OVERVIEW_TAG = "overview_summary"
@@ -210,23 +210,7 @@ class PromptStore:
 
 def load_prompt_overrides(root: Path) -> Dict[str, str]:
     """Read the `prompts:` section from .ai-docs.yaml, if present."""
-    config_path = root / ".ai-docs.yaml"
-    if not config_path.exists():
-        return {}
-    try:
-        raw = yaml.safe_load(config_path.read_text(encoding="utf-8", errors="ignore")) or {}
-    except yaml.YAMLError:
-        return {}
-    if not isinstance(raw, dict):
-        return {}
-    section = raw.get("prompts") or {}
-    if not isinstance(section, dict):
-        return {}
-    result: Dict[str, str] = {}
-    for key, value in section.items():
-        if isinstance(value, str) and value.strip():
-            result[str(key)] = value.strip()
-    return result
+    return _load_prompt_overrides(root)
 
 
 _active_store: PromptStore = PromptStore()

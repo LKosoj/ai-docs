@@ -9,6 +9,7 @@ Uses `watchdog` (optional dependency). Pattern:
 from __future__ import annotations
 
 import argparse
+import asyncio
 import os
 import shutil
 import threading
@@ -16,19 +17,27 @@ import time
 from pathlib import Path
 from typing import Optional, Set
 
+from .config import parse_bool_env, parse_int_env
+from .generation_config import GenerationConfig, parse_section_list
 from .generator import generate_docs
 from .llm import from_env
-from .prompts import configure as configure_prompts, load_prompt_overrides
+from .prompts import PromptStore, load_prompt_overrides
 from .scanner import scan_source
-from .site_config import configure_source_url, load_source_url
+from .site_config import load_source_url
 from .utils import is_url
 
 
-def _regen(args: argparse.Namespace, llm) -> None:
+def _close_llm(llm) -> None:
+    aclose = getattr(llm, "aclose", None)
+    if aclose is not None:
+        asyncio.run(aclose())
+
+
+def _regen(args: argparse.Namespace) -> None:
     include: Optional[Set[str]] = set(args.include) if args.include else None
     exclude: Optional[Set[str]] = set(args.exclude) if args.exclude else None
-    threads = max(1, args.threads or int(os.getenv("AI_DOCS_THREADS", "5")))
-    env_local_site = os.getenv("AI_DOCS_LOCAL_SITE", "false").strip().lower() in {"1", "true", "yes", "y"}
+    threads = max(1, args.threads or parse_int_env("AI_DOCS_THREADS", 5))
+    env_local_site = parse_bool_env("AI_DOCS_LOCAL_SITE", False)
     local_site = args.local_site or env_local_site
 
     scan_result = scan_source(
@@ -39,28 +48,37 @@ def _regen(args: argparse.Namespace, llm) -> None:
         workers=threads,
     )
     prompt_overrides = load_prompt_overrides(scan_result.root)
-    configure_prompts(prompt_overrides)
-    configure_source_url(load_source_url(scan_result.root))
+    source_url = load_source_url(scan_result.root)
+    generation_config = GenerationConfig(
+        prompt_store=PromptStore(prompt_overrides),
+        source_url=source_url,
+        force_sections=parse_section_list(os.getenv("AI_DOCS_REGEN", "")),
+        regen_all_threshold=parse_int_env("AI_DOCS_REGEN_ALL_THRESHOLD", 50),
+    )
 
     output_root = Path(args.output).expanduser().resolve() if args.output else scan_result.root
     output_root.mkdir(parents=True, exist_ok=True)
 
-    generate_docs(
-        files=scan_result.files,
-        output_root=output_root,
-        cache_dir=output_root / args.cache_dir,
-        llm=llm,
-        language=args.language,
-        write_readme_flag=args.readme or not args.mkdocs,
-        write_mkdocs=args.mkdocs or not args.readme,
-        use_cache=not args.no_cache,
-        threads=threads,
-        local_site=local_site,
-        force=False,
-    )
-
-    if is_url(args.source):
-        shutil.rmtree(scan_result.root, ignore_errors=True)
+    llm = from_env(concurrency=threads)
+    try:
+        generate_docs(
+            files=scan_result.files,
+            output_root=output_root,
+            cache_dir=output_root / args.cache_dir,
+            llm=llm,
+            language=args.language,
+            write_readme_flag=args.readme or not args.mkdocs,
+            write_mkdocs=args.mkdocs or not args.readme,
+            use_cache=not args.no_cache,
+            threads=threads,
+            local_site=local_site,
+            force=False,
+            generation_config=generation_config,
+        )
+    finally:
+        _close_llm(llm)
+        if is_url(args.source):
+            shutil.rmtree(scan_result.root, ignore_errors=True)
 
 
 class _Debouncer:
@@ -69,9 +87,14 @@ class _Debouncer:
         self._fn = fn
         self._lock = threading.Lock()
         self._timer: Optional[threading.Timer] = None
+        self._running = False
+        self._pending = False
 
     def bump(self) -> None:
         with self._lock:
+            if self._running:
+                self._pending = True
+                return
             if self._timer is not None:
                 self._timer.cancel()
             self._timer = threading.Timer(self._delay, self._fire)
@@ -79,16 +102,30 @@ class _Debouncer:
             self._timer.start()
 
     def _fire(self) -> None:
-        try:
-            self._fn()
-        except Exception as exc:  # noqa: BLE001
-            print(f"[ai-docs watch] regeneration failed: {exc}")
+        with self._lock:
+            self._timer = None
+            if self._running:
+                self._pending = True
+                return
+            self._running = True
+        while True:
+            try:
+                self._fn()
+            except Exception as exc:  # noqa: BLE001
+                print(f"[ai-docs watch] regeneration failed: {exc}")
+            with self._lock:
+                if self._pending:
+                    self._pending = False
+                    continue
+                self._running = False
+                return
 
     def cancel(self) -> None:
         with self._lock:
             if self._timer is not None:
                 self._timer.cancel()
                 self._timer = None
+            self._pending = False
 
 
 def run_watch(args: argparse.Namespace) -> int:
@@ -111,14 +148,12 @@ def run_watch(args: argparse.Namespace) -> int:
         print(f"[ai-docs watch] source not found: {root}")
         return 2
 
-    threads = max(1, args.threads or int(os.getenv("AI_DOCS_THREADS", "5")))
-    llm = from_env(concurrency=threads)
     cache_dir_name = args.cache_dir
 
     def _do_regen():
         print("[ai-docs watch] change detected — regenerating…")
         start = time.monotonic()
-        _regen(args, llm)
+        _regen(args)
         print(f"[ai-docs watch] regen done in {time.monotonic() - start:.1f}s")
 
     debouncer = _Debouncer(args.debounce, _do_regen)

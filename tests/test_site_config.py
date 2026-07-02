@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from ai_docs.config import ConfigError
 from ai_docs.site_config import (
     active_source_url,
     configure_source_url,
@@ -27,17 +28,19 @@ class LoadSourceUrlTests(unittest.TestCase):
                 "https://gitlab.example.com/group/repo/-/blob/main/",
             )
 
-    def test_returns_none_for_non_string(self):
+    def test_rejects_non_string(self):
         with tempfile.TemporaryDirectory() as tmp:
             cfg = Path(tmp) / ".ai-docs.yaml"
             cfg.write_text("source_url: 42\n", encoding="utf-8")
-            self.assertIsNone(load_source_url(Path(tmp)))
+            with self.assertRaises(ConfigError):
+                load_source_url(Path(tmp))
 
-    def test_returns_none_for_broken_yaml(self):
+    def test_rejects_broken_yaml(self):
         with tempfile.TemporaryDirectory() as tmp:
             cfg = Path(tmp) / ".ai-docs.yaml"
-            cfg.write_text(":::broken:::", encoding="utf-8")
-            self.assertIsNone(load_source_url(Path(tmp)))
+            cfg.write_text("source_url: [", encoding="utf-8")
+            with self.assertRaises(ConfigError):
+                load_source_url(Path(tmp))
 
 
 class FormatCitationTests(unittest.TestCase):

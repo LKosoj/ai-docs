@@ -1,9 +1,10 @@
 import asyncio
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from .generator_shared import is_test_path
+from .prompts import PromptStore
 from .summary import summarize_file_outputs, write_summary
 
 
@@ -18,6 +19,7 @@ async def summarize_entries(
     save_cb,
     errors: List[str],
     label: str,
+    prompt_store: Optional[PromptStore] = None,
 ) -> None:
     if not items:
         return
@@ -51,6 +53,7 @@ async def summarize_entries(
                     llm.model,
                     include_module_summary=meta.get("type") == "code" and not is_test_path(path),
                     include_config_summary=meta.get("type") == "config",
+                    prompt_store=prompt_store,
                 )
                 for output_key, content in outputs.items():
                     out_dir = output_dirs[output_key]

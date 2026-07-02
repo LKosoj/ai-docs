@@ -7,64 +7,24 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 import pathspec
-import yaml
 
+from .config import load_extension_config
 from .domain import (
-    CODE_EXTENSION_DESCRIPTIONS,
-    CONFIG_EXTENSION_DESCRIPTIONS,
-    DOC_EXTENSION_DESCRIPTIONS,
     classify_type,
     detect_domains,
     is_infra,
 )
-from .utils import is_binary_file, is_url, read_text_file, to_posix
+from .domain_rules import (
+    CODE_EXTENSION_DESCRIPTIONS,
+    CONFIG_EXTENSION_DESCRIPTIONS,
+    DOC_EXTENSION_DESCRIPTIONS,
+    DEFAULT_EXCLUDE_PATTERNS,
+    FIXED_INCLUDE_PATTERNS,
+    PRUNABLE_DIR_NAMES,
+    PRUNABLE_DIR_PATHS,
+)
+from .utils import is_binary_file, is_url, sha256_bytes, to_posix
 
-
-FIXED_INCLUDE_PATTERNS = {
-    "*.tf", "*.tfvars",
-    "Dockerfile*", "docker-compose*.yml", "docker-compose*.yaml", "compose.yml", "compose.yaml",
-    "Jenkinsfile", ".gitlab-ci.yml", "azure-pipelines.yml",
-    "requirements.txt", "pyproject.toml", "package.json", "package-lock.json",
-}
-
-DEFAULT_EXCLUDE_PATTERNS = {
-    ".git/*", "**/.git/*",
-    ".venv/*", ".venv/**", "**/.venv/*", "**/.venv/**",
-    "venv/*", "venv/**", "**/venv/*", "**/venv/**",
-    "**/node_modules/*",
-    "**/dist/*", "**/build/*",
-    "**/.idea/*", "**/.vscode/*", "**/__pycache__/*",
-    "**/.pytest_cache/*", "**/.mypy_cache/*",
-    "**/.ai_docs_cache/*", "**/.ai_docs_cache/**", ".ai_docs_cache/**", ".ai_docs_cache/*",
-    "**/ai_docs_site/*", "**/ai_docs_site/**", "ai_docs_site/**", "ai_docs_site/*",
-    ".ai-docs/*", ".ai-docs/**", "**/.ai-docs/*", "**/.ai-docs/**",
-    ".github/*", ".github/**", "**/.github/*", "**/.github/**",
-    "mkdocs.yml", "**/mkdocs.yml", "mkdocs_yml.md", "**/mkdocs_yml.md",
-    ".ai-docs.yaml", "**/.ai-docs.yaml",
-    "ai_docs/assets/*", "ai_docs/assets/**", "**/ai_docs/assets/*", "**/ai_docs/assets/**",
-}
-
-PRUNABLE_DIR_NAMES = {
-    ".git",
-    ".venv",
-    "venv",
-    "node_modules",
-    "dist",
-    "build",
-    ".idea",
-    ".vscode",
-    "__pycache__",
-    ".pytest_cache",
-    ".mypy_cache",
-    ".ai_docs_cache",
-    "ai_docs_site",
-    ".ai-docs",
-    ".github",
-}
-
-PRUNABLE_DIR_PATHS = {
-    "ai_docs/assets",
-}
 
 PARALLEL_LOAD_THRESHOLD = 32
 
@@ -77,74 +37,13 @@ class ScanResult:
         self.repo_name = repo_name
 
 
-def _normalize_extensions(raw: object, defaults: Dict[str, str]) -> Dict[str, str]:
-    normalized: Dict[str, str] = {}
-    if isinstance(raw, dict):
-        items = raw.items()
-        for key, value in items:
-            ext = str(key).strip()
-            if not ext:
-                continue
-            if not ext.startswith("."):
-                ext = f".{ext}"
-            desc = value if isinstance(value, str) and value.strip() else defaults.get(ext, "")
-            normalized[ext] = desc
-    elif isinstance(raw, list):
-        for item in raw:
-            ext = str(item).strip()
-            if not ext:
-                continue
-            if not ext.startswith("."):
-                ext = f".{ext}"
-            normalized[ext] = defaults.get(ext, "")
-    return normalized or defaults.copy()
-
-
-def _normalize_excludes(raw: object) -> Set[str]:
-    if not isinstance(raw, list):
-        return set()
-    return {str(item).strip() for item in raw if str(item).strip()}
-
-
 def _load_extension_config(root: Path) -> Dict[str, object]:
-    config_path = root / ".ai-docs.yaml"
     defaults = {
         "code_extensions": CODE_EXTENSION_DESCRIPTIONS,
         "doc_extensions": DOC_EXTENSION_DESCRIPTIONS,
         "config_extensions": CONFIG_EXTENSION_DESCRIPTIONS,
     }
-
-    if not config_path.exists():
-        payload = {
-            "code_extensions": defaults["code_extensions"],
-            "doc_extensions": defaults["doc_extensions"],
-            "config_extensions": defaults["config_extensions"],
-        }
-        config_path.write_text(
-            yaml.safe_dump(payload, allow_unicode=True, sort_keys=False),
-            encoding="utf-8",
-        )
-        return {**{key: value.copy() for key, value in defaults.items()}, "exclude": set()}
-
-    try:
-        raw = yaml.safe_load(config_path.read_text(encoding="utf-8", errors="ignore")) or {}
-    except yaml.YAMLError:
-        return {**{key: value.copy() for key, value in defaults.items()}, "exclude": set()}
-
-    if not isinstance(raw, dict):
-        return {**{key: value.copy() for key, value in defaults.items()}, "exclude": set()}
-
-    code_raw = raw.get("code_extensions") or {}
-    doc_raw = raw.get("doc_extensions") or {}
-    config_raw = raw.get("config_extensions") or {}
-    exclude_raw = raw.get("exclude") or []
-
-    return {
-        "code_extensions": _normalize_extensions(code_raw, defaults["code_extensions"]),
-        "doc_extensions": _normalize_extensions(doc_raw, defaults["doc_extensions"]),
-        "config_extensions": _normalize_extensions(config_raw, defaults["config_extensions"]),
-        "exclude": _normalize_excludes(exclude_raw),
-    }
+    return load_extension_config(root, defaults)
 
 
 def _build_default_include_patterns(extension_config: Dict[str, object]) -> Set[str]:
@@ -221,24 +120,34 @@ def _load_file_record(task: Tuple[str, str, int]) -> Optional[Dict]:
             return None
         if is_binary_file(abs_path):
             return None
-        content = read_text_file(abs_path)
+        raw = abs_path.read_bytes()
+        decode_error = None
+        try:
+            content = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            decode_error = f"utf-8 decode error at byte {exc.start}: {exc.reason}; invalid bytes ignored"
+            content = raw.decode("utf-8", errors="ignore")
     except OSError:
         return None
 
     content_snippet = content[:4000]
     file_type = classify_type(abs_path)
     domains = detect_domains(abs_path, content_snippet)
-    if is_infra(domains):
+    if file_type != "ci" and is_infra(domains):
         file_type = "infra"
 
-    return {
+    record = {
         "path": rel_path_str,
         "abs_path": abs_path,
         "size": size,
+        "hash": sha256_bytes(raw),
         "content": content,
         "type": file_type,
         "domains": sorted(domains),
     }
+    if decode_error:
+        record["decode_error"] = decode_error
+    return record
 
 
 def _scan_directory(
@@ -282,6 +191,22 @@ def _scan_directory(
         if record is not None:
             files.append(record)
     return files
+
+
+def path_in_scan_scope(
+    root: Path,
+    rel_path: str,
+    include: Optional[Set[str]] = None,
+    exclude: Optional[Set[str]] = None,
+) -> bool:
+    extension_config = _load_extension_config(root)
+    effective_include = include or _build_default_include_patterns(extension_config)
+    effective_exclude = set(exclude or DEFAULT_EXCLUDE_PATTERNS)
+    effective_exclude |= set(extension_config.get("exclude", set()))
+    include_spec = _compile_pathspec(effective_include)
+    exclude_spec = _compile_pathspec(effective_exclude)
+    ignore_specs = _load_ignore_specs(root)
+    return _should_include(rel_path, include_spec, exclude_spec, ignore_specs)
 
 
 def _clone_repo(repo_url: str) -> Tuple[Path, str]:

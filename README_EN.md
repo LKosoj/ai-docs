@@ -10,7 +10,7 @@ It generates a `README.md` and a MkDocs site (with automatic build).
 Key features:
 - Automatic detection of infrastructure domains (Kubernetes, Helm, Terraform, Ansible, Docker, CI/CD, Observability, Service Mesh / Ingress, Data / Storage)
 - Incremental generation and caching
-- Respects `.gitignore` and filters files
+- Respects `.gitignore` and filters files without writing service files during scan
 - Parallel scanning and LLM summarization with a global cap on concurrent LLM requests (`--threads` / `AI_DOCS_THREADS`)
 - Change report in `docs/changes.md`
 
@@ -37,6 +37,11 @@ python3 -m venv .venv
 pip install -e .
 ```
 
+For the `watch` command, install the optional extra:
+```bash
+pip install -e ".[watch]"
+```
+
 2) Configure environment variables (example — `.env.example`):
 ```env
 OPENAI_API_KEY=your_api_key_here
@@ -47,6 +52,7 @@ OPENAI_CONTEXT_TOKENS=8192
 OPENAI_TEMPERATURE=0.2
 AI_DOCS_THREADS=5
 AI_DOCS_LOCAL_SITE=false
+AI_DOCS_INSECURE_SSL=false
 ```
 
 If the tool is installed as a package, you can set environment variables like this:
@@ -59,6 +65,7 @@ export OPENAI_CONTEXT_TOKENS="8192"
 export OPENAI_TEMPERATURE="0.2"
 export AI_DOCS_THREADS="5"
 export AI_DOCS_LOCAL_SITE="false"
+export AI_DOCS_INSECURE_SSL="false"
 ```
 
 3) Generate README and MkDocs:
@@ -90,6 +97,7 @@ $env:OPENAI_CONTEXT_TOKENS="8192"
 $env:OPENAI_TEMPERATURE="0.2"
 $env:AI_DOCS_THREADS="5"
 $env:AI_DOCS_LOCAL_SITE="false"
+$env:AI_DOCS_INSECURE_SSL="false"
 ```
 
 ## CLI subcommands
@@ -201,7 +209,7 @@ The `.ai-docs/_index.json` file is built automatically and contains:
 
 ## .ai-docs.yaml (extensions)
 If the project contains `.ai-docs.yaml`, it defines a priority list of extensions to scan.
-If the file is missing, it is generated automatically from current `*_EXTENSIONS`.
+If the file is missing, built-in rules from `ai_docs/domain_rules.py` are used; scanning does not create `.ai-docs.yaml` automatically.
 
 Format (map and list are supported for extensions):
 ```yaml
@@ -243,11 +251,18 @@ Tests are in `tests/`:
 - `test_cache.py`
 - `test_changes.py`
 - `test_cli.py`
+- `test_config.py`
+- `test_generated_docs.py`
+- `test_generator.py`
+- `test_generator_shared.py`
+- `test_llm.py`
+- `test_packaging.py`
 - `test_performance.py`
 - `test_prompts.py`
 - `test_scanner.py`
 - `test_site_config.py`
 - `test_summary.py`
+- `test_watch.py`
 
 Run (from repo root):
 ```bash
@@ -271,6 +286,30 @@ If the module count is below `AI_DOCS_REGEN_ALL_THRESHOLD` (default 50), all sec
 When running without parameters for sections, a hint is printed with a `--regen` example.
 If there are more than 100 modules, `modules/index.md` is paginated into pages of 100 items with ←/→ navigation.
 If there are more than 100 configs, `configs/index.md` is paginated into pages of 100 items with ←/→ navigation.
+
+Configuration errors, corrupt cache files, and LLM summarization failures make the command exit with a non-zero code. When summarization fails, final artifacts are not overwritten as a successful result.
+
+`pr-diff` performs a full scan of the current tree, but re-summarizes only files from `git diff --name-status <base>...HEAD`; unchanged files are not treated as deleted because of a partial diff.
+
+## Python API
+
+Embedded callers can use the public async API:
+```python
+from ai_docs.generation_config import GenerationConfig
+from ai_docs.generator import generate_docs_async
+
+await generate_docs_async(..., generation_config=GenerationConfig(source_url="https://example.com/repo/"))
+```
+
+The synchronous `generate_docs(...)` remains a thin wrapper for CLI and simple scripts.
+
+## TLS
+
+TLS verification is enabled by default for all OpenAI-compatible endpoint requests. For self-signed environments, explicitly disable verification:
+```bash
+AI_DOCS_INSECURE_SSL=true
+```
+The CLI prints a warning in this mode.
 
 ## Concurrency and LLM request cap
 
@@ -309,6 +348,7 @@ mkdocs build -f mkdocs.yml
 ## Exclusions
 The scanner respects `.gitignore`, `.build_ignore`, and default exclusions:
 `.venv`, `node_modules`, `ai_docs_site`, `.ai-docs`, `.ai_docs_cache`, `dist`, `build`, etc.
+GitHub Actions workflow files in `.github/workflows/*.yml` and `.github/workflows/*.yaml` are included in the scan and classified as CI.
 
 ## Development and contribution
 - Install dependencies (see “Quick start”)
